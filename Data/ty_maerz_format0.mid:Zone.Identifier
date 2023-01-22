@@ -1,3 +1,0 @@
-[ZoneTransfer]
-ZoneId=3
-HostUrl=https://s3.us-west-2.amazonaws.com/secure.notion-static.com/24bdcd3c-e2a1-463f-bf7b-993ab6be34c6/ty_maerz_format0.mid?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20230119%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20230119T224309Z&X-Amz-Expires=86400&X-Amz-Signature=9652b5cd9a49b348230621d06c24444d27dac0840947b5cd8bca5664e62b35ac&X-Amz-SignedHeaders=host&response-content-disposition=filename%3D%22ty_maerz_format0.mid%22&x-id=GetObject

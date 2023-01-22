@@ -1,3 +1,0 @@
-[ZoneTransfer]
-ZoneId=3
-HostUrl=https://s3.us-west-2.amazonaws.com/secure.notion-static.com/2fcbfe23-d2b0-4ce0-9aab-c2d193eb42a2/debussy_cc_2_format0.mid?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20230119%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20230119T224307Z&X-Amz-Expires=86400&X-Amz-Signature=3985dda96beaff444e360be3ecce33eadfd76e8eac30b7b7cf789cb561e65032&X-Amz-SignedHeaders=host&response-content-disposition=filename%3D%22debussy_cc_2_format0.mid%22&x-id=GetObject
