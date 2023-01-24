@@ -1,0 +1,4 @@
+total 527 words...
+Read 26060 words (527 unique) from text file.
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
