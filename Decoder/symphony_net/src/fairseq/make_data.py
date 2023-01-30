@@ -10,6 +10,7 @@ from fairseq.data.indexed_dataset import MMapIndexedDatasetBuilder
 from functools import partial
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from encoding import sort_tok_str
+import subprocess
 
 PAD = 1
 EOS = 2
@@ -70,6 +71,10 @@ def process_single_piece(bundle_input, ratio, sample_len_max):
             rel_pos += 2
         else: # on token
             pass
+        # for i in str_toks[idx:idx+ratio]:
+        #     print(str2int[i])
+        #     print(idx, ratio, i)
+        #     print("\n")
         cur_mea += [str2int[x] for x in str_toks[idx:idx+ratio]] + [rel_pos-1 if c.lower() == 'p' else rel_pos]
     #TODO: how to design rel_pos and measure pos?
     if len(cur_mea) > 0:
@@ -141,10 +146,10 @@ def mp_handler(raw_data, str2int, output_file, ratio, sample_len_max, num_worker
         with open('vocab.sh', 'a') as f:
             f.write(f'MAX_REL_POS={max_rel_pos+5}\n')
             f.write(f'MAX_MEA_POS={maxl*3+5}\n')
-        with open('src/fairseq/mea_cnt_dis.txt', 'w') as f:
+        with open('./Decoder/symphony_net/src/fairseq/mea_cnt_dis.txt', 'w') as f:
             for k, v in sorted(mea_cnt_dis.items()):
                 f.write(f'{k*10} {v}\n')
-        with open('src/fairseq/mea_len_dis.txt', 'w') as f:
+        with open('./Decoder/symphony_net/src/fairseq/mea_len_dis.txt', 'w') as f:
             for k, v in sorted(mea_len_dis.items()):
                 f.write(f'{k*10} {v}\n')
 
@@ -172,7 +177,8 @@ if __name__ == '__main__':
     # --------- slice multi-track ----
     SEED, SAMPLE_LEN_MAX, totpiece, RATIO, bpe, map_meta_to_pad = None, None, None, None, None, None
     print('config.sh: ')
-    with open('config.sh', 'r') as f:
+    subprocess.run(['pwd'])
+    with open('./Decoder/symphony_net/config.sh', 'r') as f:
         for line in f:
             line = line.strip()
             if len(line) == 0:
@@ -204,8 +210,8 @@ if __name__ == '__main__':
     bpe = "" if bpe == 0 else "_bpe"
     raw_corpus = f'raw_corpus{bpe}'
     model_name = f"linear_{SAMPLE_LEN_MAX}_chord{bpe}"
-    raw_data_path = f'data/preprocessed/{raw_corpus}.txt'
-    output_dir = f'data/model_spec/{model_name}_hardloss{map_meta_to_pad}/'
+    raw_data_path = f'./Decoder/symphony_net/data/preprocessed/{raw_corpus}.txt'
+    output_dir = f'./Decoder/symphony_net/data/model_spec/{model_name}_hardloss{map_meta_to_pad}/'
     
     start_time = time.time()
     raw_data = []

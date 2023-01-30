@@ -140,9 +140,9 @@ if __name__ == '__main__':
 
     paragraphs = []
 
-    raw_data_path = 'data/preprocessed/raw_corpus.txt'
-    merged_data_path = 'data/preprocessed/raw_corpus_bpe.txt'
-    output_dir = 'data/bpe_res/'
+    raw_data_path = 'Decoder/symphony_net/data/preprocessed/raw_corpus.txt'
+    merged_data_path = 'Decoder/symphony_net/data/preprocessed/raw_corpus_bpe.txt'
+    output_dir = 'Decoder/symphony_net/data/bpe_res/'
     os.makedirs(output_dir, exist_ok=True)
     raw_data = []
     with open(raw_data_path, 'r') as f:
@@ -162,7 +162,8 @@ if __name__ == '__main__':
             f.write(''.join(k) + ' ' + str(v) + '\n')
     with open(output_dir+'codes.txt', 'w') as stdout:
         with open(output_dir+'merged_voc_list.txt', 'w') as stderr:
-            subprocess.run(['./music_bpe_exec', 'learnbpe', f'{MERGE_CNT}', output_dir+'ori_voc_cnt.txt'], stdout=stdout, stderr=stderr)
+            subprocess.run(['pwd'])
+            subprocess.run(['./Decoder/symphony_net/music_bpe_exec', 'learnbpe', f'{MERGE_CNT}', output_dir+'ori_voc_cnt.txt'], stdout=stdout, stderr=stderr)
     print(f'learnBPE finished, time elapsed:　{time.time() - start_time}')
     start_time = time.time()
 
