@@ -173,104 +173,104 @@ def makevocabs(line, ratio):
     return ret_sets
 
 
-if __name__ == '__main__':
-    # --------- slice multi-track ----
-    SEED, SAMPLE_LEN_MAX, totpiece, RATIO, bpe, map_meta_to_pad = None, None, None, None, None, None
-    print('config.sh: ')
-    subprocess.run(['pwd'])
-    with open('./Decoder/symphony_net/config.sh', 'r') as f:
-        for line in f:
-            line = line.strip()
-            if len(line) == 0:
-                break
-            print(line)
-            line = line.split('=')
-            assert len(line) == 2, f'invalid config {line}'
-            if line[0] == 'SEED':
-                SEED = int(line[1])
-                random.seed(SEED)
-            elif line[0] == 'MAX_POS_LEN':
-                SAMPLE_LEN_MAX = int(line[1])
-            elif line[0] == 'MAXPIECES':
-                totpiece = int(line[1])
-            elif line[0] == 'RATIO':
-                RATIO = int(line[1])
-            elif line[0] == 'BPE':
-                bpe = int(line[1])
-            elif line[0] == 'IGNORE_META_LOSS':
-                map_meta_to_pad = int(line[1])
+# if __name__ == '__main__':
+#     # --------- slice multi-track ----
+#     SEED, SAMPLE_LEN_MAX, totpiece, RATIO, bpe, map_meta_to_pad = None, None, None, None, None, None
+#     print('config.sh: ')
+#     subprocess.run(['pwd'])
+#     with open('./Decoder/symphony_net/config.sh', 'r') as f:
+#         for line in f:
+#             line = line.strip()
+#             if len(line) == 0:
+#                 break
+#             print(line)
+#             line = line.split('=')
+#             assert len(line) == 2, f'invalid config {line}'
+#             if line[0] == 'SEED':
+#                 SEED = int(line[1])
+#                 random.seed(SEED)
+#             elif line[0] == 'MAX_POS_LEN':
+#                 SAMPLE_LEN_MAX = int(line[1])
+#             elif line[0] == 'MAXPIECES':
+#                 totpiece = int(line[1])
+#             elif line[0] == 'RATIO':
+#                 RATIO = int(line[1])
+#             elif line[0] == 'BPE':
+#                 bpe = int(line[1])
+#             elif line[0] == 'IGNORE_META_LOSS':
+#                 map_meta_to_pad = int(line[1])
 
-    assert SEED is not None, "missing arg: SEED"
-    assert SAMPLE_LEN_MAX is not None, "missing arg: MAX_POS_LEN"
-    assert totpiece is not None, "missing arg: MAXPIECES"
-    assert RATIO is not None, "missing arg: RATIO"
-    assert bpe is not None, "missing arg: BPE"
-    assert map_meta_to_pad is not None, "missing arg: IGNORE_META_LOSS"
+#     assert SEED is not None, "missing arg: SEED"
+#     assert SAMPLE_LEN_MAX is not None, "missing arg: MAX_POS_LEN"
+#     assert totpiece is not None, "missing arg: MAXPIECES"
+#     assert RATIO is not None, "missing arg: RATIO"
+#     assert bpe is not None, "missing arg: BPE"
+#     assert map_meta_to_pad is not None, "missing arg: IGNORE_META_LOSS"
 
-    bpe = "" if bpe == 0 else "_bpe"
-    raw_corpus = f'raw_corpus{bpe}'
-    model_name = f"linear_{SAMPLE_LEN_MAX}_chord{bpe}"
-    raw_data_path = f'./Decoder/symphony_net/data/preprocessed/{raw_corpus}.txt'
-    output_dir = f'./Decoder/symphony_net/data/model_spec/{model_name}_hardloss{map_meta_to_pad}/'
+#     bpe = "" if bpe == 0 else "_bpe"
+#     raw_corpus = f'raw_corpus{bpe}'
+#     model_name = f"linear_{SAMPLE_LEN_MAX}_chord{bpe}"
+#     raw_data_path = f'./Decoder/symphony_net/data/preprocessed/{raw_corpus}.txt'
+#     output_dir = f'./Decoder/symphony_net/data/model_spec/{model_name}_hardloss{map_meta_to_pad}/'
     
-    start_time = time.time()
-    raw_data = []
-    with open(raw_data_path, 'r') as f:
-        for line in tqdm(f, desc='reading...'):
-            raw_data.append(line.strip())
-            if len(raw_data) >= totpiece:
-                break
+#     start_time = time.time()
+#     raw_data = []
+#     with open(raw_data_path, 'r') as f:
+#         for line in tqdm(f, desc='reading...'):
+#             raw_data.append(line.strip())
+#             if len(raw_data) >= totpiece:
+#                 break
 
-    sub_vocabs = dict()
-    for i in range(RATIO):
-        sub_vocabs[i] = set()
+#     sub_vocabs = dict()
+#     for i in range(RATIO):
+#         sub_vocabs[i] = set()
 
-    for ret_sets in p_uimap(partial(makevocabs, ratio=RATIO), raw_data, num_cpus=WORKERS, desc='setting up vocabs'):
-        for i in range(RATIO):
-            sub_vocabs[i] |= ret_sets[i]
+#     for ret_sets in p_uimap(partial(makevocabs, ratio=RATIO), raw_data, num_cpus=WORKERS, desc='setting up vocabs'):
+#         for i in range(RATIO):
+#             sub_vocabs[i] |= ret_sets[i]
 
-    voc_to_int = dict()
-    for type in range(RATIO):
-        sub_vocabs[type] |= set(('<bos>', '<pad>', '<eos>', '<unk>'))
-        sub_vocabs[type] -= set(('RZ', 'TZ', 'YZ'))
-        sub_vocabs[type] = sorted(list(sub_vocabs[type]), key=sort_tok_str)
-        voc_to_int.update({v:i for i,v in enumerate(sub_vocabs[type]) }) 
-    output_dict = sorted(list(set(voc_to_int.values())))
-    max_voc_size = max(output_dict)
-    print("max voc idx: ", max_voc_size)
+#     voc_to_int = dict()
+#     for type in range(RATIO):
+#         sub_vocabs[type] |= set(('<bos>', '<pad>', '<eos>', '<unk>'))
+#         sub_vocabs[type] -= set(('RZ', 'TZ', 'YZ'))
+#         sub_vocabs[type] = sorted(list(sub_vocabs[type]), key=sort_tok_str)
+#         voc_to_int.update({v:i for i,v in enumerate(sub_vocabs[type]) }) 
+#     output_dict = sorted(list(set(voc_to_int.values())))
+#     max_voc_size = max(output_dict)
+#     print("max voc idx: ", max_voc_size)
 
-    os.makedirs(output_dir + 'bin/', exist_ok=True)
-    with open(output_dir + 'bin/dict.txt', 'w') as f:
-        for i in range(4, max_voc_size+1): # [4, max_voc_size]
-            f.write("%d 0\n"%i)
+#     os.makedirs(output_dir + 'bin/', exist_ok=True)
+#     with open(output_dir + 'bin/dict.txt', 'w') as f:
+#         for i in range(4, max_voc_size+1): # [4, max_voc_size]
+#             f.write("%d 0\n"%i)
 
         
-    os.makedirs(output_dir + 'vocabs/', exist_ok=True)
-    for type in range(RATIO):
-        sub_vocab = sub_vocabs[type]
-        with open(output_dir + 'vocabs/vocab_%d.json'%type, 'w') as f:
-            json.dump({i:v for i,v in enumerate(sub_vocab)}, f)
-    with open(output_dir + 'vocabs/ori_dict.json', 'w') as f:
-        json.dump(voc_to_int, f)
-    print('sub vocab size:', end = ' ')
-    for type in range(RATIO):
-        print(len(sub_vocabs[type]), end = ' ')
-    print()
-    with open(f'vocab.sh', 'w') as f:
-        for type in range(RATIO):
-            f.write(f'SIZE_{type}={len(sub_vocabs[type])}\n')
+#     os.makedirs(output_dir + 'vocabs/', exist_ok=True)
+#     for type in range(RATIO):
+#         sub_vocab = sub_vocabs[type]
+#         with open(output_dir + 'vocabs/vocab_%d.json'%type, 'w') as f:
+#             json.dump({i:v for i,v in enumerate(sub_vocab)}, f)
+#     with open(output_dir + 'vocabs/ori_dict.json', 'w') as f:
+#         json.dump(voc_to_int, f)
+#     print('sub vocab size:', end = ' ')
+#     for type in range(RATIO):
+#         print(len(sub_vocabs[type]), end = ' ')
+#     print()
+#     with open(f'vocab.sh', 'w') as f:
+#         for type in range(RATIO):
+#             f.write(f'SIZE_{type}={len(sub_vocabs[type])}\n')
 
-    totpiece = len(raw_data)
-    print("total pieces: {:d}, create dict time: {:.2f} s".format(totpiece, time.time() - start_time))
+#     totpiece = len(raw_data)
+#     print("total pieces: {:d}, create dict time: {:.2f} s".format(totpiece, time.time() - start_time))
 
-    raw_data = myshuffle(raw_data)
-    os.makedirs(output_dir + 'bin/', exist_ok=True)
-    train_size = min(int(totpiece*0.99), totpiece-2)
-    splits = {'train': raw_data[:train_size], 'valid': raw_data[train_size:-1], 'test': raw_data[-1:]}
+#     raw_data = myshuffle(raw_data)
+#     os.makedirs(output_dir + 'bin/', exist_ok=True)
+#     train_size = min(int(totpiece*0.99), totpiece-2)
+#     splits = {'train': raw_data[:train_size], 'valid': raw_data[train_size:-1], 'test': raw_data[-1:]}
 
 
-    voc_to_int.update({x:(PAD if map_meta_to_pad == 1 else BOS) for x in ('RZ', 'TZ', 'YZ')}) 
-    for mode in splits:
-        print(mode)
-        mp_handler(splits[mode], voc_to_int, output_dir + f'bin/{mode}', ratio=RATIO, sample_len_max=SAMPLE_LEN_MAX)
+#     voc_to_int.update({x:(PAD if map_meta_to_pad == 1 else BOS) for x in ('RZ', 'TZ', 'YZ')}) 
+#     for mode in splits:
+#         print(mode)
+#         mp_handler(splits[mode], voc_to_int, output_dir + f'bin/{mode}', ratio=RATIO, sample_len_max=SAMPLE_LEN_MAX)
         

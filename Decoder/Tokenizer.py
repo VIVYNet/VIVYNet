@@ -2,6 +2,7 @@ from symphony_net.src.preprocess import preprocess_midi
 from symphony_net.src.preprocess import get_bpe_data
 from symphony_net.src.fairseq import make_data
 from symphony_net.src import encoding
+from symphony_net.src.fairseq.gen_utils import process_prime_midi, gen_one, get_trk_ins_map, get_note_seq, note_seq_to_midi_file, music_dict
 import os, traceback, time, warnings, sys, random
 from tqdm import tqdm
 from p_tqdm import p_uimap
@@ -9,20 +10,21 @@ from functools import partial
 from collections import Counter
 import subprocess#, multiprocessing
 import json
+from pprint import pprint
 
 class Tokenizer:
     def __init__(self, ratio = 4, merge_cnt= 700, char_cnt= 128, workers= 32):
+        self.main_path = "Decoder/symphony_net/"
         self.ratio = ratio
         self.merge_cnt = merge_cnt
         self.char_cnt = char_cnt
         self.workers = workers
-        self.vocab_generate()
     
-    def preprocess_midi(self, midi_path = "data/midis"):
+    def __preprocess_midi(self):
         warnings.filterwarnings('ignore')
-        folder_path = midi_path
+        midis_path = self.main_path + "data/midis"
         file_paths = []
-        for path, directories, files in os.walk(folder_path):
+        for path, directories, files in os.walk(midis_path):
             for file in files:
                 if file.endswith(".mid") or file.endswith(".MID"):
                     file_path = path + "/" + file
@@ -31,12 +33,12 @@ class Tokenizer:
         # run multi-processing midi extractor
         preprocess_midi.mp_handler(file_paths)
     
-    def byte_pair_encode(
-            self,
-            raw_corpus_path = "data/preprocessed/raw_corpus.txt", 
-            bpe_raw_corpus_path = "data/preprocessed/raw_corpus_bpe.txt", 
-            output_dir = "data/bpe_res/"):
+    def __byte_pair_encode(self):
         start_time = time.time()
+
+        raw_corpus_path = self.main_path + "data/preprocessed/raw_corpus.txt"
+        bpe_raw_corpus_path = self.main_path + "data/preprocessed/raw_corpus_bpe.txt"
+        output_dir = self.main_path + "data/bpe_res/"
 
         paragraphs = []
 
@@ -59,12 +61,13 @@ class Tokenizer:
                 f.write(''.join(k) + ' ' + str(v) + '\n')
         with open(output_dir+'codes.txt', 'w') as stdout:
             with open(output_dir+'merged_voc_list.txt', 'w') as stderr:
-                subprocess.run(['./music_bpe_exec', 'learnbpe', f'{self.merge_cnt}', output_dir+'ori_voc_cnt.txt'], stdout=stdout, stderr=stderr)
+                subprocess.run(['pwd'])
+                subprocess.run(['./' + self.main_path + '/music_bpe_exec', 'learnbpe', f'{self.merge_cnt}', output_dir+'ori_voc_cnt.txt'], stdout=stdout, stderr=stderr)
         print(f'learnBPE finished, time elapsed:　{time.time() - start_time}')
         start_time = time.time()
 
         merges, merged_vocs = get_bpe_data.load_before_apply_bpe(output_dir)
-        divide_res, divided_bpe_total, bpe_freq = get_bpe_data.apply_bpe_for_word_dict(mulpi_list, merges)
+        divide_res, divided_bpe_total, bpe_freq = get_bpe_data.apply_bpe_for_word_dict(mulpi_list, merges, merged_vocs)
         with open(output_dir+'divide_res.json', 'w') as f:
             json.dump({' '.join(k):v for k, v in divide_res.items()}, f)
         with open(output_dir+'bpe_voc_cnt.txt', 'w') as f:
@@ -87,7 +90,9 @@ class Tokenizer:
         print(f'applyBPE for corpus finished, time elapsed:　{time.time() - start_time}')
         print(f'before tokens: {before_total_tokens}, after tokens: {after_total_tokens}, delta: {(before_total_tokens - after_total_tokens) / before_total_tokens}')
 
-    def make_data(self):
+    def __make_data(self):
+        config_path = self.main_path + "config.sh"
+
         # --------- slice multi-track ----
         PAD = 1
         EOS = 2
@@ -95,7 +100,7 @@ class Tokenizer:
 
         SEED, SAMPLE_LEN_MAX, totpiece, RATIO, bpe, map_meta_to_pad = None, None, None, None, None, None
         print('config.sh: ')
-        with open('config.sh', 'r') as f:
+        with open(config_path, 'r') as f:
             for line in f:
                 line = line.strip()
                 if len(line) == 0:
@@ -127,8 +132,8 @@ class Tokenizer:
         bpe = "" if bpe == 0 else "_bpe"
         raw_corpus = f'raw_corpus{bpe}'
         model_name = f"linear_{SAMPLE_LEN_MAX}_chord{bpe}"
-        raw_data_path = f'data/preprocessed/{raw_corpus}.txt'
-        output_dir = f'data/model_spec/{model_name}_hardloss{map_meta_to_pad}/'
+        raw_data_path = f'{self.main_path}data/preprocessed/{raw_corpus}.txt'
+        output_dir = f'{self.main_path}data/model_spec/{model_name}_hardloss{map_meta_to_pad}/'
         
         start_time = time.time()
         raw_data = []
@@ -192,8 +197,34 @@ class Tokenizer:
             make_data.mp_handler(splits[mode], voc_to_int, output_dir + f'bin/{mode}', ratio=RATIO, sample_len_max=SAMPLE_LEN_MAX)
     
     def vocab_generate(self):
-        self.preprocess_midi()
-        self.byte_pair_encode()
-        self.make_data()
+        self.__preprocess_midi()
+        self.__byte_pair_encode()
+        self.__make_data()
 
-Tokenizer()
+    def encode(
+            self,
+            midi_file_path,
+            max_measure_cnt = 5,
+            max_chord_measure_cnt = 0
+        ):
+        MAX_POS_LEN = 4096
+        PI_LEVEL = 2
+        IGNORE_META_LOSS = 1
+        RATIO = 4
+        BPE = "_bpe" # or ""
+
+        DATA_BIN=f"linear_{MAX_POS_LEN}_chord{BPE}_hardloss{IGNORE_META_LOSS}"
+        CHECKPOINT_SUFFIX=f"{DATA_BIN}_PI{PI_LEVEL}"
+        DATA_BIN_DIR = f"{self.main_path}data/model_spec/{DATA_BIN}/bin/"
+        DATA_VOC_DIR = f"{self.main_path}data/model_spec/{DATA_BIN}/vocabs/"
+        BPE_RES_PATH = f"{self.main_path}data/bpe_res/"
+        music_dict.load_vocabs_bpe(DATA_VOC_DIR, BPE_RES_PATH if BPE == '_bpe' else None)
+        prime, ins_label = process_prime_midi(midi_file_path, max_measure_cnt, max_chord_measure_cnt)
+        return prime, ins_label
+
+
+tokenizer = Tokenizer()
+prime, ins_label = tokenizer.encode(
+    "/home/tnguy231/VIVY/VIVYNet/Decoder/symphony_net/data/midis/ty_maerz_format0.mid"
+)
+pprint(prime)

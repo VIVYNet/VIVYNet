@@ -501,17 +501,17 @@ def mp_handler(file_paths):
     # ----------------------------------------------------------------------------------
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    warnings.filterwarnings('ignore')
+#     warnings.filterwarnings('ignore')
 
-    folder_path = "Decoder/symphony_net/data/midis"
-    file_paths = []
-    for path, directories, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith(".mid") or file.endswith(".MID"):
-                file_path = path + "/" + file
-                file_paths.append(file_path)
+#     folder_path = "Decoder/symphony_net/data/midis"
+#     file_paths = []
+#     for path, directories, files in os.walk(folder_path):
+#         for file in files:
+#             if file.endswith(".mid") or file.endswith(".MID"):
+#                 file_path = path + "/" + file
+#                 file_paths.append(file_path)
 
-    # run multi-processing midi extractor
-    mp_handler(file_paths)
+#     # run multi-processing midi extractor
+#     mp_handler(file_paths)
