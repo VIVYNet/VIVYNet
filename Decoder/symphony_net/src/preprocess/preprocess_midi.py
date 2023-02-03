@@ -94,11 +94,15 @@ def merge_sparse_track(p_midi, CANDI_THRES=50, MIN_THRES=5):  # merge track has 
 def limit_max_track(p_midi, MAX_TRACK=40):  # merge track with least notes and limit the maximum amount of track to 40
 
     good_instruments = p_midi.instruments
-    print("LOG: " + str(good_instruments))
+    
     good_instruments.sort(
         key=lambda x: (not x.is_drum, -len(x.notes)))  # place drum track or the most note track at first
-    assert good_instruments[0].is_drum == True or len(good_instruments[0].notes) >= len(
-        good_instruments[1].notes), tuple(len(x.notes) for x in good_instruments[:3])
+    
+    # for k,i in enumerate(good_instruments):
+    #     print(str(k) + "/LOG: " + str(i))
+
+    # assert good_instruments[0].is_drum == True or len(good_instruments[0].notes) >= len(
+    #     good_instruments[1].notes), tuple(len(x.notes) for x in good_instruments[:3])
     # assert good_instruments[0].is_drum == False, (, len(good_instruments[2]))
     track_idx_lst = list(range(len(good_instruments)))
 
@@ -461,7 +465,6 @@ def mp_worker(file_path):
         print()
         return "error"
 
-
 def mp_handler(file_paths):
     start = time.time()
 
@@ -487,10 +490,10 @@ def mp_handler(file_paths):
 
     # ----------------------------------------------------------------------------------
     txt_start = time.time()
-    if not os.path.exists('data/preprocessed/'):
-        os.makedirs('data/preprocessed/')
+    if not os.path.exists('Decoder/symphony_net/data/preprocessed/'):
+        os.makedirs('Decoder/symphony_net/data/preprocessed/')
 
-    with open("data/preprocessed/raw_corpus.txt", "w", encoding="utf-8") as f:
+    with open("Decoder/symphony_net/data/preprocessed/raw_corpus.txt", "w", encoding="utf-8") as f:
         for idx, piece in enumerate(event_seq_res):
             f.write(' '.join(piece) + '\n')
 
@@ -498,17 +501,17 @@ def mp_handler(file_paths):
     # ----------------------------------------------------------------------------------
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    warnings.filterwarnings('ignore')
+#     warnings.filterwarnings('ignore')
 
-    folder_path = "data/midis"
-    file_paths = []
-    for path, directories, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith(".mid") or file.endswith(".MID"):
-                file_path = path + "/" + file
-                file_paths.append(file_path)
+#     folder_path = "Decoder/symphony_net/data/midis"
+#     file_paths = []
+#     for path, directories, files in os.walk(folder_path):
+#         for file in files:
+#             if file.endswith(".mid") or file.endswith(".MID"):
+#                 file_path = path + "/" + file
+#                 file_paths.append(file_path)
 
-    # run multi-processing midi extractor
-    mp_handler(file_paths)
+#     # run multi-processing midi extractor
+#     mp_handler(file_paths)

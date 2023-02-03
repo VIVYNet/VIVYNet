@@ -95,7 +95,7 @@ def load_before_apply_bpe(bpe_res_dir):
     
     return merges, merged_vocs
 
-def apply_bpe_for_word_dict(mulpi_list, merges):
+def apply_bpe_for_word_dict(mulpi_list, merges, merged_vocs):
     # apply bpe for vocabs
     bpe_freq = Counter()
     divided_bpe_total = Counter()
@@ -135,57 +135,59 @@ def count_single_mulpies(toks, ratio=RATIO):
     return chord_dict, l_toks // ratio
 
 
-if __name__ == '__main__':
-    start_time = time.time()
+# if __name__ == '__main__':
+#     start_time = time.time()
 
-    paragraphs = []
-
-    raw_data_path = 'data/preprocessed/raw_corpus.txt'
-    merged_data_path = 'data/preprocessed/raw_corpus_bpe.txt'
-    output_dir = 'data/bpe_res/'
-    os.makedirs(output_dir, exist_ok=True)
-    raw_data = []
-    with open(raw_data_path, 'r') as f:
-        for line in tqdm(f, desc="reading original txt file..."):
-            raw_data.append(line.strip())
-
-    chord_dict = Counter()
-    before_total_tokens = 0
-    for sub_chord_dict, l_toks in p_uimap(count_single_mulpies, raw_data, num_cpus=WORKERS):
-        chord_dict += sub_chord_dict
-        before_total_tokens += l_toks
+#     paragraphs = []
     
-    mulpi_list = sorted(chord_dict.most_common(), key=lambda x: (-x[1], x[0]))
-    with open(output_dir+'ori_voc_cnt.txt', 'w') as f:
-        f.write(str(len(mulpi_list)) + '\n')
-        for k, v in mulpi_list:
-            f.write(''.join(k) + ' ' + str(v) + '\n')
-    with open(output_dir+'codes.txt', 'w') as stdout:
-        with open(output_dir+'merged_voc_list.txt', 'w') as stderr:
-            subprocess.run(['./music_bpe_exec', 'learnbpe', f'{MERGE_CNT}', output_dir+'ori_voc_cnt.txt'], stdout=stdout, stderr=stderr)
-    print(f'learnBPE finished, time elapsed:　{time.time() - start_time}')
-    start_time = time.time()
+#     raw_data_path = 'Decoder/symphony_net/data/preprocessed/raw_corpus.txt'
+#     merged_data_path = 'Decoder/symphony_net/data/preprocessed/raw_corpus_bpe.txt'
+#     output_dir = 'Decoder/symphony_net/data/bpe_res/'
+#     os.makedirs(output_dir, exist_ok=True)
+#     raw_data = []
+#     with open(raw_data_path, 'r') as f:
+#         for line in tqdm(f, desc="reading original txt file..."):
+#             raw_data.append(line.strip())
 
-    merges, merged_vocs = load_before_apply_bpe(output_dir)
-    divide_res, divided_bpe_total, bpe_freq = apply_bpe_for_word_dict(mulpi_list, merges)
-    with open(output_dir+'divide_res.json', 'w') as f:
-        json.dump({' '.join(k):v for k, v in divide_res.items()}, f)
-    with open(output_dir+'bpe_voc_cnt.txt', 'w') as f:
-        for voc, cnt in bpe_freq.most_common():
-            f.write(voc + ' ' + str(cnt) + '\n')
-    ave_len_bpe = sum(k*v for k, v in divided_bpe_total.items()) / sum(divided_bpe_total.values())
-    ave_len_ori = sum(len(k)*v for k, v in mulpi_list) / sum(v for k, v in mulpi_list)
-    print(f'average mulpi length original:　{ave_len_ori}, average mulpi length after bpe: {ave_len_bpe}')
-    print(f'applyBPE for word finished, time elapsed:　{time.time() - start_time}')
-    start_time = time.time()
+#     chord_dict = Counter()
+#     before_total_tokens = 0
+#     for sub_chord_dict, l_toks in p_uimap(count_single_mulpies, raw_data, num_cpus=WORKERS):
+#         chord_dict += sub_chord_dict
+#         before_total_tokens += l_toks
+    
+#     mulpi_list = sorted(chord_dict.most_common(), key=lambda x: (-x[1], x[0]))
+#     with open(output_dir+'ori_voc_cnt.txt', 'w') as f:
+#         f.write(str(len(mulpi_list)) + '\n')
+#         for k, v in mulpi_list:
+#             f.write(''.join(k) + ' ' + str(v) + '\n')
+#     with open(output_dir+'codes.txt', 'w') as stdout:
+#         with open(output_dir+'merged_voc_list.txt', 'w') as stderr:
+#             subprocess.run(['pwd'])
+#             subprocess.run(['./Decoder/symphony_net/music_bpe_exec', 'learnbpe', f'{MERGE_CNT}', output_dir+'ori_voc_cnt.txt'], stdout=stdout, stderr=stderr)
+#     print(f'learnBPE finished, time elapsed:　{time.time() - start_time}')
+#     start_time = time.time()
 
-    # applyBPE for corpus
+#     merges, merged_vocs = load_before_apply_bpe(output_dir)
+#     divide_res, divided_bpe_total, bpe_freq = apply_bpe_for_word_dict(mulpi_list, merges)
+#     with open(output_dir+'divide_res.json', 'w') as f:
+#         json.dump({' '.join(k):v for k, v in divide_res.items()}, f)
+#     with open(output_dir+'bpe_voc_cnt.txt', 'w') as f:
+#         for voc, cnt in bpe_freq.most_common():
+#             f.write(voc + ' ' + str(cnt) + '\n')
+#     ave_len_bpe = sum(k*v for k, v in divided_bpe_total.items()) / sum(divided_bpe_total.values())
+#     ave_len_ori = sum(len(k)*v for k, v in mulpi_list) / sum(v for k, v in mulpi_list)
+#     print(f'average mulpi length original:　{ave_len_ori}, average mulpi length after bpe: {ave_len_bpe}')
+#     print(f'applyBPE for word finished, time elapsed:　{time.time() - start_time}')
+#     start_time = time.time()
 
-    after_total_tokens = 0
-    with open(merged_data_path, 'w') as f:
-        for x in tqdm(raw_data, desc="writing bpe data"): # unable to parallelize for out of memory
-            new_toks = apply_bpe_for_sentence(x, merges, merged_vocs, divide_res)
-            after_total_tokens += len(new_toks) // RATIO
-            f.write(' '.join(new_toks) + '\n')
-    print(f'applyBPE for corpus finished, time elapsed:　{time.time() - start_time}')
-    print(f'before tokens: {before_total_tokens}, after tokens: {after_total_tokens}, delta: {(before_total_tokens - after_total_tokens) / before_total_tokens}')
+#     # applyBPE for corpus
+
+#     after_total_tokens = 0
+#     with open(merged_data_path, 'w') as f:
+#         for x in tqdm(raw_data, desc="writing bpe data"): # unable to parallelize for out of memory
+#             new_toks = apply_bpe_for_sentence(x, merges, merged_vocs, divide_res)
+#             after_total_tokens += len(new_toks) // RATIO
+#             f.write(' '.join(new_toks) + '\n')
+#     print(f'applyBPE for corpus finished, time elapsed:　{time.time() - start_time}')
+#     print(f'before tokens: {before_total_tokens}, after tokens: {after_total_tokens}, delta: {(before_total_tokens - after_total_tokens) / before_total_tokens}')
+
