@@ -1,4 +1,3 @@
-total 749 words...
-Read 27419 words (749 unique) from text file.
-terminate called after throwing an instance of 'std::bad_alloc'
-  what():  std::bad_alloc
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/music_bpe_exec: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33' not found (required by /home/blherre4/VIVY/VIVYNet/decoder/symphony_net/music_bpe_exec)
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/music_bpe_exec: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by /home/blherre4/VIVY/VIVYNet/decoder/symphony_net/music_bpe_exec)
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/music_bpe_exec: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.29' not found (required by /home/blherre4/VIVY/VIVYNet/decoder/symphony_net/music_bpe_exec)

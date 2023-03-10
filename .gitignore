@@ -1,3 +1,4 @@
 decoder/pretrained_model
 testing/fairseq/*
+data/*
 
