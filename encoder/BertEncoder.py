@@ -1,5 +1,5 @@
 from fairseq.models import FairseqEncoder, FairseqEncoderModel, register_model, register_model_architecture
-from fairseq.tasks import LegacyFairseqTask, register_task
+from fairseq.tasks import LegacyFairseqTask, FairseqTask, register_task
 from transformers import BertTokenizer, BertModel, BertConfig
 import torch
 import torch.nn
