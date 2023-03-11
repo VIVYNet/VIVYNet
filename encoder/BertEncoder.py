@@ -5,12 +5,12 @@ import torch
 import torch.nn
 
 class BertEncoder(FairseqEncoder):
-    def __init__(self, fn_dim, dropout):
+    def __init__(self, args):
         super().__init__()
         self.config = BertConfig()
         self.model = BertModel.from_pretrained("bert-base-multilingual-cased")
-        self.dropout = torch.nn.Dropout(dropout)
-        self.fn = torch.nn.Linear(self.config.hidden_size, fn_dim)
+        self.dropout = torch.nn.Dropout(args.encoder_dropout)
+        self.fn = torch.nn.Linear(self.config.hidden_size, args.encoder_fn_dim)
 
     def forward(self, src_tokens, src_lengths=None, **kwargs):
         output = self.model(src_tokens)[0]

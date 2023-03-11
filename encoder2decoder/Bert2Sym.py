@@ -13,7 +13,7 @@ import os
 
 @dataclass
 class SymphonyModelingConfig(FairseqDataclass):
-    
+    # Note: Add more configs for Encoder
     ratio: int = field(
         default=4, metadata={"help": "note/metadata attribute amount: default (evt, dur, trk, ins)"}
     )
@@ -52,23 +52,41 @@ class Bert2SymphonyNet(FairseqEncoderDecoderModel):
     @staticmethod
     def add_args(parser):
         # WORK IN PROCESS
-        pass
+        # Note: change feature name for encoder and decoder
+        parser.add_argument('--enc-fn-dim', type=int, metavar='N',
+                            help='encoder feed forward layer dimension')
+        parser.add_argument('--enc-dropout', type=float, metavar='D',
+                            help='encoder dropout probability for all fully connected layers')
+        parser.add_argument('--dec-embed-dim', type=int, metavar='N',
+                            help='decoder embedding dimension')
+        parser.add_argument('--dec-num-attention-heads', type=int, metavar='N',
+                            help='decoder num attention heads')
+        parser.add_argument('--dec-num-layers', type=int, metavar='N',
+                            help='decoder num layers')
+        parser.add_argument('--dec-dropout', type=float, metavar='D',
+                            help='decoder dropout probability for all fully connected layers '
+                                 'in the embeddings, encoder, and pooler')
 
     @classmethod
     def build_model(cls, args, task):
         # WORK IN PROCESS
-        encoder = BertEncoder.BertEncoder(args.dropout, args.fn_dim)
+        encoder = BertEncoder.BertEncoder(args)
         decoder = linear_transformer_multi.LinearTransformerMultiHeadDecoder(args, task)
         return Bert2SymphonyNet(encoder, decoder)
     
     def forward(self, src_tokens, src_lengths, prev_output_tokens, **kwargs):
-        # WORK IN PROCESS
-        pass
+        encoder_out = self.encoder(src_tokens, src_lengths)
+        decoder_out = self.decoder(prev_output_tokens, encoder_out)
+        return decoder_out
 
 @register_model_architecture('Bert2SymphonyNet', 'Default')
 def base_architecture(args):
-    args.dropout = getattr(args, 'dropout', 0.5)
-    args.fn_dim = getattr(args, 'fn_dim', 768)
+    args.enc_dropout = getattr(args, 'enc_dropout', 0.5)
+    args.enc_fn_dim = getattr(args, 'enc_fn_dim', 768)
+    args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
+    args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
+    args.dec_num_layers = getattr(args, "dec_num_layers", 12)
+    args.dec_dropout = getattr(args, "dec_dropout", 0.1)
 
 @register_task('midi_generate')
 class MidiGenerateTask(FairseqTask):
@@ -104,20 +122,21 @@ class MidiGenerateTask(FairseqTask):
         split_path = os.path.join(data_path, split)
         # WORK IN PROCESS:
         
-        # 
         src_path = os.path.join(self.args.data, "{}-{}".format("src",split_path))
         tgt_path = os.path.join(self.args.data, "{}-{}".format("tgt",split_path))
 
         src = data_utils.load_indexed_dataset(
-            src_path, self.input_vocab, self.args.dataset_impl
+            src_path,
+            self.input_vocab,      #Source Dictionary
+            self.args.dataset_impl #Default dataset_impl is used: MMAP (binary files)
         )
 
         tgt = data_utils.load_indexed_dataset(
-            tgt_path, self.target_vocab, self.args.dataset_impl
+            tgt_path, 
+            self.target_vocab,     #Target Dictionary
+            self.args.dataset_impl #Default dataset_impl is used: MMAP (binary files)
         )
-        
-        # Note: This is where dataset are tokenized and processes and paired together
-
+                
         # Process text-based dataset
         text_dataset = src
         # Process music dataset
@@ -153,9 +172,9 @@ class MidiGenerateTask(FairseqTask):
             tgt = music_dataset,
             tgt_sizes = music_dataset.sizes,
             tgt_dict = self.target_vocab,
-            shuffle = True
+            shuffle = True,
+            left_pad_source=True
         )
-        # Initialize 
 
     @property
     def source_dictionary(self):
