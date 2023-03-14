@@ -19,7 +19,7 @@ import re
 import os
 
 # Constants 
-DATASET_LOC = "/mnt/d/Projects/VIVY/Data/Ready"
+DATASET_LOC = "/mnt/d/Projects/VIVY/Data/Good"
 DATASET_INDEX = json.load(open(f"{DATASET_LOC}/index.json"))
 DATA_TOK_LOC = "/home/blherre4/VIVY/VIVYNet/data"
 
@@ -155,14 +155,14 @@ def tokenize(item: dict) -> None:
 # Main run thread
 if __name__ == "__main__":
     
-    # # MultiThreading process to port files from the DB to the midis
-    # print("Copying Files Over...")
-    # with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-    #     _ = list(tqdm(executor.map(transfer, DATASET_INDEX), total=len(DATASET_INDEX)))
+    # MultiThreading process to port files from the DB to the midis
+    print("Copying Files Over...")
+    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        _ = list(tqdm(executor.map(transfer, DATASET_INDEX), total=len(DATASET_INDEX)))
     
-    # # Run the MIDI preprocess script
-    # print("Preprocessing MIDIs...")
-    # preprocess_midi_run()
+    # Run the MIDI preprocess script
+    print("Preprocessing MIDIs...")
+    preprocess_midi_run()
     
     # Build map
     print("Building Map...")
