@@ -7,6 +7,7 @@ from miditoolkit.midi.parser import MidiFile
 from miditoolkit.midi.containers import Instrument
 from miditoolkit.midi.containers import Note as mtkNote
 from chorder import Dechorder
+from tqdm import tqdm
 
 import sys, os
 
@@ -15,6 +16,8 @@ from encoding import pit2str, pos2str, bom2str, dur2str, trk2str, ins2str, pit2a
 
 WORKERS = 32
 
+# CONSTANTS
+MAIN_PATH = "/home/blherre4/VIVY/VIVYNet"
 
 def measure_calc_chord(evt_seq):
     assert evt_seq[0][1] == 'BOM', "wrong measure for chord"
@@ -442,28 +445,29 @@ def midi_to_event_seq_str(midi_file_path, readonly=False):
 def mp_worker(file_path):
     try:
         event_seq = midi_to_event_seq_str(file_path)
-        return event_seq
+        return event_seq, file_path
     except (OSError, EOFError, ValueError, KeyError) as e:
         print(file_path)
         traceback.print_exc(limit=0)
         print()
-        return "error"
+        return "error", file_path
 
     except AssertionError as e:
         if str(e) == "No time_signature_changes":
             return "error"
         elif str(e) == "Measure duration error":
             # print("Measure duration error", file_path)
-            return "error"
+            return "error", file_path
         else:
             print("Other Assertion Error", str(e), file_path)
-            return "error"
+            return "error", file_path
 
     except Exception as e:
         print(file_path)
         traceback.print_exc(limit=0)
         print()
-        return "error"
+        return "error", file_path
+
 
 def mp_handler(file_paths):
     start = time.time()
@@ -472,46 +476,66 @@ def mp_handler(file_paths):
     good_counter = 0
 
     event_seq_res = []
+    file_ptr = []
     chord_cnter = Counter()
     print(f'starts processing {len(file_paths)} midis with {WORKERS} processes')
-
+    
     with multiprocessing.Pool(WORKERS) as p:
-        for event_seq in p.imap(mp_worker, file_paths):
-            if isinstance(event_seq, str):
+        for res in list(tqdm(p.imap(mp_worker, file_paths))):
+            if isinstance(res[0], str):
                 broken_counter += 1
-            elif len(event_seq) > 0:
-                event_seq_res.append(event_seq)
+            elif len(res[0]) > 0:
+                event_seq_res.append(res[0])
+                file_ptr.append(res[1])
                 good_counter += 1
             else:
                 broken_counter += 1
 
-    print(
-        f"MIDI data preprocessing takes: {time.time() - start}s, {good_counter} samples collected, {broken_counter} broken.")
+    print(f"MIDI data preprocessing takes: {time.time() - start}s, {good_counter} samples collected, {broken_counter} broken.")
 
     # ----------------------------------------------------------------------------------
     txt_start = time.time()
-    if not os.path.exists('/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/preprocessed'):
-        os.makedirs('/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/preprocessed')
+    if not os.path.exists(f'{MAIN_PATH}/data/tokens/'):
+        os.makedirs(f'{MAIN_PATH}/data/tokens/')
 
-    with open("/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/preprocessed/raw_corpus.txt", "w", encoding="utf-8") as f:
+    with open(f"{MAIN_PATH}/data/tokens/temp.data.y", "w", encoding="utf-8") as f:
         for idx, piece in enumerate(event_seq_res):
+            # print(event_seq_res)
             f.write(' '.join(piece) + '\n')
+    
+    with open(f"{MAIN_PATH}/data/tokens/data_pointer.info", "w", encoding="utf-8") as f:
+        for idx, piece in enumerate(file_ptr):
+            # print(event_seq_res)
+            f.write(piece + "\n")
 
     print("Create txt file takes: ", time.time() - txt_start)
     # ----------------------------------------------------------------------------------
 
+def preprocess_midi_run() -> None:
+    """Main Run Script Method
+    
+    Description:
+        Runs the main processes of this script
+        
+    Information:
+        :return: None
+        :rtype: None
+    """
+    
+    warnings.filterwarnings('ignore')   # Filter out warnings
 
-if __name__ == '__main__':
-
-    warnings.filterwarnings('ignore')
-
-    folder_path = "/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis"
+    # Prep list of file paths for processing
+    folder_path = f"{MAIN_PATH}/data/midis"
     file_paths = []
     for path, directories, files in os.walk(folder_path):
         for file in files:
-            if file.endswith(".mid") or file.endswith(".MID"):
+            if file.endswith(".mid") \
+            or file.endswith(".Mid") \
+            or file.endswith(".MID") \
+            or file.endswith(".midi") \
+            or file.endswith(".Midi") \
+            or file.endswith(".MIDI"):
                 file_path = path + "/" + file
                 file_paths.append(file_path)
-
-    # run multi-processing midi extractor
-    mp_handler(file_paths)
+   
+    mp_handler(file_paths)  # run multi-processing midi extractor
