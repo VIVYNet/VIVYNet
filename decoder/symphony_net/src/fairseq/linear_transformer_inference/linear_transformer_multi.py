@@ -186,42 +186,42 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         #print(task.target_dictionary)
         # for i in range(len(task.target_dictionary)):
         #     print(i, task.target_dictionary[i])
-        self.embed_dim = args.embed_dim
-        self.wEvte = nn.Embedding(args.evt_voc_size, args.embed_dim)
-        self.wTrke = nn.Embedding(args.trk_voc_size, args.embed_dim)
-        self.wDure = nn.Embedding(args.dur_voc_size, args.embed_dim)
+        self.dec_embed_dim = args.dec_embed_dim
+        self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
+        self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
+        self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
         self.max_pos = args.tokens_per_sample
         #self.ratio = args.ratio
         #print("max positions:", self.max_pos)
 
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
-            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.embed_dim) 
-            self.wMpe = nn.Embedding(args.max_mea_pos+1, args.embed_dim)
+            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.dec_embed_dim) 
+            self.wMpe = nn.Embedding(args.max_mea_pos+1, args.dec_embed_dim)
         else:
-            self.wpe = nn.Embedding(self.max_pos+1, args.embed_dim) # max_pos_len = 4096
-        self.drop = nn.Dropout(args.dropout)
-        self.ln_f = nn.LayerNorm(args.embed_dim, eps=1e-6)
+            self.wpe = nn.Embedding(self.max_pos+1, args.dec_embed_dim) # max_pos_len = 4096
+        self.drop = nn.Dropout(args.dec_dropout)
+        self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
         
 
         self.model = RecurrentEncoderBuilder.from_kwargs(
-                n_layers=args.num_layers,
-                n_heads=args.num_attention_heads,
-                query_dimensions=args.embed_dim // args.num_attention_heads,
-                value_dimensions=args.embed_dim // args.num_attention_heads,
-                feed_forward_dimensions=4 * args.embed_dim,
+                n_layers=args.dec_num_layers,
+                n_heads=args.dec_num_attention_heads,
+                query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+                value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+                feed_forward_dimensions=4 * args.dec_embed_dim,
                 activation='gelu',
                 #final_normalization=True,
-                dropout=args.dropout,
+                dropout=args.dec_dropout,
                 attention_type="causal-linear",
                 #feature_map=Favor.factory(n_dims=self.d_model)
             ).get()
 
         self.attn_mask = TriangularCausalMask(self.max_pos)
-        self.proj_evt = nn.Linear(args.embed_dim, args.evt_voc_size, bias=False)
-        self.proj_dur = nn.Linear(args.embed_dim, args.dur_voc_size, bias=False)
-        self.proj_trk = nn.Linear(args.embed_dim, args.trk_voc_size, bias=False)
-        self.proj_ins = nn.Linear(args.embed_dim, args.ins_voc_size, bias=False)
+        self.proj_evt = nn.Linear(args.dec_embed_dim, args.evt_voc_size, bias=False)
+        self.proj_dur = nn.Linear(args.dec_embed_dim, args.dur_voc_size, bias=False)
+        self.proj_trk = nn.Linear(args.dec_embed_dim, args.trk_voc_size, bias=False)
+        self.proj_ins = nn.Linear(args.dec_embed_dim, args.ins_voc_size, bias=False)
 
         self.apply(self._init_weights)
         # set zero embedding for padding symbol
