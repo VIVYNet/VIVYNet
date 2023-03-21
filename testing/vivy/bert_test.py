@@ -204,10 +204,11 @@ class BertCoLATrain(FairseqTask):
                 # Strip the lable
                 label = line.strip()
                 
+                # Process label
+                process = torch.LongTensor([int(label)])
+                
                 # Add to labels
-                labels.append(
-                    torch.LongTensor([self.label_vocab.add_symbol(label)])
-                )
+                labels.append(process)
         
         # Check the alignment of the data
         assert len(sources) == len(labels)
@@ -273,17 +274,34 @@ class ModelCriterion(CrossEntropyCriterion):
         return loss, sample["ntokens"], logging_output
     
     def compute_loss(self, model, net_output, sample, reduce=True):
+        
+        print("\COMPUTE_LOSS-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
+        
+        # Declare a list to store losess
         losses = []
+        
+        # Iterate through all normalized probability
         for idx, lprobs in enumerate(lprobs_tuple):
+            
+            # Change the probability dimension
             lprobs = lprobs.view(-1, lprobs.size(-1))
+            
+            # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
 
+            # Calculate loss
             loss = F.nll_loss(
                 lprobs,
                 target,
                 ignore_index=self.padding_idx,
                 reduction="sum" if reduce else "none",
             )
+            
+            # Append the loss to the loss list
             losses.append(loss)
+            
+        # Return the list of losses
         return losses
