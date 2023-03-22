@@ -1,0 +1,268 @@
+2023-03-21 18:01:02 | INFO | fairseq_cli.train | Namespace(adam_betas='(0.9, 0.98)', adam_eps=1e-06, add_bos_token=False, all_gather_list_size=16384, arch='linear_transformer_multi', batch_size=2, batch_size_valid=2, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='_linear_4096_chord_bpe_hardloss1_PI2', clip_norm=0.0, cpu=True, criterion='multiple_loss', curriculum=0, data='data/model_spec/linear_4096_chord_bpe_hardloss1/bin', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_num_procs=1, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', dropout=0.1, dur_voc_size=36, embed_dim=512, empty_cache_freq=0, end_learning_rate=0.0, evt_voc_size=237, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, future_target=False, gen_subset='test', ins_voc_size=16, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, localsgd_frequency=3, log_format='simple', log_interval=100, lr=[0.0003], lr_scheduler='polynomial_decay', max_epoch=0, max_mea_pos=311, max_rel_pos=86, max_target_positions=None, max_tokens=None, max_tokens_valid=None, max_update=210000, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, min_lr=-1.0, model_parallel_size=1, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=False, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, nprocs_per_node=1, num_attention_heads=16, num_layers=12, num_shards=1, num_workers=1, optimizer='adam', optimizer_overrides='{}', output_dictionary_size=-1, past_target=False, patience=-1, perm_inv=2, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, power=1.0, profile=False, quantization_config_path=None, ratio=4, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt', sample_break_mode='complete_doc', sample_overlap_rate=4, save_dir='ckpt/', save_interval=1, save_interval_updates=0, scoring='bleu', seed=1998, self_target=False, sentence_avg=False, shard_id=0, shorten_data_split_list='', shorten_method='none', skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, stop_time_hours=0, task='symphony_modeling', tensorboard_logdir='logs/linear_4096_chord_bpe_hardloss1_PI2', threshold_loss_scale=None, tokenizer=None, tokens_per_sample=4096, total_num_update=210000, tpu=False, train_subset='train', trk_voc_size=36, update_freq=[64], use_bmuf=False, use_old_adam=False, user_dir='src/fairseq/linear_transformer', valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, warmup_updates=5000, weight_decay=0.01, zero_sharding='none')
+2023-03-21 18:01:02 | INFO | fairseq.tasks.language_modeling | dictionary: 247 types
+2023-03-21 18:01:02 | INFO | fairseq.data.data_utils | loaded 166 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/valid
+2023-03-21 18:01:03 | INFO | fairseq_cli.train | LinearTransformerMultiHeadLM(
+  (decoder): LinearTransformerMultiHeadDecoder(
+    (wEvte): Embedding(237, 512)
+    (wTrke): Embedding(36, 512)
+    (wDure): Embedding(36, 512)
+    (wRpe): Embedding(87, 512)
+    (wMpe): Embedding(312, 512)
+    (drop): Dropout(p=0.1, inplace=False)
+    (ln_f): LayerNorm((512,), eps=1e-06, elementwise_affine=True)
+    (model): TransformerEncoder(
+      (layers): ModuleList(
+        (0): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (1): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (2): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (3): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (4): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (5): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (6): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (7): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (8): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (9): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (10): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (11): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+      )
+      (norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+    )
+    (proj_evt): Linear(in_features=512, out_features=237, bias=False)
+    (proj_dur): Linear(in_features=512, out_features=36, bias=False)
+    (proj_trk): Linear(in_features=512, out_features=36, bias=False)
+    (proj_ins): Linear(in_features=512, out_features=16, bias=False)
+  )
+)
+2023-03-21 18:01:03 | INFO | fairseq_cli.train | task: symphony_modeling (SymphonyModelingTask)
+2023-03-21 18:01:03 | INFO | fairseq_cli.train | model: linear_transformer_multi (LinearTransformerMultiHeadLM)
+2023-03-21 18:01:03 | INFO | fairseq_cli.train | criterion: multiple_loss (MultiplelossCriterion)
+2023-03-21 18:01:03 | INFO | fairseq_cli.train | num. model params: 38359552 (num. trained: 38359552)
+2023-03-21 18:01:03 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_dur.bias
+2023-03-21 18:01:03 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_trk.bias
+2023-03-21 18:01:03 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_ins.bias
+2023-03-21 18:01:03 | INFO | fairseq_cli.train | training on 1 devices (GPUs/TPUs)
+2023-03-21 18:01:03 | INFO | fairseq_cli.train | max tokens per GPU = None and max sentences per GPU = 2
+2023-03-21 18:01:03 | INFO | fairseq.trainer | no existing checkpoint found ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt
+2023-03-21 18:01:03 | INFO | fairseq.trainer | loading train data for epoch 1
+2023-03-21 18:01:03 | INFO | fairseq.data.data_utils | loaded 2847 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/train
+2023-03-21 18:01:03 | INFO | fairseq.trainer | begin training epoch 1
+Traceback (most recent call last):
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/bin/fairseq-train", line 8, in <module>
+    sys.exit(cli_main())
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq_cli/train.py", line 352, in cli_main
+    distributed_utils.call_main(args, main)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/distributed_utils.py", line 301, in call_main
+    main(args, **kwargs)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq_cli/train.py", line 125, in main
+    valid_losses, should_stop = train(args, trainer, task, epoch_itr)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/contextlib.py", line 75, in inner
+    return func(*args, **kwds)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq_cli/train.py", line 208, in train
+    log_output = trainer.train_step(samples)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/contextlib.py", line 75, in inner
+    return func(*args, **kwds)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/trainer.py", line 480, in train_step
+    loss, sample_size_i, logging_output = self.task.train_step(
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/tasks/fairseq_task.py", line 416, in train_step
+    loss, sample_size, logging_output = criterion(model, sample)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/tnguy231/VIVY/VIVYNet/decoder/symphony_net/src/fairseq/linear_transformer/linear_transformer_multi.py", line 54, in forward
+    net_output = model(**sample["net_input"])
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/models/fairseq_model.py", line 481, in forward
+    return self.decoder(src_tokens, **kwargs)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/tnguy231/VIVY/VIVYNet/decoder/symphony_net/src/fairseq/linear_transformer/linear_transformer_multi.py", line 256, in forward
+    features = self.extract_features(x, src_lengths)
+  File "/home/tnguy231/VIVY/VIVYNet/decoder/symphony_net/src/fairseq/linear_transformer/linear_transformer_multi.py", line 271, in extract_features
+    evt_emb = self.wEvte(x[..., 0])
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/sparse.py", line 124, in forward
+    return F.embedding(
+  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/functional.py", line 1852, in embedding
+    return torch.embedding(weight, input, padding_idx, scale_grad_by_freq, sparse)
+IndexError: index out of range in self

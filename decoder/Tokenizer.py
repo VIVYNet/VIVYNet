@@ -14,7 +14,7 @@ from pprint import pprint
 
 class Tokenizer:
     def __init__(self, ratio = 4, merge_cnt= 700, char_cnt= 128, workers= 32):
-        self.main_path = "Decoder/symphony_net/"
+        self.main_path = "decoder/symphony_net/"
         self.ratio = ratio
         self.merge_cnt = merge_cnt
         self.char_cnt = char_cnt
@@ -224,7 +224,8 @@ class Tokenizer:
 
 
 tokenizer = Tokenizer()
-prime, ins_label = tokenizer.encode(
-    "/home/tnguy231/VIVY/VIVYNet/Decoder/symphony_net/data/midis/ty_maerz_format0.mid"
-)
-pprint(prime)
+tokenizer.vocab_generate();
+# prime, ins_label = tokenizer.encode(
+#     "/home/tnguy231/VIVY/VIVYNet/Decoder/symphony_net/data/midis/ty_maerz_format0.mid"
+# )
+# pprint(prime)

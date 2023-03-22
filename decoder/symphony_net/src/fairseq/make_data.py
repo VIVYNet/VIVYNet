@@ -146,10 +146,10 @@ def mp_handler(raw_data, str2int, output_file, ratio, sample_len_max, num_worker
         with open('vocab.sh', 'a') as f:
             f.write(f'MAX_REL_POS={max_rel_pos+5}\n')
             f.write(f'MAX_MEA_POS={maxl*3+5}\n')
-        with open('./Decoder/symphony_net/src/fairseq/mea_cnt_dis.txt', 'w') as f:
+        with open('./decoder/symphony_net/src/fairseq/mea_cnt_dis.txt', 'w') as f:
             for k, v in sorted(mea_cnt_dis.items()):
                 f.write(f'{k*10} {v}\n')
-        with open('./Decoder/symphony_net/src/fairseq/mea_len_dis.txt', 'w') as f:
+        with open('./decoder/symphony_net/src/fairseq/mea_len_dis.txt', 'w') as f:
             for k, v in sorted(mea_len_dis.items()):
                 f.write(f'{k*10} {v}\n')
 

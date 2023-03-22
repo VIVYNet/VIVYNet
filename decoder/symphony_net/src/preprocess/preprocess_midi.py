@@ -490,10 +490,10 @@ def mp_handler(file_paths):
 
     # ----------------------------------------------------------------------------------
     txt_start = time.time()
-    if not os.path.exists('Decoder/symphony_net/data/preprocessed/'):
-        os.makedirs('Decoder/symphony_net/data/preprocessed/')
+    if not os.path.exists('decoder/symphony_net/data/preprocessed/'):
+        os.makedirs('decoder/symphony_net/data/preprocessed/')
 
-    with open("Decoder/symphony_net/data/preprocessed/raw_corpus.txt", "w", encoding="utf-8") as f:
+    with open("decoder/symphony_net/data/preprocessed/raw_corpus.txt", "w", encoding="utf-8") as f:
         for idx, piece in enumerate(event_seq_res):
             f.write(' '.join(piece) + '\n')
 
