@@ -189,7 +189,7 @@ class Tokenizer:
         os.makedirs(output_dir + 'bin/', exist_ok=True)
         train_size = min(int(totpiece*0.99), totpiece-2)
         splits = {'train': raw_data[:train_size], 'valid': raw_data[train_size:-1], 'test': raw_data[-1:]}
-
+        print("ratio: ",RATIO)
 
         voc_to_int.update({x:(PAD if map_meta_to_pad == 1 else BOS) for x in ('RZ', 'TZ', 'YZ')}) 
         for mode in splits:
