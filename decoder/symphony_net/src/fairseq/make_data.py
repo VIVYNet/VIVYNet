@@ -118,7 +118,7 @@ def myshuffle(l):
     return ret
 
     
-def mp_handler(raw_data, str2int, output_file, ratio, sample_len_max, num_workers=WORKERS):
+def mp_handler(main_path, raw_data, str2int, output_file, ratio, sample_len_max, num_workers=WORKERS):
     begin_time = time.time()
 
     merged_sentences = []
@@ -143,7 +143,7 @@ def mp_handler(raw_data, str2int, output_file, ratio, sample_len_max, num_worker
     begin_time = time.time()
 
     if output_file.split('/')[-1] == 'train':
-        with open('vocab.sh', 'a') as f:
+        with open(f'{main_path}/vocab.sh', 'a') as f:
             f.write(f'MAX_REL_POS={max_rel_pos+5}\n')
             f.write(f'MAX_MEA_POS={maxl*3+5}\n')
         with open('./decoder/symphony_net/src/fairseq/mea_cnt_dis.txt', 'w') as f:

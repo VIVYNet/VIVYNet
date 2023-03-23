@@ -178,7 +178,7 @@ class Tokenizer:
         for type in range(RATIO):
             print(len(sub_vocabs[type]), end = ' ')
         print()
-        with open(f'vocab.sh', 'w') as f:
+        with open(f'{self.main_path}/vocab.sh', 'w') as f:
             for type in range(RATIO):
                 f.write(f'SIZE_{type}={len(sub_vocabs[type])}\n')
 
@@ -194,7 +194,7 @@ class Tokenizer:
         voc_to_int.update({x:(PAD if map_meta_to_pad == 1 else BOS) for x in ('RZ', 'TZ', 'YZ')}) 
         for mode in splits:
             print(mode)
-            make_data.mp_handler(splits[mode], voc_to_int, output_dir + f'bin/{mode}', ratio=RATIO, sample_len_max=SAMPLE_LEN_MAX)
+            make_data.mp_handler(self.main_path, splits[mode], voc_to_int, output_dir + f'bin/{mode}', ratio=RATIO, sample_len_max=SAMPLE_LEN_MAX)
     
     def vocab_generate(self):
         self.__preprocess_midi()
