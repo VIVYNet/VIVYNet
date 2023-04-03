@@ -1,4 +1,13 @@
-decoder/checkpoints
+decoder/symphony_net/data
+decoder/symphony_net/ckpt
+decoder/symphony_net/logs
+decoder/symphony_net/src/__pycache__
+decoder/symphony_net/src/fairseq/__pycache__
+decoder/symphony_net/src/fairseq/linear_transformer/__pycache__
+decoder/symphony_net/src/musicBPE
+decoder/symphony_net/src/preprocess/__pycache__
 testing/fairseq/*
 data/sample
-decoder/symphony_net/data/bpe_res
+decoder/symphony_net/linear_4096_chord_bpe_hardloss1_PI2_part0.log
+decoder/symphony_net/src/fairseq/mea_cnt_dis.txt
+decoder/symphony_net/src/fairseq/mea_len_dis.txt
