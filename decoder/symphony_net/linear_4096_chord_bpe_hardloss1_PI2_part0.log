@@ -1,13 +1,13 @@
-2023-03-23 14:04:37 | INFO | fairseq_cli.train | Namespace(adam_betas='(0.9, 0.98)', adam_eps=1e-06, add_bos_token=False, all_gather_list_size=16384, arch='linear_transformer_multi', batch_size=2, batch_size_valid=2, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='_linear_4096_chord_bpe_hardloss1_PI2', clip_norm=0.0, cpu=False, criterion='multiple_loss', curriculum=0, data='data/model_spec/linear_4096_chord_bpe_hardloss1/bin', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_num_procs=1, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', dropout=0.1, dur_voc_size=36, embed_dim=512, empty_cache_freq=0, end_learning_rate=0.0, evt_voc_size=247, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, future_target=False, gen_subset='test', ins_voc_size=17, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, localsgd_frequency=3, log_format='simple', log_interval=100, lr=[0.0003], lr_scheduler='polynomial_decay', max_epoch=0, max_mea_pos=311, max_rel_pos=70, max_target_positions=None, max_tokens=None, max_tokens_valid=None, max_update=210000, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, min_lr=-1.0, model_parallel_size=1, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=False, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, nprocs_per_node=1, num_attention_heads=16, num_layers=12, num_shards=1, num_workers=1, optimizer='adam', optimizer_overrides='{}', output_dictionary_size=-1, past_target=False, patience=-1, perm_inv=2, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, power=1.0, profile=False, quantization_config_path=None, ratio=4, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt', sample_break_mode='complete_doc', sample_overlap_rate=4, save_dir='ckpt/', save_interval=1, save_interval_updates=0, scoring='bleu', seed=1998, self_target=False, sentence_avg=False, shard_id=0, shorten_data_split_list='', shorten_method='none', skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, stop_time_hours=0, task='symphony_modeling', tensorboard_logdir='logs/linear_4096_chord_bpe_hardloss1_PI2', threshold_loss_scale=None, tokenizer=None, tokens_per_sample=4096, total_num_update=210000, tpu=False, train_subset='train', trk_voc_size=36, update_freq=[64], use_bmuf=False, use_old_adam=False, user_dir='src/fairseq/linear_transformer', valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, warmup_updates=5000, weight_decay=0.01, zero_sharding='none')
-2023-03-23 14:04:37 | INFO | fairseq.tasks.language_modeling | dictionary: 247 types
-2023-03-23 14:04:37 | INFO | fairseq.data.data_utils | loaded 166 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/valid
-2023-03-23 14:04:38 | INFO | fairseq_cli.train | LinearTransformerMultiHeadLM(
+2023-04-02 18:35:01 | INFO | fairseq_cli.train | Namespace(adam_betas='(0.9, 0.98)', adam_eps=1e-06, add_bos_token=False, all_gather_list_size=16384, arch='linear_transformer_multi', batch_size=2, batch_size_valid=2, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='_linear_4096_chord_bpe_hardloss1_PI2', clip_norm=0.0, cpu=False, criterion='multiple_loss', curriculum=0, data='data/model_spec/linear_4096_chord_bpe_hardloss1/bin', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_num_procs=1, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', dropout=0.1, dur_voc_size=36, embed_dim=512, empty_cache_freq=0, end_learning_rate=0.0, evt_voc_size=243, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, future_target=False, gen_subset='test', ins_voc_size=17, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, localsgd_frequency=3, log_format='simple', log_interval=100, lr=[0.0003], lr_scheduler='polynomial_decay', max_epoch=0, max_mea_pos=500, max_rel_pos=86, max_target_positions=None, max_tokens=None, max_tokens_valid=None, max_update=210000, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, min_lr=-1.0, model_parallel_size=1, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=False, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, nprocs_per_node=1, num_attention_heads=16, num_layers=12, num_shards=1, num_workers=1, optimizer='adam', optimizer_overrides='{}', output_dictionary_size=-1, past_target=False, patience=-1, perm_inv=2, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, power=1.0, profile=False, quantization_config_path=None, ratio=4, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt', sample_break_mode='complete_doc', sample_overlap_rate=4, save_dir='ckpt/', save_interval=1, save_interval_updates=0, scoring='bleu', seed=1998, self_target=False, sentence_avg=False, shard_id=0, shorten_data_split_list='', shorten_method='none', skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, stop_time_hours=0, task='symphony_modeling', tensorboard_logdir='logs/linear_4096_chord_bpe_hardloss1_PI2', threshold_loss_scale=None, tokenizer=None, tokens_per_sample=4096, total_num_update=210000, tpu=False, train_subset='train', trk_voc_size=36, update_freq=[64], use_bmuf=False, use_old_adam=False, user_dir='src/fairseq/linear_transformer', valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, warmup_updates=5000, weight_decay=0.01, zero_sharding='none')
+2023-04-02 18:35:01 | INFO | fairseq.tasks.language_modeling | dictionary: 243 types
+2023-04-02 18:35:01 | INFO | fairseq.data.data_utils | loaded 470 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/valid
+2023-04-02 18:35:01 | INFO | fairseq_cli.train | LinearTransformerMultiHeadLM(
   (decoder): LinearTransformerMultiHeadDecoder(
-    (wEvte): Embedding(247, 512)
+    (wEvte): Embedding(243, 512)
     (wTrke): Embedding(36, 512)
     (wDure): Embedding(36, 512)
-    (wRpe): Embedding(71, 512)
-    (wMpe): Embedding(312, 512)
+    (wRpe): Embedding(87, 512)
+    (wMpe): Embedding(501, 512)
     (drop): Dropout(p=0.1, inplace=False)
     (ln_f): LayerNorm((512,), eps=1e-06, elementwise_affine=True)
     (model): TransformerEncoder(
@@ -207,114 +207,812 @@
       )
       (norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
     )
-    (proj_evt): Linear(in_features=512, out_features=247, bias=False)
+    (proj_evt): Linear(in_features=512, out_features=243, bias=False)
     (proj_dur): Linear(in_features=512, out_features=36, bias=False)
     (proj_trk): Linear(in_features=512, out_features=36, bias=False)
     (proj_ins): Linear(in_features=512, out_features=17, bias=False)
   )
 )
-2023-03-23 14:04:38 | INFO | fairseq_cli.train | task: symphony_modeling (SymphonyModelingTask)
-2023-03-23 14:04:38 | INFO | fairseq_cli.train | model: linear_transformer_multi (LinearTransformerMultiHeadLM)
-2023-03-23 14:04:38 | INFO | fairseq_cli.train | criterion: multiple_loss (MultiplelossCriterion)
-2023-03-23 14:04:38 | INFO | fairseq_cli.train | num. model params: 38362112 (num. trained: 38362112)
-2023-03-23 14:04:40 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_dur.bias
-2023-03-23 14:04:40 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_trk.bias
-2023-03-23 14:04:40 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_ins.bias
-2023-03-23 14:04:40 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
-2023-03-23 14:04:40 | INFO | fairseq.utils | rank   0: capabilities =  8.6  ; total memory = 4.000 GB ; name = NVIDIA GeForce RTX 3050 Ti Laptop GPU   
-2023-03-23 14:04:40 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
-2023-03-23 14:04:40 | INFO | fairseq_cli.train | training on 1 devices (GPUs/TPUs)
-2023-03-23 14:04:40 | INFO | fairseq_cli.train | max tokens per GPU = None and max sentences per GPU = 2
-2023-03-23 14:04:40 | INFO | fairseq.trainer | no existing checkpoint found ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt
-2023-03-23 14:04:40 | INFO | fairseq.trainer | loading train data for epoch 1
-2023-03-23 14:04:40 | INFO | fairseq.data.data_utils | loaded 2847 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/train
-2023-03-23 14:04:40 | INFO | fairseq.trainer | NOTE: your device may support faster training with --fp16
-2023-03-23 14:04:40 | INFO | fairseq.trainer | begin training epoch 1
-Input:  tensor([[[  2,   2,   2,   2,   0,   0],
-         [193,   1,   1,   1,   0,   1],
-         [127,   1,   1,   1,   0,   2],
-         ...,
-         [  1,   1,   1,   1,   1,   1],
-         [  1,   1,   1,   1,   1,   1],
-         [  1,   1,   1,   1,   1,   1]],
+2023-04-02 18:35:01 | INFO | fairseq_cli.train | task: symphony_modeling (SymphonyModelingTask)
+2023-04-02 18:35:01 | INFO | fairseq_cli.train | model: linear_transformer_multi (LinearTransformerMultiHeadLM)
+2023-04-02 18:35:01 | INFO | fairseq_cli.train | criterion: multiple_loss (MultiplelossCriterion)
+2023-04-02 18:35:01 | INFO | fairseq_cli.train | num. model params: 38462976 (num. trained: 38462976)
+2023-04-02 18:35:03 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_dur.bias
+2023-04-02 18:35:03 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_trk.bias
+2023-04-02 18:35:03 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_ins.bias
+2023-04-02 18:35:03 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-04-02 18:35:03 | INFO | fairseq.utils | rank   0: capabilities =  8.6  ; total memory = 4.000 GB ; name = NVIDIA GeForce RTX 3050 Ti Laptop GPU   
+2023-04-02 18:35:03 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-04-02 18:35:03 | INFO | fairseq_cli.train | training on 1 devices (GPUs/TPUs)
+2023-04-02 18:35:03 | INFO | fairseq_cli.train | max tokens per GPU = None and max sentences per GPU = 2
+2023-04-02 18:35:03 | INFO | fairseq.trainer | no existing checkpoint found ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt
+2023-04-02 18:35:03 | INFO | fairseq.trainer | loading train data for epoch 1
+2023-04-02 18:35:03 | INFO | fairseq.data.data_utils | loaded 2306 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/train
+2023-04-02 18:35:03 | INFO | fairseq.trainer | NOTE: your device may support faster training with --fp16
+2023-04-02 18:35:03 | INFO | fairseq.trainer | begin training epoch 1
+2023-04-02 18:35:05 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:05 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 1            |        cudaMalloc retries: 1         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    5755 MB |    2210 MB |
+|       from large pool |    3484 MB |    3484 MB |    5628 MB |    2144 MB |
+|       from small pool |      61 MB |      62 MB |     127 MB |      66 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    5755 MB |    2210 MB |
+|       from large pool |    3484 MB |    3484 MB |    5628 MB |    2144 MB |
+|       from small pool |      61 MB |      62 MB |     127 MB |      66 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3556 MB |       0 B  |
+|       from large pool |    3492 MB |    3492 MB |    3492 MB |       0 B  |
+|       from small pool |      64 MB |      64 MB |      64 MB |       0 B  |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10320 KB |   63888 KB |     961 MB |     951 MB |
+|       from large pool |    8192 KB |   61440 KB |     860 MB |     852 MB |
+|       from small pool |    2128 KB |    2512 KB |     101 MB |      99 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     444    |     445    |     633    |     189    |
+|       from large pool |     196    |     196    |     303    |     107    |
+|       from small pool |     248    |     249    |     330    |      82    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     444    |     445    |     633    |     189    |
+|       from large pool |     196    |     196    |     303    |     107    |
+|       from small pool |     248    |     249    |     330    |      82    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     168    |       0    |
+|       from large pool |     136    |     136    |     136    |       0    |
+|       from small pool |      32    |      32    |      32    |       0    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |       7    |       9    |     131    |     124    |
+|       from large pool |       1    |       3    |      37    |      36    |
+|       from small pool |       6    |       7    |      94    |      88    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
 
-        [[  2,   2,   2,   2,   0,   0],
-         [193,   1,   1,   1,   0,   1],
-         [169,   1,   1,   1,   0,   2],
-         ...,
-         [206,   1,   1,   1,   6, 240],
-         [ 50,   5,  10,  12,   7, 240],
-         [246,   1,   1,   1,   1, 240]]], device='cuda:0')
-Input torch.max:  torch.return_types.max(
-values=tensor([[  2,   2,   2,   2,   0,   0],
-        [193,   1,   1,   1,   0,   1],
-        [169,   1,   1,   1,   0,   2],
-        ...,
-        [206,   1,   1,   1,   6, 240],
-        [ 50,   5,  10,  12,   7, 240],
-        [246,   1,   1,   1,   1, 240]], device='cuda:0'),
-indices=tensor([[0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0, 0],
-        ...,
-        [1, 0, 0, 0, 1, 1],
-        [1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 1]], device='cuda:0'))
-Input Size:  torch.Size([2, 4096, 6])
-Input a:  tensor([[  2, 193, 127,  ...,   1,   1,   1],
-        [  2, 193, 169,  ..., 206,  50, 246]], device='cuda:0')
-Input a size:  torch.Size([2, 4096])
-Traceback (most recent call last):
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/bin/fairseq-train", line 8, in <module>
-    sys.exit(cli_main())
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq_cli/train.py", line 352, in cli_main
-    distributed_utils.call_main(args, main)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/distributed_utils.py", line 301, in call_main
-    main(args, **kwargs)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq_cli/train.py", line 125, in main
-    valid_losses, should_stop = train(args, trainer, task, epoch_itr)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/contextlib.py", line 75, in inner
-    return func(*args, **kwds)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq_cli/train.py", line 208, in train
-    log_output = trainer.train_step(samples)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/contextlib.py", line 75, in inner
-    return func(*args, **kwds)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/trainer.py", line 480, in train_step
-    loss, sample_size_i, logging_output = self.task.train_step(
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/tasks/fairseq_task.py", line 416, in train_step
-    loss, sample_size, logging_output = criterion(model, sample)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
-    result = self.forward(*input, **kwargs)
-  File "/home/tnguy231/VIVY/VIVYNet/decoder/symphony_net/src/fairseq/linear_transformer/linear_transformer_multi.py", line 54, in forward
-    net_output = model(**sample["net_input"])
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
-    result = self.forward(*input, **kwargs)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fairseq/models/fairseq_model.py", line 481, in forward
-    return self.decoder(src_tokens, **kwargs)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
-    result = self.forward(*input, **kwargs)
-  File "/home/tnguy231/VIVY/VIVYNet/decoder/symphony_net/src/fairseq/linear_transformer/linear_transformer_multi.py", line 256, in forward
-    features = self.extract_features(x, src_lengths)
-  File "/home/tnguy231/VIVY/VIVYNet/decoder/symphony_net/src/fairseq/linear_transformer/linear_transformer_multi.py", line 316, in extract_features
-    outputs = self.model(x, self.attn_mask, len_mask)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
-    result = self.forward(*input, **kwargs)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fast_transformers/transformers.py", line 138, in forward
-    x = layer(x, attn_mask=attn_mask, length_mask=length_mask)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
-    result = self.forward(*input, **kwargs)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fast_transformers/transformers.py", line 77, in forward
-    x = x + self.dropout(self.attention(
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
-    result = self.forward(*input, **kwargs)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fast_transformers/attention/attention_layer.py", line 103, in forward
-    new_values = self.inner_attention(
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
-    result = self.forward(*input, **kwargs)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fast_transformers/attention/causal_linear_attention.py", line 98, in forward
-    V = causal_linear(
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fast_transformers/attention/causal_linear_attention.py", line 23, in causal_linear
-    V_new = causal_dot_product(Q, K, V)
-  File "/home/tnguy231/miniconda3/envs/vivyenv38/lib/python3.8/site-packages/fast_transformers/causal_product/__init__.py", line 44, in forward
-    CausalDotProduct.dot[device.type](
-TypeError: 'NoneType' object is not callable
+2023-04-02 18:35:05 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:05 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:05 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 2            |        cudaMalloc retries: 2         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |   11365 MB |    7819 MB |
+|       from large pool |    3484 MB |    3484 MB |   11160 MB |    7676 MB |
+|       from small pool |      61 MB |      62 MB |     205 MB |     143 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |   11365 MB |    7819 MB |
+|       from large pool |    3484 MB |    3484 MB |   11160 MB |    7676 MB |
+|       from small pool |      61 MB |      62 MB |     205 MB |     143 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3556 MB |       0 B  |
+|       from large pool |    3492 MB |    3492 MB |    3492 MB |       0 B  |
+|       from small pool |      64 MB |      64 MB |      64 MB |       0 B  |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10320 KB |  108880 KB |    2412 MB |    2402 MB |
+|       from large pool |    8192 KB |  106496 KB |    2228 MB |    2220 MB |
+|       from small pool |    2128 KB |    2512 KB |     184 MB |     182 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     444    |     445    |    1061    |     617    |
+|       from large pool |     196    |     196    |     582    |     386    |
+|       from small pool |     248    |     249    |     479    |     231    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     444    |     445    |    1061    |     617    |
+|       from large pool |     196    |     196    |     582    |     386    |
+|       from small pool |     248    |     249    |     479    |     231    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     168    |       0    |
+|       from large pool |     136    |     136    |     136    |       0    |
+|       from small pool |      32    |      32    |      32    |       0    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |       7    |      11    |     281    |     274    |
+|       from large pool |       1    |       5    |      93    |      92    |
+|       from small pool |       6    |       7    |     188    |     182    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:35:05 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:05 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-04-02 18:35:17 | INFO | valid | epoch 001 | valid on 'valid' subset | loss 4.222 | evt_loss 8.371 | dur_loss 3.371 | trk_loss 3.034 | ins_loss 2.114 | ppl 18.66 | evt_ppl 330.96 | dur_ppl 10.35 | trk_ppl 8.19 | ins_ppl 4.33 | wps 29518.8 | wpb 7933.2 | bsz 2 | num_updates 0
+2023-04-02 18:35:17 | INFO | fairseq_cli.train | begin save checkpoint
+2023-04-02 18:35:18 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint1_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 1 @ 0 updates, score 4.222) (writing took 0.40031377600098494 seconds)
+2023-04-02 18:35:18 | INFO | fairseq_cli.train | end of epoch 1 (average epoch stats below)
+2023-04-02 18:35:18 | INFO | train | epoch 001 | lr 0 | train_wall 13 | wall 15
+2023-04-02 18:35:18 | INFO | fairseq.trainer | begin training epoch 2
+2023-04-02 18:35:18 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:18 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 3            |        cudaMalloc retries: 3         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |  286790 MB |  283244 MB |
+|       from large pool |    3484 MB |    3484 MB |  281914 MB |  278430 MB |
+|       from small pool |      61 MB |      62 MB |    4875 MB |    4813 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |  286790 MB |  283244 MB |
+|       from large pool |    3484 MB |    3484 MB |  281914 MB |  278430 MB |
+|       from small pool |      61 MB |      62 MB |    4875 MB |    4813 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3556 MB |       0 B  |
+|       from large pool |    3492 MB |    3492 MB |    3492 MB |       0 B  |
+|       from small pool |      64 MB |      64 MB |      64 MB |       0 B  |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |  190800 KB |   13574 MB |   13563 MB |
+|       from large pool |    8192 KB |  188416 KB |    8110 MB |    8102 MB |
+|       from small pool |    2123 KB |    3311 KB |    5463 MB |    5461 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     455    |   27729    |   27275    |
+|       from large pool |     196    |     196    |   14519    |   14323    |
+|       from small pool |     258    |     259    |   13210    |   12952    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     455    |   27729    |   27275    |
+|       from large pool |     196    |     196    |   14519    |   14323    |
+|       from small pool |     258    |     259    |   13210    |   12952    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     168    |       0    |
+|       from large pool |     136    |     136    |     136    |       0    |
+|       from small pool |      32    |      32    |      32    |       0    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      10    |      14    |   10068    |   10058    |
+|       from large pool |       1    |       6    |     616    |     615    |
+|       from small pool |       9    |      13    |    9452    |    9443    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:35:18 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:19 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:19 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 4            |        cudaMalloc retries: 4         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |  292399 MB |  288853 MB |
+|       from large pool |    3484 MB |    3484 MB |  287446 MB |  283962 MB |
+|       from small pool |      61 MB |      62 MB |    4953 MB |    4891 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |  292399 MB |  288853 MB |
+|       from large pool |    3484 MB |    3484 MB |  287446 MB |  283962 MB |
+|       from small pool |      61 MB |      62 MB |    4953 MB |    4891 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3556 MB |       0 B  |
+|       from large pool |    3492 MB |    3492 MB |    3492 MB |       0 B  |
+|       from small pool |      64 MB |      64 MB |      64 MB |       0 B  |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |  190800 KB |   15013 MB |   15003 MB |
+|       from large pool |    8192 KB |  188416 KB |    9466 MB |    9458 MB |
+|       from small pool |    2123 KB |    3311 KB |    5547 MB |    5545 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     455    |   28157    |   27703    |
+|       from large pool |     196    |     196    |   14798    |   14602    |
+|       from small pool |     258    |     259    |   13359    |   13101    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     455    |   28157    |   27703    |
+|       from large pool |     196    |     196    |   14798    |   14602    |
+|       from small pool |     258    |     259    |   13359    |   13101    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     168    |       0    |
+|       from large pool |     136    |     136    |     136    |       0    |
+|       from small pool |      32    |      32    |      32    |       0    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      10    |      15    |   10216    |   10206    |
+|       from large pool |       1    |       6    |     666    |     665    |
+|       from small pool |       9    |      13    |    9550    |    9541    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:35:19 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:19 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-04-02 18:35:31 | INFO | valid | epoch 002 | valid on 'valid' subset | loss 4.222 | evt_loss 8.371 | dur_loss 3.371 | trk_loss 3.034 | ins_loss 2.114 | ppl 18.66 | evt_ppl 330.96 | dur_ppl 10.35 | trk_ppl 8.19 | ins_ppl 4.33 | wps 30714.3 | wpb 7933.2 | bsz 2 | num_updates 0 | best_loss 4.222
+2023-04-02 18:35:31 | INFO | fairseq_cli.train | begin save checkpoint
+2023-04-02 18:35:31 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint2_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 2 @ 0 updates, score 4.222) (writing took 0.43891136399906827 seconds)
+2023-04-02 18:35:31 | INFO | fairseq_cli.train | end of epoch 2 (average epoch stats below)
+2023-04-02 18:35:31 | INFO | train | epoch 002 | lr 0 | train_wall 12 | wall 28
+2023-04-02 18:35:31 | INFO | fairseq.trainer | begin training epoch 3
+2023-04-02 18:35:32 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 40.00 MiB (GPU 0; 4.00 GiB total capacity; 2.74 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:32 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 5            |        cudaMalloc retries: 5         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    2761 MB |    3546 MB |  566619 MB |  563857 MB |
+|       from large pool |    2701 MB |    3484 MB |  556985 MB |  554283 MB |
+|       from small pool |      59 MB |      62 MB |    9633 MB |    9574 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    2761 MB |    3546 MB |  566619 MB |  563857 MB |
+|       from large pool |    2701 MB |    3484 MB |  556985 MB |  554283 MB |
+|       from small pool |      59 MB |      62 MB |    9633 MB |    9574 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3554 MB |    3556 MB |    3556 MB |    2048 KB |
+|       from large pool |    3492 MB |    3492 MB |    3492 MB |       0 KB |
+|       from small pool |      62 MB |      64 MB |      64 MB |    2048 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |  745956 KB |     970 MB |   27985 MB |   27257 MB |
+|       from large pool |  743572 KB |     968 MB |   17147 MB |   16421 MB |
+|       from small pool |    2384 KB |       3 MB |   10838 MB |   10835 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     515    |     517    |   54937    |   54422    |
+|       from large pool |     241    |     242    |   28811    |   28570    |
+|       from small pool |     274    |     275    |   26126    |   25852    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     515    |     517    |   54937    |   54422    |
+|       from large pool |     241    |     242    |   28811    |   28570    |
+|       from small pool |     274    |     275    |   26126    |   25852    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     167    |     168    |     168    |       1    |
+|       from large pool |     136    |     136    |     136    |       0    |
+|       from small pool |      31    |      32    |      32    |       1    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |     141    |     142    |   20120    |   19979    |
+|       from large pool |     127    |     128    |    1396    |    1269    |
+|       from small pool |      14    |      15    |   18724    |   18710    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:35:32 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:32 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:32 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 6            |        cudaMalloc retries: 6         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |  572228 MB |  568682 MB |
+|       from large pool |    3484 MB |    3484 MB |  562517 MB |  559033 MB |
+|       from small pool |      61 MB |      62 MB |    9710 MB |    9649 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |  572228 MB |  568682 MB |
+|       from large pool |    3484 MB |    3484 MB |  562517 MB |  559033 MB |
+|       from small pool |      61 MB |      62 MB |    9710 MB |    9649 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3622 MB |   67584 KB |
+|       from large pool |    3492 MB |    3492 MB |    3556 MB |   65536 KB |
+|       from small pool |      64 MB |      64 MB |      66 MB |    2048 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   29656 MB |   29646 MB |
+|       from large pool |    8192 KB |    1002 MB |   18736 MB |   18728 MB |
+|       from small pool |    2123 KB |       3 MB |   10920 MB |   10918 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |   55365    |   54911    |
+|       from large pool |     196    |     242    |   29090    |   28894    |
+|       from small pool |     258    |     275    |   26275    |   26017    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |   55365    |   54911    |
+|       from large pool |     196    |     242    |   29090    |   28894    |
+|       from small pool |     258    |     275    |   26275    |   26017    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     170    |       2    |
+|       from large pool |     136    |     136    |     137    |       1    |
+|       from small pool |      32    |      32    |      33    |       1    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      12    |     143    |   20275    |   20263    |
+|       from large pool |       1    |     129    |    1450    |    1449    |
+|       from small pool |      11    |      15    |   18825    |   18814    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:35:32 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:32 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-04-02 18:35:44 | INFO | valid | epoch 003 | valid on 'valid' subset | loss 4.222 | evt_loss 8.371 | dur_loss 3.371 | trk_loss 3.034 | ins_loss 2.114 | ppl 18.66 | evt_ppl 330.96 | dur_ppl 10.35 | trk_ppl 8.19 | ins_ppl 4.33 | wps 30463.8 | wpb 7933.2 | bsz 2 | num_updates 0 | best_loss 4.222
+2023-04-02 18:35:44 | INFO | fairseq_cli.train | begin save checkpoint
+2023-04-02 18:35:45 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint3_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 3 @ 0 updates, score 4.222) (writing took 0.6801259429994388 seconds)
+2023-04-02 18:35:45 | INFO | fairseq_cli.train | end of epoch 3 (average epoch stats below)
+2023-04-02 18:35:45 | INFO | train | epoch 003 | lr 0 | train_wall 13 | wall 42
+2023-04-02 18:35:45 | INFO | fairseq.trainer | begin training epoch 4
+2023-04-02 18:35:46 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:46 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 7            |        cudaMalloc retries: 7         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |     827 GB |     824 GB |
+|       from large pool |    3484 MB |    3484 MB |     813 GB |     810 GB |
+|       from small pool |      61 MB |      62 MB |      14 GB |      13 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |     827 GB |     824 GB |
+|       from large pool |    3484 MB |    3484 MB |     813 GB |     810 GB |
+|       from small pool |      61 MB |      62 MB |      14 GB |      13 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3622 MB |   67584 KB |
+|       from large pool |    3492 MB |    3492 MB |    3556 MB |   65536 KB |
+|       from small pool |      64 MB |      64 MB |      66 MB |    2048 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   40817 MB |   40807 MB |
+|       from large pool |    8192 KB |    1002 MB |   24618 MB |   24610 MB |
+|       from small pool |    2123 KB |       3 MB |   16199 MB |   16197 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |   82033    |   81579    |
+|       from large pool |     196    |     242    |   43027    |   42831    |
+|       from small pool |     258    |     275    |   39006    |   38748    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |   82033    |   81579    |
+|       from large pool |     196    |     242    |   43027    |   42831    |
+|       from small pool |     258    |     275    |   39006    |   38748    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     170    |       2    |
+|       from large pool |     136    |     136    |     137    |       1    |
+|       from small pool |      32    |      32    |      33    |       1    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      10    |     143    |   30023    |   30013    |
+|       from large pool |       1    |     129    |    1973    |    1972    |
+|       from small pool |       9    |      15    |   28050    |   28041    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:35:46 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:46 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:35:46 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 8            |        cudaMalloc retries: 8         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |     833 GB |     829 GB |
+|       from large pool |    3484 MB |    3484 MB |     819 GB |     815 GB |
+|       from small pool |      61 MB |      62 MB |      14 GB |      14 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |     833 GB |     829 GB |
+|       from large pool |    3484 MB |    3484 MB |     819 GB |     815 GB |
+|       from small pool |      61 MB |      62 MB |      14 GB |      14 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3622 MB |   67584 KB |
+|       from large pool |    3492 MB |    3492 MB |    3556 MB |   65536 KB |
+|       from small pool |      64 MB |      64 MB |      66 MB |    2048 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   42257 MB |   42246 MB |
+|       from large pool |    8192 KB |    1002 MB |   25974 MB |   25966 MB |
+|       from small pool |    2123 KB |       3 MB |   16282 MB |   16280 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |   82461    |   82007    |
+|       from large pool |     196    |     242    |   43306    |   43110    |
+|       from small pool |     258    |     275    |   39155    |   38897    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |   82461    |   82007    |
+|       from large pool |     196    |     242    |   43306    |   43110    |
+|       from small pool |     258    |     275    |   39155    |   38897    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     170    |       2    |
+|       from large pool |     136    |     136    |     137    |       1    |
+|       from small pool |      32    |      32    |      33    |       1    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      10    |     143    |   30167    |   30157    |
+|       from large pool |       1    |     129    |    2023    |    2022    |
+|       from small pool |       9    |      15    |   28144    |   28135    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:35:46 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:35:46 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-04-02 18:35:59 | INFO | valid | epoch 004 | valid on 'valid' subset | loss 4.222 | evt_loss 8.371 | dur_loss 3.371 | trk_loss 3.034 | ins_loss 2.114 | ppl 18.66 | evt_ppl 330.96 | dur_ppl 10.35 | trk_ppl 8.19 | ins_ppl 4.33 | wps 29121.4 | wpb 7933.2 | bsz 2 | num_updates 0 | best_loss 4.222
+2023-04-02 18:35:59 | INFO | fairseq_cli.train | begin save checkpoint
+2023-04-02 18:35:59 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint4_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 4 @ 0 updates, score 4.222) (writing took 0.8012536019996332 seconds)
+2023-04-02 18:35:59 | INFO | fairseq_cli.train | end of epoch 4 (average epoch stats below)
+2023-04-02 18:35:59 | INFO | train | epoch 004 | lr 0 | train_wall 13 | wall 57
+2023-04-02 18:35:59 | INFO | fairseq.trainer | begin training epoch 5
+2023-04-02 18:36:01 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:01 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 9            |        cudaMalloc retries: 9         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    1102 GB |    1098 GB |
+|       from large pool |    3484 MB |    3484 MB |    1083 GB |    1080 GB |
+|       from small pool |      61 MB |      62 MB |      18 GB |      18 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    1102 GB |    1098 GB |
+|       from large pool |    3484 MB |    3484 MB |    1083 GB |    1080 GB |
+|       from small pool |      61 MB |      62 MB |      18 GB |      18 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3622 MB |   67584 KB |
+|       from large pool |    3492 MB |    3492 MB |    3556 MB |   65536 KB |
+|       from small pool |      64 MB |      64 MB |      66 MB |    2048 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   53418 MB |   53408 MB |
+|       from large pool |    8192 KB |    1002 MB |   31856 MB |   31848 MB |
+|       from small pool |    2123 KB |       3 MB |   21561 MB |   21559 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |  109129    |  108675    |
+|       from large pool |     196    |     242    |   57243    |   57047    |
+|       from small pool |     258    |     275    |   51886    |   51628    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |  109129    |  108675    |
+|       from large pool |     196    |     242    |   57243    |   57047    |
+|       from small pool |     258    |     275    |   51886    |   51628    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     170    |       2    |
+|       from large pool |     136    |     136    |     137    |       1    |
+|       from small pool |      32    |      32    |      33    |       1    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |       9    |     143    |   39913    |   39904    |
+|       from large pool |       1    |     129    |    2546    |    2545    |
+|       from small pool |       8    |      15    |   37367    |   37359    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:01 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:01 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 42.00 MiB (GPU 0; 4.00 GiB total capacity; 2.88 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:01 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 10           |        cudaMalloc retries: 10        |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    2908 MB |    3546 MB |    1106 GB |    1103 GB |
+|       from large pool |    2848 MB |    3484 MB |    1088 GB |    1085 GB |
+|       from small pool |      60 MB |      62 MB |      18 GB |      18 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    2908 MB |    3546 MB |    1106 GB |    1103 GB |
+|       from large pool |    2848 MB |    3484 MB |    1088 GB |    1085 GB |
+|       from small pool |      60 MB |      62 MB |      18 GB |      18 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3554 MB |    3556 MB |    3622 MB |   69632 KB |
+|       from large pool |    3492 MB |    3492 MB |    3556 MB |   65536 KB |
+|       from small pool |      62 MB |      64 MB |      66 MB |    4096 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |  595561 KB |    1003 MB |   56524 MB |   55942 MB |
+|       from large pool |  593668 KB |    1002 MB |   34866 MB |   34287 MB |
+|       from small pool |    1893 KB |       3 MB |   21657 MB |   21655 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     515    |     517    |  109669    |  109154    |
+|       from large pool |     241    |     242    |   57598    |   57357    |
+|       from small pool |     274    |     275    |   52071    |   51797    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     515    |     517    |  109669    |  109154    |
+|       from large pool |     241    |     242    |   57598    |   57357    |
+|       from small pool |     274    |     275    |   52071    |   51797    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     167    |     168    |     170    |       3    |
+|       from large pool |     136    |     136    |     137    |       1    |
+|       from small pool |      31    |      32    |      33    |       2    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |     134    |     143    |   40268    |   40134    |
+|       from large pool |     120    |     129    |    2803    |    2683    |
+|       from small pool |      14    |      15    |   37465    |   37451    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:01 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:01 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-04-02 18:36:13 | INFO | valid | epoch 005 | valid on 'valid' subset | loss 4.222 | evt_loss 8.371 | dur_loss 3.371 | trk_loss 3.034 | ins_loss 2.114 | ppl 18.66 | evt_ppl 330.96 | dur_ppl 10.35 | trk_ppl 8.19 | ins_ppl 4.33 | wps 30003.1 | wpb 7933.2 | bsz 2 | num_updates 0 | best_loss 4.222
+2023-04-02 18:36:13 | INFO | fairseq_cli.train | begin save checkpoint
+2023-04-02 18:36:14 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint5_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 5 @ 0 updates, score 4.222) (writing took 0.565240783000263 seconds)
+2023-04-02 18:36:14 | INFO | fairseq_cli.train | end of epoch 5 (average epoch stats below)
+2023-04-02 18:36:14 | INFO | train | epoch 005 | lr 0 | train_wall 13 | wall 71
+2023-04-02 18:36:14 | INFO | fairseq.trainer | begin training epoch 6
+2023-04-02 18:36:15 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:15 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 11           |        cudaMalloc retries: 11        |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    1375 GB |    1372 GB |
+|       from large pool |    3484 MB |    3484 MB |    1352 GB |    1349 GB |
+|       from small pool |      61 MB |      62 MB |      23 GB |      23 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    1375 GB |    1372 GB |
+|       from large pool |    3484 MB |    3484 MB |    1352 GB |    1349 GB |
+|       from small pool |      61 MB |      62 MB |      23 GB |      23 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3688 MB |  135168 KB |
+|       from large pool |    3492 MB |    3492 MB |    3620 MB |  131072 KB |
+|       from small pool |      64 MB |      64 MB |      68 MB |    4096 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   67960 MB |   67950 MB |
+|       from large pool |    8192 KB |    1002 MB |   41024 MB |   41016 MB |
+|       from small pool |    2123 KB |       3 MB |   26935 MB |   26933 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |  136337    |  135883    |
+|       from large pool |     196    |     242    |   71535    |   71339    |
+|       from small pool |     258    |     275    |   64802    |   64544    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |  136337    |  135883    |
+|       from large pool |     196    |     242    |   71535    |   71339    |
+|       from small pool |     258    |     275    |   64802    |   64544    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     172    |       4    |
+|       from large pool |     136    |     136    |     138    |       2    |
+|       from small pool |      32    |      32    |      34    |       2    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      12    |     143    |   50043    |   50031    |
+|       from large pool |       1    |     129    |    3337    |    3336    |
+|       from small pool |      11    |      15    |   46706    |   46695    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:15 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:15 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:15 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 12           |        cudaMalloc retries: 12        |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    1381 GB |    1377 GB |
+|       from large pool |    3484 MB |    3484 MB |    1357 GB |    1354 GB |
+|       from small pool |      61 MB |      62 MB |      23 GB |      23 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    1381 GB |    1377 GB |
+|       from large pool |    3484 MB |    3484 MB |    1357 GB |    1354 GB |
+|       from small pool |      61 MB |      62 MB |      23 GB |      23 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3688 MB |  135168 KB |
+|       from large pool |    3492 MB |    3492 MB |    3620 MB |  131072 KB |
+|       from small pool |      64 MB |      64 MB |      68 MB |    4096 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   69399 MB |   69389 MB |
+|       from large pool |    8192 KB |    1002 MB |   42380 MB |   42372 MB |
+|       from small pool |    2123 KB |       3 MB |   27019 MB |   27017 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |  136765    |  136311    |
+|       from large pool |     196    |     242    |   71814    |   71618    |
+|       from small pool |     258    |     275    |   64951    |   64693    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |  136765    |  136311    |
+|       from large pool |     196    |     242    |   71814    |   71618    |
+|       from small pool |     258    |     275    |   64951    |   64693    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     172    |       4    |
+|       from large pool |     136    |     136    |     138    |       2    |
+|       from small pool |      32    |      32    |      34    |       2    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      12    |     143    |   50188    |   50176    |
+|       from large pool |       1    |     129    |    3387    |    3386    |
+|       from small pool |      11    |      15    |   46801    |   46790    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:15 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:15 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-04-02 18:36:27 | INFO | valid | epoch 006 | valid on 'valid' subset | loss 4.222 | evt_loss 8.371 | dur_loss 3.371 | trk_loss 3.034 | ins_loss 2.114 | ppl 18.66 | evt_ppl 330.96 | dur_ppl 10.35 | trk_ppl 8.19 | ins_ppl 4.33 | wps 30017.6 | wpb 7933.2 | bsz 2 | num_updates 0 | best_loss 4.222
+2023-04-02 18:36:27 | INFO | fairseq_cli.train | begin save checkpoint
+2023-04-02 18:36:28 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint6_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 6 @ 0 updates, score 4.222) (writing took 0.6420198839987279 seconds)
+2023-04-02 18:36:28 | INFO | fairseq_cli.train | end of epoch 6 (average epoch stats below)
+2023-04-02 18:36:28 | INFO | train | epoch 006 | lr 0 | train_wall 13 | wall 85
+2023-04-02 18:36:28 | INFO | fairseq.trainer | begin training epoch 7
+2023-04-02 18:36:29 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:29 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 13           |        cudaMalloc retries: 13        |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    1650 GB |    1646 GB |
+|       from large pool |    3484 MB |    3484 MB |    1622 GB |    1618 GB |
+|       from small pool |      61 MB |      62 MB |      27 GB |      27 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    1650 GB |    1646 GB |
+|       from large pool |    3484 MB |    3484 MB |    1622 GB |    1618 GB |
+|       from small pool |      61 MB |      62 MB |      27 GB |      27 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3688 MB |  135168 KB |
+|       from large pool |    3492 MB |    3492 MB |    3620 MB |  131072 KB |
+|       from small pool |      64 MB |      64 MB |      68 MB |    4096 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   80560 MB |   80550 MB |
+|       from large pool |    8192 KB |    1002 MB |   48262 MB |   48254 MB |
+|       from small pool |    2123 KB |       3 MB |   32298 MB |   32296 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |  163433    |  162979    |
+|       from large pool |     196    |     242    |   85751    |   85555    |
+|       from small pool |     258    |     275    |   77682    |   77424    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |  163433    |  162979    |
+|       from large pool |     196    |     242    |   85751    |   85555    |
+|       from small pool |     258    |     275    |   77682    |   77424    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     172    |       4    |
+|       from large pool |     136    |     136    |     138    |       2    |
+|       from small pool |      32    |      32    |      34    |       2    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      10    |     143    |   59863    |   59853    |
+|       from large pool |       1    |     129    |    3910    |    3909    |
+|       from small pool |       9    |      15    |   55953    |   55944    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:29 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:29 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:29 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 14           |        cudaMalloc retries: 14        |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    1655 GB |    1652 GB |
+|       from large pool |    3484 MB |    3484 MB |    1627 GB |    1624 GB |
+|       from small pool |      61 MB |      62 MB |      28 GB |      27 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    1655 GB |    1652 GB |
+|       from large pool |    3484 MB |    3484 MB |    1627 GB |    1624 GB |
+|       from small pool |      61 MB |      62 MB |      28 GB |      27 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3688 MB |  135168 KB |
+|       from large pool |    3492 MB |    3492 MB |    3620 MB |  131072 KB |
+|       from small pool |      64 MB |      64 MB |      68 MB |    4096 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   82000 MB |   81989 MB |
+|       from large pool |    8192 KB |    1002 MB |   49618 MB |   49610 MB |
+|       from small pool |    2123 KB |       3 MB |   32381 MB |   32379 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |  163861    |  163407    |
+|       from large pool |     196    |     242    |   86030    |   85834    |
+|       from small pool |     258    |     275    |   77831    |   77573    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |  163861    |  163407    |
+|       from large pool |     196    |     242    |   86030    |   85834    |
+|       from small pool |     258    |     275    |   77831    |   77573    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     172    |       4    |
+|       from large pool |     136    |     136    |     138    |       2    |
+|       from small pool |      32    |      32    |      34    |       2    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      10    |     143    |   60009    |   59999    |
+|       from large pool |       1    |     129    |    3960    |    3959    |
+|       from small pool |       9    |      15    |   56049    |   56040    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:29 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:29 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-04-02 18:36:41 | INFO | valid | epoch 007 | valid on 'valid' subset | loss 4.222 | evt_loss 8.371 | dur_loss 3.371 | trk_loss 3.034 | ins_loss 2.114 | ppl 18.66 | evt_ppl 330.96 | dur_ppl 10.35 | trk_ppl 8.19 | ins_ppl 4.33 | wps 30042.1 | wpb 7933.2 | bsz 2 | num_updates 0 | best_loss 4.222
+2023-04-02 18:36:41 | INFO | fairseq_cli.train | begin save checkpoint
+2023-04-02 18:36:42 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint7_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 7 @ 0 updates, score 4.222) (writing took 0.7172034979994351 seconds)
+2023-04-02 18:36:42 | INFO | fairseq_cli.train | end of epoch 7 (average epoch stats below)
+2023-04-02 18:36:42 | INFO | train | epoch 007 | lr 0 | train_wall 13 | wall 99
+2023-04-02 18:36:42 | INFO | fairseq.trainer | begin training epoch 8
+2023-04-02 18:36:43 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:43 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 15           |        cudaMalloc retries: 15        |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    1924 GB |    1921 GB |
+|       from large pool |    3484 MB |    3484 MB |    1892 GB |    1888 GB |
+|       from small pool |      61 MB |      62 MB |      32 GB |      32 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    1924 GB |    1921 GB |
+|       from large pool |    3484 MB |    3484 MB |    1892 GB |    1888 GB |
+|       from small pool |      61 MB |      62 MB |      32 GB |      32 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3688 MB |  135168 KB |
+|       from large pool |    3492 MB |    3492 MB |    3620 MB |  131072 KB |
+|       from small pool |      64 MB |      64 MB |      68 MB |    4096 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   93161 MB |   93151 MB |
+|       from large pool |    8192 KB |    1002 MB |   55500 MB |   55492 MB |
+|       from small pool |    2123 KB |       3 MB |   37660 MB |   37658 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |  190529    |  190075    |
+|       from large pool |     196    |     242    |   99967    |   99771    |
+|       from small pool |     258    |     275    |   90562    |   90304    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |  190529    |  190075    |
+|       from large pool |     196    |     242    |   99967    |   99771    |
+|       from small pool |     258    |     275    |   90562    |   90304    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     172    |       4    |
+|       from large pool |     136    |     136    |     138    |       2    |
+|       from small pool |      32    |      32    |      34    |       2    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      11    |     143    |   69716    |   69705    |
+|       from large pool |       1    |     129    |    4483    |    4482    |
+|       from small pool |      10    |      15    |   65233    |   65223    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:43 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:43 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 16.00 MiB (GPU 0; 4.00 GiB total capacity; 3.46 GiB already allocated; 0 bytes free; 3.47 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+2023-04-02 18:36:43 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 16           |        cudaMalloc retries: 16        |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    3545 MB |    3546 MB |    1930 GB |    1926 GB |
+|       from large pool |    3484 MB |    3484 MB |    1897 GB |    1894 GB |
+|       from small pool |      61 MB |      62 MB |      32 GB |      32 GB |
+|---------------------------------------------------------------------------|
+| Active memory         |    3545 MB |    3546 MB |    1930 GB |    1926 GB |
+|       from large pool |    3484 MB |    3484 MB |    1897 GB |    1894 GB |
+|       from small pool |      61 MB |      62 MB |      32 GB |      32 GB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    3556 MB |    3556 MB |    3688 MB |  135168 KB |
+|       from large pool |    3492 MB |    3492 MB |    3620 MB |  131072 KB |
+|       from small pool |      64 MB |      64 MB |      68 MB |    4096 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |   10315 KB |    1003 MB |   94600 MB |   94590 MB |
+|       from large pool |    8192 KB |    1002 MB |   56856 MB |   56848 MB |
+|       from small pool |    2123 KB |       3 MB |   37743 MB |   37741 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |     454    |     517    |  190957    |  190503    |
+|       from large pool |     196    |     242    |  100246    |  100050    |
+|       from small pool |     258    |     275    |   90711    |   90453    |
+|---------------------------------------------------------------------------|
+| Active allocs         |     454    |     517    |  190957    |  190503    |
+|       from large pool |     196    |     242    |  100246    |  100050    |
+|       from small pool |     258    |     275    |   90711    |   90453    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     168    |     168    |     172    |       4    |
+|       from large pool |     136    |     136    |     138    |       2    |
+|       from small pool |      32    |      32    |      34    |       2    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      11    |     143    |   69861    |   69850    |
+|       from large pool |       1    |     129    |    4533    |    4532    |
+|       from small pool |      10    |      15    |   65328    |   65318    |
+|---------------------------------------------------------------------------|
+| Oversize allocations  |       0    |       0    |       0    |       0    |
+|---------------------------------------------------------------------------|
+| Oversize GPU segments |       0    |       0    |       0    |       0    |
+|===========================================================================|
+
+2023-04-02 18:36:43 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-04-02 18:36:43 | INFO | fairseq_cli.train | begin validation on "valid" subset

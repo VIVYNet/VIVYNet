@@ -266,11 +266,11 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         x,
         src_lengths = None
     ):
-        print("Input: ", x)
-        print("Input torch.max: ", torch.max(x, dim=0))
-        print("Input Size: ", x.size())
-        print("Input a: ",x[..., 0])
-        print("Input a size: ", x[..., 0].size())
+        # print("Input: ", x)
+        # print("Input torch.max: ", torch.max(x, dim=0))
+        # print("Input Size: ", x.size())
+        # print("Input a: ",x[..., 0])
+        # print("Input a size: ", x[..., 0].size())
         bsz, seq_len, ratio = x.size()
         
         evt_emb = self.wEvte(x[..., 0])

@@ -1,3 +1,4 @@
 decoder/checkpoints
 testing/fairseq/*
 data/sample
+decoder/symphony_net/data/bpe_res
