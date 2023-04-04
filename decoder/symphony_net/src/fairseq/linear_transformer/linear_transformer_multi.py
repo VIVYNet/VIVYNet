@@ -272,12 +272,12 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         # print("Input a: ",x[..., 0])
         # print("Input a size: ", x[..., 0].size())
         bsz, seq_len, ratio = x.size()
-        
+        # x = x.to(torch.float16)
         evt_emb = self.wEvte(x[..., 0])
 
         # if not mapping to pad, padding idx will only occer at last
         evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) 
-
+        # print("LOG: ", evton_mask)
         tmp = self.wDure(x[..., 1])
         dur_emb = tmp * evton_mask
         # assert ((tmp==dur_emb).all())
@@ -312,8 +312,8 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         
         x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
 
-
         outputs = self.model(x, self.attn_mask, len_mask)
+        # print("Output: ",outputs)
         outputs = self.ln_f(outputs)
         
         return outputs

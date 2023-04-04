@@ -22,7 +22,7 @@ class Tokenizer:
     
     def __preprocess_midi(self):
         warnings.filterwarnings('ignore')
-        midis_path = self.main_path + "data/midis"
+        midis_path = self.main_path + "data/dmidis/midis"
         file_paths = []
         for path, directories, files in os.walk(midis_path):
             for file in files:

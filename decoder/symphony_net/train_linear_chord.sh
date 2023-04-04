@@ -24,6 +24,8 @@ CHECKPOINT_SUFFIX=${DATA_BIN}_PI${PI_LEVEL}
 
 
 CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" PYTHONWARNINGS="ignore" fairseq-train 	${DATA_BIN_DIR} \
+	--max-epoch 3 \
+	--ddp-backend no_c10d \
 	--seed ${SEED} \
 	--user-dir src/fairseq/linear_transformer \
 	--task symphony_modeling --criterion multiple_loss \
