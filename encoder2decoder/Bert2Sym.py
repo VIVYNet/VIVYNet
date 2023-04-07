@@ -2,15 +2,130 @@ from fairseq.models import FairseqEncoder, FairseqEncoderModel, FairseqEncoderDe
 from fairseq.tasks import LegacyFairseqTask, FairseqTask, register_task
 from fairseq.data import Dictionary, data_utils, TokenBlockDataset, MonolingualDataset, LanguagePairDataset
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
+from fairseq.criterions import register_criterion
+from fairseq.criterions.cross_entropy import CrossEntropyCriterion
 from fairseq import utils, metrics
 from dataclasses import dataclass, field
 from transformers import BertTokenizer, BertModel, BertConfig
 from encoder import BertEncoder
-from decoder.symphony_net.src.fairseq.linear_transformer_inference import linear_transformer_multi
+from decoder.symphony_net.src.fairseq.modified_linear_transformer import linear_transformer_multi
+import logging, math
 import torch
-import torch.nn
+import torch.nn as nn
+import torch.nn.functional as F
 import os
 
+@register_criterion("multiple_loss")
+class MultiplelossCriterion(CrossEntropyCriterion):
+    def forward(self, model, sample, reduce=True):
+        """Compute the loss for the given sample.
+
+        Returns a tuple with three elements:
+        1) the loss
+        2) the sample size, which is used as the denominator for the gradient
+        3) logging outputs to display while training
+        """
+        net_output = model(**sample["net_input"])
+        losses = self.compute_loss(model, net_output, sample, reduce=reduce) # return a list
+        assert not self.sentence_avg
+        #TODO: adjust weight of evt losses and other losses by length (current strategy: simple average the losses)
+        # weights = [sample["ntokens"]] + [sample["ontokens"]] * (len(losses) - 1)
+        loss = torch.mean(torch.stack(losses))
+        logging_output = {
+            "loss": loss.data,
+            "evt_loss": losses[0].data,
+            "dur_loss": losses[1].data,
+            "trk_loss": losses[2].data,
+            "ins_loss": losses[3].data,
+            "ntokens": sample["ntokens"],
+            "nsentences": sample["target"].size(0),
+            "sample_size": sample["ntokens"],
+            "on_sample_size": sample["ntokens"],
+        }
+        return loss, sample["ntokens"], logging_output
+
+    def compute_loss(self, model, net_output, sample, reduce=True):
+        lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
+        print("SAMPLE: ", sample)
+        print("PROBS: ", lprobs_tuple, " + ",lprobs_tuple[0].size())
+        print("PROBS_SIZE: ", len(lprobs_tuple))
+        losses = []
+        for idx, lprobs in enumerate(lprobs_tuple):
+            lprobs = lprobs.view(-1, lprobs.size(-1))
+            target = model.get_targets(sample, net_output)[..., idx].view(-1)
+
+            loss = F.nll_loss(
+                lprobs,
+                target,
+                ignore_index=self.padding_idx,
+                reduction="sum" if reduce else "none",
+            )
+            losses.append(loss)
+        return losses
+
+    @staticmethod
+    def reduce_metrics(logging_outputs) -> None:
+        """Aggregate logging outputs from data parallel training."""
+        loss_sum = sum(log.get("loss", 0) for log in logging_outputs)
+        loss_evt = sum(log.get("evt_loss", 0) for log in logging_outputs)
+        loss_dur = sum(log.get("dur_loss", 0) for log in logging_outputs)
+        loss_trk = sum(log.get("trk_loss", 0) for log in logging_outputs)
+        loss_ins = sum(log.get("ins_loss", 0) for log in logging_outputs)
+        ntokens = sum(log.get("ntokens", 0) for log in logging_outputs)
+        sample_size = sum(log.get("sample_size", 0) for log in logging_outputs)
+        on_sample_size = sum(log.get("on_sample_size", 0) for log in logging_outputs)
+        # we divide by log(2) to convert the loss from base e to base 2
+        # total_losses = 4
+        # weighted_size = (sample_size + on_sample_size*(total_losses-1)) / total_losses
+        metrics.log_scalar(
+            "loss", loss_sum / sample_size / math.log(2), sample_size, round=3
+        )
+        metrics.log_scalar(
+            "evt_loss", loss_evt / sample_size / math.log(2), sample_size, round=3
+        )
+        metrics.log_scalar(
+            "dur_loss", loss_dur / on_sample_size / math.log(2), on_sample_size, round=3
+        )
+        metrics.log_scalar(
+            "trk_loss", loss_trk / on_sample_size / math.log(2), on_sample_size, round=3
+        )
+        metrics.log_scalar(
+            "ins_loss", loss_ins / on_sample_size / math.log(2), on_sample_size, round=3
+        )
+
+        if sample_size != ntokens:
+            metrics.log_scalar(
+                "nll_loss", loss_sum / ntokens / math.log(2), ntokens, round=3
+            )
+            metrics.log_derived(
+                "ppl", lambda meters: utils.get_perplexity(meters["nll_loss"].avg)
+            )
+        else:
+            metrics.log_derived(
+                "ppl", lambda meters: utils.get_perplexity(meters["loss"].avg)
+            )
+            metrics.log_derived(
+                "evt_ppl", lambda meters: utils.get_perplexity(meters["evt_loss"].avg)
+            )
+            metrics.log_derived(
+                "dur_ppl", lambda meters: utils.get_perplexity(meters["dur_loss"].avg)
+            )
+            metrics.log_derived(
+                "trk_ppl", lambda meters: utils.get_perplexity(meters["trk_loss"].avg)
+            )
+            metrics.log_derived(
+                "ins_ppl", lambda meters: utils.get_perplexity(meters["ins_loss"].avg)
+            )
+
+    @staticmethod
+    def logging_outputs_can_be_summed() -> bool:
+        """
+        Whether the logging outputs returned by `forward` can be summed
+        across workers prior to calling `reduce_metrics`. Setting this
+        to True will improves distributed training speed.
+        """
+        return True
+    
 @dataclass
 class SymphonyModelingConfig(FairseqDataclass):
     # Note: Add more configs for Encoder

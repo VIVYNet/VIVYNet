@@ -4,6 +4,7 @@ decoder/symphony_net/logs
 decoder/symphony_net/src/__pycache__
 decoder/symphony_net/src/fairseq/__pycache__
 decoder/symphony_net/src/fairseq/linear_transformer/__pycache__
+decoder/symphony_net/src/fairseq/modified_linear_transformer/__pycache__
 decoder/symphony_net/src/musicBPE
 decoder/symphony_net/src/preprocess/__pycache__
 testing/fairseq/*

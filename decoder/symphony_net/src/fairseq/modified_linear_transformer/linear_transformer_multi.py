@@ -1,4 +1,4 @@
-from fast_transformers.builders import TransformerEncoderBuilder, RecurrentEncoderBuilder
+from fast_transformers.builders import TransformerEncoderBuilder, RecurrentEncoderBuilder, TransformerDecoderBuilder
 from fast_transformers.masking import TriangularCausalMask, LengthMask
 
 import logging, math
@@ -161,13 +161,13 @@ class LinearTransformerMultiHeadLM(FairseqLanguageModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--embed-dim', type=int, metavar='N',
+        parser.add_argument('--dec-embed-dim', type=int, metavar='N',
                             help='embedding dimension')
-        parser.add_argument('--num-attention-heads', type=int, metavar='N',
+        parser.add_argument('--dec-num-attention-heads', type=int, metavar='N',
                             help='num attention heads')
-        parser.add_argument('--num-layers', type=int, metavar='N',
+        parser.add_argument('--dec-num-layers', type=int, metavar='N',
                             help='num layers')
-        parser.add_argument('--dropout', type=float, metavar='D',
+        parser.add_argument('--dec-dropout', type=float, metavar='D',
                             help='dropout probability for all fully connected layers '
                                  'in the embeddings, encoder, and pooler')
 
@@ -222,6 +222,19 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
                 attention_type="causal-linear",
                 #feature_map=Favor.factory(n_dims=self.d_model)
             ).get()
+        
+        self.decoder_model = TransformerDecoderBuilder.from_kwargs(
+                n_layers = args.num_layers,
+                n_heads=args.num_attention_heads,
+                query_dimensions=args.embed_dim // args.num_attention_heads,
+                value_dimensions=args.embed_dim // args.num_attention_heads,
+                feed_forward_dimensions=4 * args.embed_dim,
+                activation='gelu',
+                #final_normalization=True,
+                dropout=args.dropout,
+                self_attention_type="causal-linear", 
+                cross_attention_type="full",
+            ).get()
 
         self.attn_mask = TriangularCausalMask(self.max_pos)
         self.proj_evt = nn.Linear(args.embed_dim, args.evt_voc_size, bias=False)
@@ -253,10 +266,18 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
             
     def forward(
         self,
+        prev_output_tokens,
+        encoder_out,
         x,
         src_lengths=None,
     ):
-        features = self.extract_features(x, src_lengths)
+        features = self.extract_features(
+            x = x, 
+            prev_output_tokens = prev_output_tokens, 
+            encoder_out = encoder_out,
+            src_lengths = src_lengths
+            )
+        
         evt_logits = self.proj_evt(features)
         dur_logits = self.proj_dur(features)
         trk_logits = self.proj_trk(features)
@@ -266,21 +287,16 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
 
     def extract_features(
         self,
+        prev_output_tokens,
+        encoder_out,
         x,
         src_lengths = None
     ):
-        # print("Input: ", x)
-        # print("Input torch.max: ", torch.max(x, dim=0))
-        # print("Input Size: ", x.size())
-        # print("Input a: ",x[..., 0])
-        # print("Input a size: ", x[..., 0].size())
         bsz, seq_len, ratio = x.size()
-        # x = x.to(torch.float16)
         evt_emb = self.wEvte(x[..., 0])
 
         # if not mapping to pad, padding idx will only occer at last
         evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) 
-        # print("LOG: ", evton_mask)
         tmp = self.wDure(x[..., 1])
         dur_emb = tmp * evton_mask
         # assert ((tmp==dur_emb).all())
@@ -316,6 +332,7 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
 
         outputs = self.model(x, self.attn_mask, len_mask)
+
         # print("Output: ",outputs)
         outputs = self.ln_f(outputs)
         
@@ -342,17 +359,17 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
 @register_model_architecture("linear_transformer_multi", "linear_transformer_multi")
 def base_architecture(args):
     
-    args.embed_dim = getattr(args, "embed_dim", 512)
-    args.num_attention_heads = getattr(args, "num_attention_heads", 16)
-    args.num_layers = getattr(args, "num_layers", 12)
-    args.dropout = getattr(args, "dropout", 0.1)
+    args.embed_dim = getattr(args, "dec_embed_dim", 512)
+    args.num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
+    args.num_layers = getattr(args, "dec_num_layers", 12)
+    args.dropout = getattr(args, "dec_dropout", 0.1)
 
 @register_model_architecture("linear_transformer_multi", "linear_transformer_multi_large")
 def base_architecture(args):
-    args.embed_dim = getattr(args, "embed_dim", 768)
-    args.num_attention_heads = getattr(args, "num_attention_heads", 12)
-    args.num_layers = getattr(args, "num_layers", 12)
-    args.dropout = getattr(args, "dropout", 0.1)
+    args.embed_dim = getattr(args, "dec_embed_dim", 768)
+    args.num_attention_heads = getattr(args, "dec_num_attention_heads", 12)
+    args.num_layers = getattr(args, "dec_num_layers", 12)
+    args.dropout = getattr(args, "dec_dropout", 0.1)
 
 
 class TupleMultiHeadDataset(TokenBlockDataset):
