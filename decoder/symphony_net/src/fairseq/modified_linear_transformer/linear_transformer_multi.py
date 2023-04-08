@@ -1,5 +1,5 @@
-from fast_transformers.builders import TransformerEncoderBuilder, RecurrentEncoderBuilder, TransformerDecoderBuilder
-from fast_transformers.masking import TriangularCausalMask, LengthMask
+from fast_transformers.builders import TransformerEncoderBuilder, TransformerDecoderBuilder
+from fast_transformers.masking import TriangularCausalMask, LengthMask, FullMask
 
 import logging, math
 import os
@@ -233,7 +233,7 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
                 #final_normalization=True,
                 dropout=args.dropout,
                 self_attention_type="causal-linear", 
-                cross_attention_type="full",
+                cross_attention_type="full", # Fully masked so that each domain can be moerged
             ).get()
 
         self.attn_mask = TriangularCausalMask(self.max_pos)
@@ -266,16 +266,16 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
             
     def forward(
         self,
-        prev_output_tokens,
         encoder_out,
         x,
-        src_lengths=None,
+        src_lengths = None,
+        encoder_out_lengths = None,
     ):
         features = self.extract_features(
             x = x, 
-            prev_output_tokens = prev_output_tokens, 
             encoder_out = encoder_out,
-            src_lengths = src_lengths
+            src_lengths = src_lengths,
+            encoder_out_lengths = encoder_out_lengths
             )
         
         evt_logits = self.proj_evt(features)
@@ -285,14 +285,19 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
 
         return (evt_logits, dur_logits, trk_logits, ins_logits)
 
+
+    # TODO: Understand how SymphonyNet masks work, including LengthMask and TriangularMask
+    # TODO: Understand Permutiation Imvariant in code
     def extract_features(
         self,
-        prev_output_tokens,
-        encoder_out,
         x,
-        src_lengths = None
+        encoder_out = None,
+        src_lengths = None,
+        encoder_out_lengths = None
     ):
         bsz, seq_len, ratio = x.size()
+        enc_bsz, enc_len = encoder_out.size()
+
         evt_emb = self.wEvte(x[..., 0])
 
         # if not mapping to pad, padding idx will only occer at last
@@ -304,13 +309,36 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         trk_emb = tmp * evton_mask
         # assert ((tmp==trk_emb).all())
 
+        # Note: Calc LengthMask for src_lengths
         pad_mask = x[..., 0].ne(self.pad_idx).long().to(x.device)
         if src_lengths is not None:
-            len_mask = LengthMask(src_lengths, max_len=seq_len, device=x.device)
+            len_mask = LengthMask(
+                src_lengths, 
+                max_len=seq_len, 
+                device=x.device
+                )
         else:
-            len_mask = LengthMask(torch.sum(pad_mask, axis=1), max_len=seq_len, device=x.device)
+            len_mask = LengthMask(
+                torch.sum(pad_mask, axis=1), 
+                max_len=seq_len, 
+                device= x.device)
         
-
+        # Note: Calc LengthMask for endoer_out_lengths
+        if encoder_out_lengths is not None:
+            enc_len_mask = LengthMask(
+                encoder_out_lengths, 
+                max_len = enc_len,
+                device= encoder_out.device)
+        else:
+            # WIP: Calc LengthMask when enc_out_len is none
+            pass
+        
+        # WIP: Implement FullMask for Cross Attention layer
+        full_mask = FullMask(
+            
+        )
+        
+        # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
             rel_pos = pad_mask * x[..., 4]
             rel_pos_mask = rel_pos.ne(0).float()[..., None].to(x.device) # ignore bom, chord, eos
@@ -332,7 +360,14 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
 
         outputs = self.model(x, self.attn_mask, len_mask)
-
+        doutputs = self.decoder_model(
+            x = x,
+            memory = encoder_out,
+            x_mask = self.attn_mask,
+            x_length_mask = len_mask,
+            memory_mask = None, #WIP
+            memory_length_mask = None #WIP
+        )
         # print("Output: ",outputs)
         outputs = self.ln_f(outputs)
         
