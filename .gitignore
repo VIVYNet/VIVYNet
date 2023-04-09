@@ -1,3 +1,4 @@
 decoder/checkpoints
-testing/fairseq/*
+testing/fsq/*
 data/*
+*.pyc

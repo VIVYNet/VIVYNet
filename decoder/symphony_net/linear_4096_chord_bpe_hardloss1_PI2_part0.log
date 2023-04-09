@@ -1,0 +1,337 @@
+2023-03-31 11:53:05 | INFO | fairseq_cli.train | Namespace(adam_betas='(0.9, 0.98)', adam_eps=1e-06, add_bos_token=False, all_gather_list_size=16384, arch='linear_transformer_multi', batch_size=2, batch_size_valid=2, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='_linear_4096_chord_bpe_hardloss1_PI2', clip_norm=0.0, cpu=False, criterion='multiple_loss', curriculum=0, data='data/model_spec/linear_4096_chord_bpe_hardloss1/bin', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_num_procs=1, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', dropout=0.1, dur_voc_size=36, embed_dim=512, empty_cache_freq=0, end_learning_rate=0.0, evt_voc_size=237, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, future_target=False, gen_subset='test', ins_voc_size=16, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, localsgd_frequency=3, log_format='simple', log_interval=100, lr=[0.0003], lr_scheduler='polynomial_decay', max_epoch=0, max_mea_pos=311, max_rel_pos=86, max_target_positions=None, max_tokens=None, max_tokens_valid=None, max_update=210000, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, min_lr=-1.0, model_parallel_size=1, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=False, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, nprocs_per_node=1, num_attention_heads=16, num_layers=12, num_shards=1, num_workers=1, optimizer='adam', optimizer_overrides='{}', output_dictionary_size=-1, past_target=False, patience=-1, perm_inv=2, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, power=1.0, profile=False, quantization_config_path=None, ratio=4, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt', sample_break_mode='complete_doc', sample_overlap_rate=4, save_dir='ckpt/', save_interval=1, save_interval_updates=0, scoring='bleu', seed=1998, self_target=False, sentence_avg=False, shard_id=0, shorten_data_split_list='', shorten_method='none', skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, stop_time_hours=0, task='symphony_modeling', tensorboard_logdir='logs/linear_4096_chord_bpe_hardloss1_PI2', threshold_loss_scale=None, tokenizer=None, tokens_per_sample=4096, total_num_update=210000, tpu=False, train_subset='train', trk_voc_size=36, update_freq=[64], use_bmuf=False, use_old_adam=False, user_dir='src/fairseq/linear_transformer', valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, warmup_updates=5000, weight_decay=0.01, zero_sharding='none')
+2023-03-31 11:53:05 | INFO | fairseq.tasks.language_modeling | dictionary: 151 types
+2023-03-31 11:53:05 | INFO | fairseq.data.data_utils | loaded 61 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/valid
+2023-03-31 11:53:05 | INFO | fairseq_cli.train | LinearTransformerMultiHeadLM(
+  (decoder): LinearTransformerMultiHeadDecoder(
+    (wEvte): Embedding(237, 512)
+    (wTrke): Embedding(36, 512)
+    (wDure): Embedding(36, 512)
+    (wRpe): Embedding(87, 512)
+    (wMpe): Embedding(312, 512)
+    (drop): Dropout(p=0.1, inplace=False)
+    (ln_f): LayerNorm((512,), eps=1e-06, elementwise_affine=True)
+    (model): TransformerEncoder(
+      (layers): ModuleList(
+        (0): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (1): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (2): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (3): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (4): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (5): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (6): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (7): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (8): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (9): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (10): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (11): TransformerEncoderLayer(
+          (attention): AttentionLayer(
+            (inner_attention): CausalLinearAttention(
+              (feature_map): ActivationFunctionFeatureMap()
+            )
+            (query_projection): Linear(in_features=512, out_features=512, bias=True)
+            (key_projection): Linear(in_features=512, out_features=512, bias=True)
+            (value_projection): Linear(in_features=512, out_features=512, bias=True)
+            (out_projection): Linear(in_features=512, out_features=512, bias=True)
+          )
+          (linear1): Linear(in_features=512, out_features=2048, bias=True)
+          (linear2): Linear(in_features=2048, out_features=512, bias=True)
+          (norm1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (norm2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+      )
+      (norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+    )
+    (proj_evt): Linear(in_features=512, out_features=237, bias=False)
+    (proj_dur): Linear(in_features=512, out_features=36, bias=False)
+    (proj_trk): Linear(in_features=512, out_features=36, bias=False)
+    (proj_ins): Linear(in_features=512, out_features=16, bias=False)
+  )
+)
+2023-03-31 11:53:05 | INFO | fairseq_cli.train | task: symphony_modeling (SymphonyModelingTask)
+2023-03-31 11:53:05 | INFO | fairseq_cli.train | model: linear_transformer_multi (LinearTransformerMultiHeadLM)
+2023-03-31 11:53:05 | INFO | fairseq_cli.train | criterion: multiple_loss (MultiplelossCriterion)
+2023-03-31 11:53:05 | INFO | fairseq_cli.train | num. model params: 38359552 (num. trained: 38359552)
+2023-03-31 11:53:08 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_dur.bias
+2023-03-31 11:53:08 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_trk.bias
+2023-03-31 11:53:08 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_ins.bias
+2023-03-31 11:53:08 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-03-31 11:53:08 | INFO | fairseq.utils | rank   0: capabilities =  7.5  ; total memory = 6.000 GB ; name = NVIDIA GeForce RTX 2060                 
+2023-03-31 11:53:08 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-03-31 11:53:08 | INFO | fairseq_cli.train | training on 1 devices (GPUs/TPUs)
+2023-03-31 11:53:08 | INFO | fairseq_cli.train | max tokens per GPU = None and max sentences per GPU = 2
+2023-03-31 11:53:08 | INFO | fairseq.trainer | NOTE: your device may support faster training with --fp16
+2023-03-31 11:53:09 | INFO | fairseq.trainer | loaded checkpoint ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 3 @ 2 updates)
+2023-03-31 11:53:09 | INFO | fairseq.trainer | loading train data for epoch 3
+2023-03-31 11:53:09 | INFO | fairseq.data.data_utils | loaded 523 examples from: data/model_spec/linear_4096_chord_bpe_hardloss1/bin/train
+2023-03-31 11:53:09 | INFO | fairseq.trainer | begin training epoch 3
+2023-03-31 11:53:10 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 64.00 MiB (GPU 0; 6.00 GiB total capacity; 4.73 GiB already allocated; 0 bytes free; 5.27 GiB reserved in total by PyTorch)
+2023-03-31 11:53:10 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 1            |        cudaMalloc retries: 1         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    4839 MB |    4867 MB |   14554 MB |    9715 MB |
+|       from large pool |    4624 MB |    4652 MB |   14288 MB |    9664 MB |
+|       from small pool |     215 MB |     216 MB |     266 MB |      50 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    4839 MB |    4867 MB |   14554 MB |    9715 MB |
+|       from large pool |    4624 MB |    4652 MB |   14288 MB |    9664 MB |
+|       from small pool |     215 MB |     216 MB |     266 MB |      50 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    5394 MB |    5394 MB |    5394 MB |       0 B  |
+|       from large pool |    5176 MB |    5176 MB |    5176 MB |       0 B  |
+|       from small pool |     218 MB |     218 MB |     218 MB |       0 B  |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |  567468 KB |  646060 KB |    8103 MB |    7549 MB |
+|       from large pool |  565248 KB |  643072 KB |    7932 MB |    7380 MB |
+|       from small pool |    2220 KB |    5002 KB |     170 MB |     168 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |    1125    |    1125    |    2630    |    1505    |
+|       from large pool |     313    |     314    |    1301    |     988    |
+|       from small pool |     812    |     812    |    1329    |     517    |
+|---------------------------------------------------------------------------|
+| Active allocs         |    1125    |    1125    |    2630    |    1505    |
+|       from large pool |     313    |     314    |    1301    |     988    |
+|       from small pool |     812    |     812    |    1329    |     517    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     305    |     305    |     305    |       0    |
+|       from large pool |     196    |     196    |     196    |       0    |
+|       from small pool |     109    |     109    |     109    |       0    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |     100    |     114    |    1059    |     959    |
+|       from large pool |      72    |      87    |     704    |     632    |
+|       from small pool |      28    |      29    |     355    |     327    |
+|===========================================================================|
+
+2023-03-31 11:53:10 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-03-31 11:53:10 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-03-31 11:53:11 | INFO | valid | epoch 003 | valid on 'valid' subset | loss 4.271 | evt_loss 8.63 | dur_loss 3.62 | trk_loss 2.757 | ins_loss 2.078 | ppl 19.31 | evt_ppl 396.08 | dur_ppl 12.29 | trk_ppl 6.76 | ins_ppl 4.22 | wps 5653.3 | wpb 3719.7 | bsz 1.7 | num_updates 2 | best_loss 4.271
+2023-03-31 11:53:11 | INFO | fairseq_cli.train | begin save checkpoint
+2023-03-31 11:53:13 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint3_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 3 @ 2 updates, score 4.271) (writing took 1.2223460599998361 seconds)
+2023-03-31 11:53:13 | INFO | fairseq_cli.train | end of epoch 3 (average epoch stats below)
+2023-03-31 11:53:13 | INFO | train | epoch 003 | loss 4.039 | evt_loss 8.465 | dur_loss 2.876 | trk_loss 2.578 | ins_loss 2.235 | wps 196.7 | ups 0 | wpb 99860 | bsz 38 | num_updates 2 | lr 1.2e-07 | gnorm 8.688 | train_wall 581 | wall 0
+2023-03-31 11:53:13 | INFO | fairseq.trainer | begin training epoch 4
+2023-03-31 11:53:22 | WARNING | fairseq.trainer | OOM: Ran out of memory with exception: CUDA out of memory. Tried to allocate 2.00 MiB (GPU 0; 6.00 GiB total capacity; 4.89 GiB already allocated; 0 bytes free; 5.29 GiB reserved in total by PyTorch)
+2023-03-31 11:53:22 | WARNING | fairseq.trainer | |===========================================================================|
+|                  PyTorch CUDA memory summary, device ID 0                 |
+|---------------------------------------------------------------------------|
+|            CUDA OOMs: 2            |        cudaMalloc retries: 2         |
+|===========================================================================|
+|        Metric         | Cur Usage  | Peak Usage | Tot Alloc  | Tot Freed  |
+|---------------------------------------------------------------------------|
+| Allocated memory      |    4992 MB |    5052 MB |   47941 MB |   42948 MB |
+|       from large pool |    4776 MB |    4836 MB |   47462 MB |   42686 MB |
+|       from small pool |     216 MB |     217 MB |     478 MB |     261 MB |
+|---------------------------------------------------------------------------|
+| Active memory         |    4992 MB |    5052 MB |   47941 MB |   42948 MB |
+|       from large pool |    4776 MB |    4836 MB |   47462 MB |   42686 MB |
+|       from small pool |     216 MB |     217 MB |     478 MB |     261 MB |
+|---------------------------------------------------------------------------|
+| GPU reserved memory   |    5422 MB |    5422 MB |    5728 MB |  313344 KB |
+|       from large pool |    5204 MB |    5204 MB |    5464 MB |  266240 KB |
+|       from small pool |     218 MB |     218 MB |     264 MB |   47104 KB |
+|---------------------------------------------------------------------------|
+| Non-releasable memory |  439340 KB |  646060 KB |   20719 MB |   20290 MB |
+|       from large pool |  438272 KB |  643072 KB |   20289 MB |   19861 MB |
+|       from small pool |    1068 KB |    7998 KB |     430 MB |     429 MB |
+|---------------------------------------------------------------------------|
+| Allocations           |    1155    |    1162    |    6213    |    5058    |
+|       from large pool |     322    |     325    |    3442    |    3120    |
+|       from small pool |     833    |     840    |    2771    |    1938    |
+|---------------------------------------------------------------------------|
+| Active allocs         |    1155    |    1162    |    6213    |    5058    |
+|       from large pool |     322    |     325    |    3442    |    3120    |
+|       from small pool |     833    |     840    |    2771    |    1938    |
+|---------------------------------------------------------------------------|
+| GPU reserved segments |     301    |     305    |     334    |      33    |
+|       from large pool |     192    |     196    |     202    |      10    |
+|       from small pool |     109    |     109    |     132    |      23    |
+|---------------------------------------------------------------------------|
+| Non-releasable allocs |      57    |     114    |    3161    |    3104    |
+|       from large pool |      45    |      87    |    2007    |    1962    |
+|       from small pool |      12    |      33    |    1154    |    1142    |
+|===========================================================================|
+
+2023-03-31 11:53:22 | WARNING | fairseq.trainer | attempting to recover from OOM in forward/backward pass
+2023-03-31 11:53:22 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-03-31 11:53:24 | INFO | valid | epoch 004 | valid on 'valid' subset | loss 4.263 | evt_loss 8.641 | dur_loss 3.639 | trk_loss 2.673 | ins_loss 2.098 | ppl 19.2 | evt_ppl 399.28 | dur_ppl 12.46 | trk_ppl 6.38 | ins_ppl 4.28 | wps 2612.4 | wpb 2874.3 | bsz 1.7 | num_updates 2 | best_loss 4.263
+2023-03-31 11:53:24 | INFO | fairseq_cli.train | begin save checkpoint
+2023-03-31 11:53:26 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint4_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 4 @ 2 updates, score 4.263) (writing took 2.1057654039977933 seconds)
+2023-03-31 11:53:26 | INFO | fairseq_cli.train | end of epoch 4 (average epoch stats below)
+2023-03-31 11:53:26 | INFO | train | epoch 004 | loss None | evt_loss None | dur_loss None | trk_loss None | ins_loss None | wps 0 | ups 0 | wpb None | bsz None | num_updates None | lr 1.2e-07 | gnorm None | train_wall 12 | wall 0
+2023-03-31 11:53:26 | INFO | fairseq.trainer | begin training epoch 5
+2023-03-31 11:54:42 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-03-31 11:54:42 | INFO | valid | epoch 005 | valid on 'valid' subset | loss 4.302 | evt_loss 8.595 | dur_loss 3.625 | trk_loss 2.833 | ins_loss 2.155 | ppl 19.73 | evt_ppl 386.74 | dur_ppl 12.34 | trk_ppl 7.13 | ins_ppl 4.45 | wps 17067.4 | wpb 3407.7 | bsz 1.7 | num_updates 3 | best_loss 4.263
+2023-03-31 11:54:42 | INFO | fairseq_cli.train | begin save checkpoint
+2023-03-31 11:54:43 | INFO | fairseq.checkpoint_utils | saved checkpoint ckpt/checkpoint5_linear_4096_chord_bpe_hardloss1_PI2.pt (epoch 5 @ 3 updates, score 4.302) (writing took 0.9683583669975633 seconds)
+2023-03-31 11:54:43 | INFO | fairseq_cli.train | end of epoch 5 (average epoch stats below)
+2023-03-31 11:54:43 | INFO | train | epoch 005 | loss 4.054 | evt_loss 8.457 | dur_loss 2.861 | trk_loss 2.65 | ins_loss 2.246 | ppl 16.61 | evt_ppl 351.31 | dur_ppl 7.27 | trk_ppl 6.28 | ins_ppl 4.75 | wps 1337.6 | ups 0.01 | wpb 103047 | bsz 38 | num_updates 3 | lr 1.8e-07 | gnorm 8.728 | train_wall 75 | wall 0
+2023-03-31 11:54:43 | INFO | fairseq.trainer | begin training epoch 6
