@@ -187,7 +187,7 @@ class LinearTransformerMultiHeadLM(FairseqLanguageModel):
 
 class LinearTransformerMultiHeadDecoder(FairseqDecoder):
     def __init__(self, args, task):
-
+        #TODO: Add dictionary for encoder
         super().__init__(task.target_dictionary)
         #print(task.target_dictionary)
         # for i in range(len(task.target_dictionary)):
@@ -197,8 +197,6 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         self.wTrke = nn.Embedding(args.trk_voc_size, args.embed_dim)
         self.wDure = nn.Embedding(args.dur_voc_size, args.embed_dim)
         self.max_pos = args.tokens_per_sample
-        #self.ratio = args.ratio
-        #print("max positions:", self.max_pos)
 
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
@@ -233,7 +231,7 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
                 #final_normalization=True,
                 dropout=args.dropout,
                 self_attention_type="causal-linear", 
-                cross_attention_type="full", # Fully masked so that each domain can be moerged
+                cross_attention_type="full", # Fully masked so that each domain can be merged
             ).get()
 
         self.attn_mask = TriangularCausalMask(self.max_pos)
@@ -331,11 +329,13 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
                 device= encoder_out.device)
         else:
             # WIP: Calc LengthMask when enc_out_len is none
-            pass
+            enc_len_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
         
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(
-            
+            N = seq_len,
+            M = enc_len,
+            device = x.device
         )
         
         # Note: Perform Permutation Invariant
@@ -365,8 +365,8 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
             memory = encoder_out,
             x_mask = self.attn_mask,
             x_length_mask = len_mask,
-            memory_mask = None, #WIP
-            memory_length_mask = None #WIP
+            memory_mask = full_mask, #WIP
+            memory_length_mask = enc_len_mask #WIP
         )
         # print("Output: ",outputs)
         outputs = self.ln_f(outputs)

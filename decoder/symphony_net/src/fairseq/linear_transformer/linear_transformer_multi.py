@@ -72,9 +72,9 @@ class MultiplelossCriterion(CrossEntropyCriterion):
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
-        print("SAMPLE: ", sample)
-        print("PROBS: ", lprobs_tuple, " + ",lprobs_tuple[0].size())
-        print("PROBS_SIZE: ", len(lprobs_tuple))
+        # print("SAMPLE: ", sample)
+        # print("PROBS: ", lprobs_tuple, " + ",lprobs_tuple[0].size())
+        # print("PROBS_SIZE: ", len(lprobs_tuple))
         losses = []
         for idx, lprobs in enumerate(lprobs_tuple):
             lprobs = lprobs.view(-1, lprobs.size(-1))
@@ -187,7 +187,7 @@ class LinearTransformerMultiHeadLM(FairseqLanguageModel):
 
 class LinearTransformerMultiHeadDecoder(FairseqDecoder):
     def __init__(self, args, task):
-
+        
         super().__init__(task.target_dictionary)
         #print(task.target_dictionary)
         # for i in range(len(task.target_dictionary)):
@@ -209,7 +209,6 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         self.drop = nn.Dropout(args.dropout)
         self.ln_f = nn.LayerNorm(args.embed_dim, eps=1e-6)
         
-
         self.model = TransformerEncoderBuilder.from_kwargs(
                 n_layers=args.num_layers,
                 n_heads=args.num_attention_heads,
@@ -293,7 +292,11 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
             len_mask = LengthMask(src_lengths, max_len=seq_len, device=x.device)
         else:
             len_mask = LengthMask(torch.sum(pad_mask, axis=1), max_len=seq_len, device=x.device)
-        
+        print("X_SHAPE: ",x.size())
+        print("X: ", x)
+        print("X[..., 0]: ", x[..., 0])
+        print("PAD_MASK: ", pad_mask)
+        print("LEN_MASK: ", len_mask)
 
         if self.perm_inv > 1:
             rel_pos = pad_mask * x[..., 4]

@@ -127,7 +127,13 @@ def mp_handler(main_path, raw_data, str2int, output_file, ratio, sample_len_max,
     max_rel_pos = 0
     maxl = 0
     with multiprocessing.Pool(num_workers) as p:
-        for sentences, len_cnter, pos, l in p.imap_unordered(partial(process_single_piece, ratio=ratio, sample_len_max=sample_len_max), [(x, str2int) for x in raw_data]):
+        for sentences, len_cnter, pos, l in p.imap_unordered(
+                partial(
+                    process_single_piece, 
+                    ratio=ratio, 
+                    sample_len_max=sample_len_max), 
+                    [(x, str2int) for x in raw_data]
+                    ):
             merged_sentences.append(sentences)
             mea_len_dis += len_cnter
             max_rel_pos = max(max_rel_pos, pos)
