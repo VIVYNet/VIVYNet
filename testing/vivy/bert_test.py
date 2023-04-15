@@ -15,16 +15,12 @@ class BERT(FairseqEncoder):
     
     def __init__(self, args, dictionary):
         
-        print("\nMODEL-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
         # Super module call
         super().__init__(dictionary)
         
         # Instance variables
         self.device = torch.device("cuda")
         self.args = args
-        
-        print("\nMODEL-A =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Initialize model
         self.model = BertForSequenceClassification.from_pretrained(
@@ -37,33 +33,21 @@ class BERT(FairseqEncoder):
         # Softmax
         self.softmax = torch.nn.LogSoftmax(dim=1)
         
-        print("\nMODEL-B =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
         # Run model on CUDA
         self.model.cuda()
         
-        print("\nMODEL-C =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-    
     def forward(self, src_token, src_length):
-        
-        print("\nMODEL_FORWARD-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Send data to device
         input_ids = src_token.to(self.device).long()
-        
-        print("\nMODEL_FORWARD-A =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Return logits from BERT
         output = self.model(input_ids)
         logits = output["logits"]
         
-        print("\nMODEL_FORWARD-B =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
         # Get the softmax
         sm = self.softmax(logits)
         sm = sm.detach().cpu().clone().numpy()
-        
-        print("\nMODEL_FORWARD-C =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Get the predictions and change its dimensions
         pred = np.argmax(sm, axis=1)
@@ -71,8 +55,6 @@ class BERT(FairseqEncoder):
         pred = torch.Tensor(pred).cuda()
         pred.requires_grad_(True)
         pred = pred.view(length, 1)
-        
-        print("\nMODEL_FORWARD-D =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Return result
         return {"encoder_out": pred}
@@ -83,12 +65,8 @@ class BERTValidityClassifier(FairseqEncoderModel):
     @classmethod
     def build_model(cls, args, task):
         
-        print("\nCLASS_BUILD-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
         # Initiate BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
-        
-        print("\nCLASS_BUILD-A =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Return the wrapped version of the module
         return BERTValidityClassifier(
@@ -98,37 +76,23 @@ class BERTValidityClassifier(FairseqEncoderModel):
 
     def __init__(self, model, input_vocab):
         
-        print("\nTRAIN_INIT-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
         # Retrieves attributes
         super(BERTValidityClassifier, self).__init__(model)
-        
-        print("\nTRAIN_INIT-A =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Save instance variables
         self.model = model
         self.input_vocab = input_vocab
         
-        print("\nTRAIN_INIT-B =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
         # Put model into train mode
         self.model.train()
         
-        print("\nTRAIN_INIT-C =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-    
     def forward(self, src_tokens, src_lengths):
-        
-        print("\nTRAIN_FORWARD-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Clear previously caluclated gradients
         self.model.zero_grad()
         
-        print("\nTRAIN_FORWARD-A =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
         # Get loss and the logits from the model
         logits = self.model(src_tokens, len(src_lengths))
-        
-        print("\nTRAIN_FORWARD-B =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
         
         # Return the logits
         return logits
@@ -236,72 +200,3 @@ class BertCoLATrain(FairseqTask):
     def target_dictionary(self):
         """Return the target :class:`~fairseq.data.Dictionary`."""
         return self.label_vocab
-    
-@register_criterion("nll_loss")
-class ModelCriterion(CrossEntropyCriterion):
-    
-    def forward(self, model, sample, reduce=True):
-        
-        print("\nNLL_LOSS_FORWARD-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
-        # Get output of the model
-        net_output = model(**sample["net_input"])
-        
-        print("\nNLL_LOSS_FORWARD-A =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
-        # Compute the losses of the output
-        losses = self.compute_loss(model, net_output, sample, reduce=reduce)
-        
-        print("\nNLL_LOSS_FORWARD-B =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
-        # Aggregate losses
-        loss = torch.mean(torch.stack(losses))
-        
-        print("\nNLL_LOSS_FORWARD-C =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
-        # Create logging output
-        logging_output = {
-            "loss": loss.data,
-            "ntokens": sample["ntokens"],
-            "nsentences": sample["target"].size(0),
-            "sample_size": sample["ntokens"],
-            "on_sample_size": sample["ntokens"],
-        }
-        
-        print("\nNLL_LOSS_FORWARD-D =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
-        # Return information
-        return loss, sample["ntokens"], logging_output
-    
-    def compute_loss(self, model, net_output, sample, reduce=True):
-        
-        print("\COMPUTE_LOSS-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
-        # Get normalized probability from the net_ouput
-        lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
-        
-        # Declare a list to store losess
-        losses = []
-        
-        # Iterate through all normalized probability
-        for idx, lprobs in enumerate(lprobs_tuple):
-            
-            # Change the probability dimension
-            lprobs = lprobs.view(-1, lprobs.size(-1))
-            
-            # Get the target data
-            target = model.get_targets(sample, net_output)[..., idx].view(-1)
-
-            # Calculate loss
-            loss = F.nll_loss(
-                lprobs,
-                target,
-                ignore_index=self.padding_idx,
-                reduction="sum" if reduce else "none",
-            )
-            
-            # Append the loss to the loss list
-            losses.append(loss)
-            
-        # Return the list of losses
-        return losses

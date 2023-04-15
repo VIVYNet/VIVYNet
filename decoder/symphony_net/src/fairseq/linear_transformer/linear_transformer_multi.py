@@ -683,6 +683,9 @@ class SymphonyModelingTask(LanguageModelingTask):
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
 
+        print(self.args)
+        input()
+        
         dataset = data_utils.load_indexed_dataset(
             split_path, self.dictionary, self.args.dataset_impl, combine=combine
         )
