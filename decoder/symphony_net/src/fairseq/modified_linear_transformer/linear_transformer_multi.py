@@ -329,7 +329,12 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
                 device= encoder_out.device)
         else:
             # WIP: Calc LengthMask when enc_out_len is none
-            enc_len_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
+            enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
+            enc_len_mask = LengthMask(
+                torch.sum(enc_pad_mask, axis=1),
+                max_len=enc_len,
+                device= encoder_out.device)
+            
         
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(
