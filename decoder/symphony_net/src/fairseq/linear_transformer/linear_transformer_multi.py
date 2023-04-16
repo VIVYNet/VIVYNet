@@ -319,6 +319,9 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
 
         outputs = self.model(x, self.attn_mask, len_mask)
+        for name,param in enumerate(self.model.named_parameters()):
+            print(f"PARAM {name}: {param}")
+        # print("PARAM: ",self.model)
         # print("Output: ",outputs)
         outputs = self.ln_f(outputs)
         
