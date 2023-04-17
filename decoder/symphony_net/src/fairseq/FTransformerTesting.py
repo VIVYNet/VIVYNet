@@ -1,5 +1,6 @@
 from fast_transformers.builders import TransformerEncoderBuilder, RecurrentEncoderBuilder, TransformerDecoderBuilder
 from fast_transformers.masking import TriangularCausalMask, LengthMask
+from transformers import BertModel
 
 import logging, math
 import os
@@ -38,23 +39,28 @@ decoder_model = TransformerDecoderBuilder.from_kwargs(
                 cross_attention_type="full", # Fully masked so that each domain can be merged
             ).get()
 
-# print(decoder_model)
+bert = BertModel.from_pretrained("bert-base-uncased")
+
+print(model)
 
 # for name, param in model.named_parameters():
 #     print(f"{name}: {param}")
 
 # for child in decoder_model.children():
 #     for num, c in enumerate(child):
-#         # print(f"{num}: {c}")
-#         for name, param in c.self_attention.named_parameters():
-#             param.requires_grad = True
-#             print(f"{num}./{name}: {param}")
+        # print(f"{num}: {c}")
+        # print(c.self_attention.inner_attention)
+        # for name, param in c.self_attention.named_parameters():
+        #     param.requires_grad = True
+        #     print(f"{num}./{name}: {param}")
 
-print(model.layers)
-# for child in decoder_model.children():
-#     print(child)
-for num, c in enumerate(decoder_model.layers):
-    # print(f"{num}: {c}")
-    for name, param in c.self_attention.named_parameters():
-        param.requires_grad = True
-        print(f"{num}./{name}: {param}")
+# print(decoder_model.layers)
+# # for child in decoder_model.children():
+# #     print(child)
+# for num, c in enumerate(decoder_model.layers):
+#     # print(f"{num}: {c}")
+#     for name, param in c.self_attention.named_parameters():
+#         param.requires_grad = True
+#         print(f"{num}./{name}: {param}")
+
+# print()
