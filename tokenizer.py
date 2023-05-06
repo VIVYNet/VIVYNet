@@ -25,8 +25,8 @@ import os
 # Constants 
 DATASET_LOC = "/mnt/d/Projects/VIVY/Data/Good"
 DATASET_INDEX = json.load(open(f"{DATASET_LOC}/index.json"))
-DATA_TOK_LOC = "/home/blherre4/VIVY/VIVYNet/data"
-FINAL_LOC = "./data/final"
+DATA_TOK_LOC = "./data"
+FINAL_LOC = "./data/final/features"
 
 MIDI_TOK_LOC = f"{DATA_TOK_LOC}/midis"
 TEXT_TOKEN_FILE = f"{DATA_TOK_LOC}/tokens/data.x"
@@ -192,7 +192,7 @@ def text_binarize(train_ratio: float) -> None:
     sorted_word_counts = sorted(word_count.items(), key=lambda x: (-x[1], x[0]), reverse=False)
 
     # write the word counts to a text file in decreasing order of frequency
-    with open(f"{FINAL_LOC}/dict.x.txt", "w") as f:
+    with open(f"{FINAL_LOC}/dict.txt", "w") as f:
         for word, count in sorted_word_counts:
             f.write(f"{word} {count}\n")
 
@@ -200,18 +200,18 @@ def text_binarize(train_ratio: float) -> None:
     train_size = int(totalpiece * train_ratio)
 
     # Binarize for training data
-    train_ds = MMapIndexedDatasetBuilder(f"{FINAL_LOC}/train.x-y.x.bin", dtype=np.uint16)
+    train_ds = MMapIndexedDatasetBuilder(f"{FINAL_LOC}/train.bin", dtype=np.uint16)
     for item in tqdm(data[:train_size], desc='writing bin file (training)'):
         insert = [int(i) for i in item.split()]
         train_ds.add_item(torch.IntTensor(insert))
-    train_ds.finalize(f"{FINAL_LOC}/train.x-y.x.idx")
+    train_ds.finalize(f"{FINAL_LOC}/train.idx")
     
-    # Binarize for training data
-    valid_ds = MMapIndexedDatasetBuilder(f"{FINAL_LOC}/valid.x-y.x.bin", dtype=np.uint16)
+    # Binarize for validation data
+    valid_ds = MMapIndexedDatasetBuilder(f"{FINAL_LOC}/valid.bin", dtype=np.uint16)
     for item in tqdm(data[train_size:], desc='writing bin file (validation)'):
         insert = [int(i) for i in item.split()]
         valid_ds.add_item(torch.IntTensor(insert))
-    valid_ds.finalize(f"{FINAL_LOC}/valid.x-y.x.idx")
+    valid_ds.finalize(f"{FINAL_LOC}/valid.idx")
     
 # Main run thread
 if __name__ == "__main__":

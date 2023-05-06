@@ -329,8 +329,6 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
     def max_positions(self):
         return None
 
-
-
 @register_model_architecture("linear_transformer_multi", "linear_transformer_multi")
 def base_architecture(args):
     
@@ -338,6 +336,9 @@ def base_architecture(args):
     args.num_attention_heads = getattr(args, "num_attention_heads", 16)
     args.num_layers = getattr(args, "num_layers", 12)
     args.dropout = getattr(args, "dropout", 0.1)
+    
+    print(args)
+    input()
 
 @register_model_architecture("linear_transformer_multi", "linear_transformer_multi_large")
 def base_architecture(args):
@@ -345,7 +346,6 @@ def base_architecture(args):
     args.num_attention_heads = getattr(args, "num_attention_heads", 12)
     args.num_layers = getattr(args, "num_layers", 12)
     args.dropout = getattr(args, "dropout", 0.1)
-
 
 class TupleMultiHeadDataset(TokenBlockDataset):
     def __init__(
@@ -636,8 +636,6 @@ class MultiheadDataset(MonolingualDataset):
         source, target = self._maybe_add_bos(source, target)
         return {"id": index, "source": source, "target": target, "on": on}
 
-
-
 @dataclass
 class SymphonyModelingConfig(LanguageModelingConfig):
     
@@ -682,17 +680,24 @@ class SymphonyModelingTask(LanguageModelingTask):
 
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
-
-        print(self.args)
-        input()
         
         dataset = data_utils.load_indexed_dataset(
             split_path, self.dictionary, self.args.dataset_impl, combine=combine
         )
+        
         if dataset is None:
             raise FileNotFoundError(
                 "Dataset not found: {} ({})".format(split, split_path)
             )
+        
+        # print("=-=-=-=-=")
+        # print(self.args.shorten_data_split_list)
+        # print(self.args.shorten_method)
+        # print(self.args.tokens_per_sample)
+        # print(self.args.seed)
+        # input()
+        
+        
         #print('load indexed dataset finished')
         dataset = maybe_shorten_dataset(
             dataset,
@@ -724,6 +729,9 @@ class SymphonyModelingTask(LanguageModelingTask):
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
         )
+        
+        print(len(dataset))
+        input()
 
         self.datasets[split] = self._initialize_dataset(
             dataset=dataset,

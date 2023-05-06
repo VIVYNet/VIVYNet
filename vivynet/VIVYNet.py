@@ -1,5 +1,6 @@
 # Import
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
+from fairseq.tasks.language_modeling import LanguageModelingConfig
 from fairseq.tasks.language_modeling import LanguageModelingTask
 from fairseq.data.shorten_dataset import maybe_shorten_dataset
 from fairseq.criterions import register_criterion
@@ -15,12 +16,10 @@ from fairseq.tasks import (
 )
 from fairseq.data import (
     Dictionary, 
-    LanguagePairDataset,
     TokenBlockDataset,
     data_utils, 
-    shorten_dataset,
-    MonolingualDataset,
-    plasma_utils
+    plasma_utils,
+    LanguagePairDataset
 )
 from fairseq import utils
 
@@ -83,6 +82,36 @@ class SymphonyNet():
 @register_model('vivy')
 class VIVYNet(BaseFairseqModel):
     """Encoder and Decoder Specification for Full Training"""
+    
+    @staticmethod
+    def add_args(parser):
+        """Argument Definition class"""
+        # Shorten Method
+        parser.add_argument('--shorten_method', type=str, metavar='N')
+        
+        # Shorten Data Split List
+        parser.add_argument('--shorten_data_split_list', type=str, metavar='N')
+        
+        # Token Per Sample
+        parser.add_argument('--tokens_per_sample', type=int, metavar='N')
+        
+        # Sample Break Mode
+        parser.add_argument('--sample_break_mode', type=str, metavar='N')
+        
+        # Ratio
+        parser.add_argument('--ratio', type=int, metavar='N')
+        
+        # Sample Overlap Rate
+        parser.add_argument('--sample_overlap_rate', type=int, metavar='N')
+        
+        # Permutation invariance
+        parser.add_argument('--perm_inv', type=int, metavar='N')
+        
+        # Event Token Size
+        parser.add_argument('--evt_voc_size', type=int, metavar='N')
+        
+        # Track Token Size
+        parser.add_argument('--trk_voc_size', type=int, metavar='N')
     
     @classmethod
     def build_model(cls, args, task):
@@ -296,172 +325,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         # Return item
         return source, item, on
 
-# def collate_tokens(
-#     values,
-#     pad_idx,
-#     eos_idx=None,
-#     left_pad=False,
-# ):
-#     """Convert a list of 2d tensors into a padded 3d tensor."""
-#     size = max(v.size(0) for v in values) # max batch size
- 
-#     res = values[0].new(len(values), size, values[0].size(-1)).fill_(pad_idx)
-
-#     def copy_tensor(src, dst):
-#         assert dst.numel() == src.numel()
-#         dst.copy_(src)
-
-#     for i, v in enumerate(values):
-#         copy_tensor(v, res[i][size - len(v) :] if left_pad else res[i][: len(v)])
-
-#     return res
-
-# # pad = 1, eos = 2
-# def collate(samples, pad_idx, eos_idx):
-#     if len(samples) == 0:
-#         return {}
-#     # print('raw length', end = ' ')
-#     # for s in samples:
-#     #     print(len(s['source']), end = ' ')
-#     # print()
-#     def merge(key, is_list=False):
-#         if is_list:
-#             res = []
-#             for i in range(len(samples[0][key])):
-#                 res.append(
-#                     collate_tokens(
-#                         [s[key][i] for s in samples],
-#                         pad_idx,
-#                         eos_idx,
-#                         left_pad=False,
-#                     )
-#                 )
-#             return res
-#         else:
-#             return collate_tokens(
-#                 [s[key] for s in samples],
-#                 pad_idx,
-#                 eos_idx,
-#                 left_pad=False,
-#             )
-
-# class MultiheadDataset(MonolingualDataset):
-#     def __init__(
-#         self,
-#         dataset,
-#         sizes,
-#         src_vocab,
-#         tgt_vocab,
-#         add_eos_for_other_targets,
-#         shuffle,
-#         targets=None,
-#         add_bos_token=False,
-#     ):
-#         # print(len(sizes))
-#         # print(type(dataset))
-#         # print(len(dataset))
-#         self.dataset = dataset
-#         self.sizes = np.array(sizes)
-#         self.vocab = src_vocab
-#         self.tgt_vocab = tgt_vocab
-#         self.add_eos_for_other_targets = add_eos_for_other_targets
-#         self.shuffle = shuffle
-#         self.add_bos_token = add_bos_token
-#         assert not self.add_bos_token, "<bos> is occupied"
-
-#         assert targets is None or all(
-#             t in {"self", "future", "past"} for t in targets
-#         ), "targets must be none or one of 'self', 'future', 'past'"
-#         if targets is not None and len(targets) == 0:
-#             targets = None
-#         assert len(targets) == 1 and targets[0] == 'future'
-#         self.targets = targets
-#     def collater(self, samples):
-#         return collate(samples, self.vocab.pad(), self.vocab.eos())
-
-#     def __getitem__(self, index):
-#         assert self.targets is not None
-#         source, target, on = self.dataset[index]
-#         source, target = self._make_source_target(
-#                 source, target, None
-#             )
-
-#         source, target = self._maybe_add_bos(source, target)
-#         return {"id": index, "source": source, "target": target, "on": on}
-
-# @register_task("text2music")
-# class VIVYData(LanguageModelingTask):
-#     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-#         """Load a given dataset split.
-
-#         Args:
-#             split (str): name of the split (e.g., train, valid, test)
-#         """
-#         paths = utils.split_paths(self.args.data)
-#         assert len(paths) > 0
-
-#         data_path = paths[(epoch - 1) % len(paths)]
-#         split_path = os.path.join(data_path, split)
-
-#         print(self.args)
-#         input()
-        
-#         dataset = data_utils.load_indexed_dataset(
-#             split_path, self.dictionary, self.args.dataset_impl, combine=combine
-#         )
-#         if dataset is None:
-#             raise FileNotFoundError(
-#                 "Dataset not found: {} ({})".format(split, split_path)
-#             )
-#         #print('load indexed dataset finished')
-#         dataset = maybe_shorten_dataset(
-#             dataset,
-#             split,
-#             self.args.shorten_data_split_list,
-#             self.args.shorten_method,
-#             self.args.tokens_per_sample,
-#             self.args.seed,
-#         )
-#         #print('maybe_shorten_dataset finished')
-#         dataset = TupleMultiHeadDataset(
-#             dataset,
-#             dataset.sizes,
-#             self.args.tokens_per_sample,
-#             pad=self.dictionary.pad(),
-#             eos=self.dictionary.eos(),
-#             break_mode=self.args.sample_break_mode,
-#             include_targets=True,
-#             ratio=self.args.ratio + 1,
-#             sample_overlap_rate=self.args.sample_overlap_rate,
-#             permutation_invariant=self.args.perm_inv,
-#             #trk_idx=self.args.trk_idx,
-#             #spec_tok_cnt=self.args.spec_tok_cnt,
-#             evt_vocab_size=self.args.evt_voc_size,
-#             trk_vocab_size=self.args.trk_voc_size,
-#         )
-#         #print('TupleMultiHeadDataset init finished')
-#         add_eos_for_other_targets = (
-#             self.args.sample_break_mode is not None
-#             and self.args.sample_break_mode != "none"
-#         )
-
-#         self.datasets[split] = self._initialize_dataset(
-#             dataset=dataset,
-#             sizes=dataset.sizes,
-#             src_vocab=self.dictionary,
-#             tgt_vocab=self.output_dictionary,
-#             add_eos_for_other_targets=add_eos_for_other_targets,
-#             shuffle=True,
-#             targets=self.targets,
-#             add_bos_token=self.args.add_bos_token,
-#         )
-#         #print('_initialize_dataset finished')
-
-#     # def _initialize_dataset(self, **kwargs):
-#     #     return MultiheadDataset(**kwargs)
-#     # def build_dataset_for_inference(self, src_tokens, src_lengths, **kwargs):
-#     #     assert False, "inference not implemented"
-
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
     """Dataset Class Specification"""
@@ -478,80 +341,56 @@ class VIVYData(LanguageModelingTask):
         """Task setup method"""
         
         # Load dictionaries from the data
-        src_vocab = Dictionary.load(os.path.join(args.data, 'dict.x.txt'))
-        tgt_vocab = Dictionary.load(os.path.join(args.data, 'dict.y.txt'))
+        src_vocab = Dictionary.load(os.path.join(args.data + "/features", 'dict.txt'))
+        tgt_vocab = Dictionary.load(os.path.join(args.data + "/labels/bin", 'dict.txt'))
         print('| [input] dictionary: {} types'.format(len(src_vocab)))
         print('| [label] dictionary: {} types'.format(len(tgt_vocab)))
         
         # Return the instance of the training class
-        return VIVYData(args, src_vocab, tgt_vocab)
+        return VIVYData(args, tgt_vocab, src_vocab)
 
-    def __init__(self, args, input_vocab, label_vocab):
+    def __init__(self, args, label_vocab, input_vocab):
         """Constructor for VIVYTrain class"""
         
         # Set instance variables
         # super().__init__(args)
+        self.args = args
         self.src_vocab = input_vocab
         self.tgt_vocab = label_vocab
-        
+    
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-        
-        # # Get prefix
-        # prefix = os.path.join(self.args.data, '{}.x-y'.format(split))        
-        
-        """
-        SOURCE DATA HANDLING
-        """
-        
-        # Prep source data and the length of the source data
-        sources = []
-        lengths = []
-        
-        # # Read source sentences file
-        # with open(prefix + '.x', encoding='utf-8') as file:
-            
-        #     # Iterate through each line
-        #     for line in file:
-                
-        #         # Strip the source sentence
-        #         sentence = line.strip()
-                
-        #         # Tokenize the sentence, splitting on spaces
-        #         tokens = self.input_vocab.encode_line(
-        #             sentence, add_if_not_exist=False
-        #         )
-                
-        #         # Append tokens to the sentences list
-        #         # and its length to length list
-        #         sources.append(tokens)
-        #         lengths.append(len(tokens))
+        """Load a given dataset split.
 
+        Args:
+            split (str): name of the split (e.g., train, valid, test)
+        """
+        
         """
         TARGET DATA HANDLING
         """
         
         # Split the paths to the data
-        paths = utils.split_paths(self.args.data)
+        paths = utils.split_paths(self.args.data  + "/labels/bin")
         assert len(paths) > 0
         
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
         
-        # Create dataset instance
-        tgt_dataset = data_utils.load_indexed_dataset(
-            split_path, self.dictionary, self.args.dataset_impl, combine=combine
+        # Read and get the information from the .bin and .idx files
+        tgt_datasets = data_utils.load_indexed_dataset(
+            split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
         )
         
         # If no dataset instance is created, raise an error
-        if tgt_dataset is None:
+        if tgt_datasets is None:
             raise FileNotFoundError(
                 "Dataset not found: {} ({})".format(split, split_path)
             )
-        
+
         # Shorten dataset if need be
-        tgt_dataset = shorten_dataset.maybe_shorten_dataset(
-            tgt_dataset,
+        tgt_datasets = maybe_shorten_dataset(
+            tgt_datasets,
             split,
             self.args.shorten_data_split_list,
             self.args.shorten_method,
@@ -559,35 +398,93 @@ class VIVYData(LanguageModelingTask):
             self.args.seed,
         )
         
-        # Create a tupled multihead dataset
-        tgt_dataset = TupleMultiHeadDataset(
-            tgt_dataset,
-            tgt_dataset.sizes,
-            self.args.tokens_per_sample,
-            pad=self.dictionary.pad(),
-            eos=self.dictionary.eos(),
-            break_mode=self.args.sample_break_mode,
-            include_targets=True,
-            ratio=self.args.ratio + 1,
-            sample_overlap_rate=self.args.sample_overlap_rate,
-            permutation_invariant=self.args.perm_inv,
-            evt_vocab_size=self.args.evt_voc_size,
-            trk_vocab_size=self.args.trk_voc_size,
-        )
+        #
+        # Split the combined measures into their corresponding sentences
+        #
+        
+        # Set arrays for splitting
+        temp_arr = []
+        temp_sizes_arr = []
+        tgt_sentences = []
+        tgt_sentence_sizes = []
+        
+        # Iterate through the parsed data and make the splits
+        for idx, item in enumerate(tgt_datasets):
+            # Save the parsed information into the temporary arrays
+            temp_arr.append(item)
+            temp_sizes_arr.append(tgt_datasets.sizes[idx])
+            
+            # Check if the iterated item is an EOS measure
+            if item.tolist() == [2]:
+                # If so, append the temporary information into the resulting arrays
+                tgt_sentences.append(temp_arr)
+                tgt_sentence_sizes.append(temp_sizes_arr)
+                
+                # Reset temporary arrays
+                temp_arr = []
+                temp_sizes_arr = []
+                
+                # Continue
+                continue
+        
+        #
+        # Generate TupleMultiHeadDataset from the spliced target data
+        #
+        
+        # Create a list to store the tupled result
+        tgt_tupled_sentences = []
+        
+        # Iterate through the spliced sentences and make a 
+        # TupleMultiHeadDataset instance from each iterations
+        for idx, item in enumerate(tgt_sentences):
+            # Append the instance to tgt_tupled_sentences
+            tgt_tupled_sentences.append(
+                TupleMultiHeadDataset(
+                    item,
+                    tgt_sentence_sizes[idx],
+                    self.args.tokens_per_sample,
+                    pad=self.tgt_vocab.pad(),
+                    eos=self.tgt_vocab.eos(),
+                    break_mode=self.args.sample_break_mode,
+                    include_targets=True,
+                    ratio=self.args.ratio + 1,
+                    sample_overlap_rate=self.args.sample_overlap_rate,
+                    permutation_invariant=self.args.perm_inv,
+                    evt_vocab_size=self.args.evt_voc_size,
+                    trk_vocab_size=self.args.trk_voc_size,
+                )
+            )
+        
+        """
+        SOURCE DATA HANDLING
+        """
+        
+        # Split the paths to the data
+        paths = utils.split_paths(self.args.data  + "/features")
+        assert len(paths) > 0
+        
+        # Get the path splits
+        data_path = paths[(epoch - 1) % len(paths)]
+        split_path = os.path.join(data_path, split)
+        
+        # Create dataset instance
+        src_dataset = data_utils.load_indexed_dataset(
+            split_path, self.src_vocab, self.args.dataset_impl, combine=combine
+        )       
         
         """
         DATASET COMPILATION
         """
-
+        
         # Generate the dataset
-        self.datasets[split] = LanguagePairDataset(
-            src=sources,
-            src_sizes=lengths,
+        actualdataset = LanguagePairDataset(
+            src=src_dataset,    
+            src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
-            tgt=tgt_dataset,
-            tgt_sizes=tgt_dataset.sizes,
+            tgt=tgt_tupled_sentences,
+            tgt_sizes=[i.sizes for i in tgt_tupled_sentences],
             tgt_dict=self.tgt_vocab
-        )
+        )        
         
     @property
     def source_dictionary(self):

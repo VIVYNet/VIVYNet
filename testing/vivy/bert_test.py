@@ -200,3 +200,76 @@ class BertCoLATrain(FairseqTask):
     def target_dictionary(self):
         """Return the target :class:`~fairseq.data.Dictionary`."""
         return self.label_vocab
+
+@register_criterion("nll_loss")
+class ModelCriterion(CrossEntropyCriterion):
+    
+    #
+    #   NOT NEEDED ANYMORE
+    #
+    
+    def forward(self, model, sample, reduce=True):
+        
+        print("\nNLL_LOSS_FORWARD-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        # Get output of the model
+        net_output = model(**sample["net_input"])
+        
+        print("\nNLL_LOSS_FORWARD-A =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        # Compute the losses of the output
+        losses = self.compute_loss(model, net_output, sample, reduce=reduce)
+        
+        print("\nNLL_LOSS_FORWARD-B =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        # Aggregate losses
+        loss = torch.mean(torch.stack(losses))
+        
+        print("\nNLL_LOSS_FORWARD-C =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        # Create logging output
+        logging_output = {
+            "loss": loss.data,
+            "ntokens": sample["ntokens"],
+            "nsentences": sample["target"].size(0),
+            "sample_size": sample["ntokens"],
+            "on_sample_size": sample["ntokens"],
+        }
+        
+        print("\nNLL_LOSS_FORWARD-D =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        # Return information
+        return loss, sample["ntokens"], logging_output
+    
+    def compute_loss(self, model, net_output, sample, reduce=True):
+        
+        print("\COMPUTE_LOSS-START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        # Get normalized probability from the net_ouput
+        lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
+        
+        # Declare a list to store losess
+        losses = []
+        
+        # Iterate through all normalized probability
+        for idx, lprobs in enumerate(lprobs_tuple):
+            
+            # Change the probability dimension
+            lprobs = lprobs.view(-1, lprobs.size(-1))
+            
+            # Get the target data
+            target = model.get_targets(sample, net_output)[..., idx].view(-1)
+
+            # Calculate loss
+            loss = F.nll_loss(
+                lprobs,
+                target,
+                ignore_index=self.padding_idx,
+                reduction="sum" if reduce else "none",
+            )
+            
+            # Append the loss to the loss list
+            losses.append(loss)
+            
+        # Return the list of losses
+        return losses
