@@ -1,3 +1,10 @@
+"""
+    Filename:       FTransformerTesting
+    Description:    Created for FastTransformer models testing purposes and
+                    deriving layers from the model's architecture to be frozen 
+"""
+
+
 from fast_transformers.builders import TransformerEncoderBuilder, RecurrentEncoderBuilder, TransformerDecoderBuilder
 from fast_transformers.masking import TriangularCausalMask, LengthMask
 from transformers import BertModel
@@ -15,6 +22,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
+"""
+    Description: FastTransformer Encoder-based model, which is assumed to have self-attentions only
+"""
+
 model = TransformerEncoderBuilder.from_kwargs(
     n_layers = 12,
     n_heads = 16,
@@ -25,6 +36,11 @@ model = TransformerEncoderBuilder.from_kwargs(
     dropout = 0.1,
     attention_type = "causal-linear"
 ).get()
+
+"""
+    Description: FastTransformer Decoder-based model, which is assumed to have both self-attentions and cross attentions and 
+                 similar to the original Transformer architecture.
+"""
 
 decoder_model = TransformerDecoderBuilder.from_kwargs(
                 n_layers = 12,
@@ -43,22 +59,24 @@ bert = BertModel.from_pretrained("bert-base-uncased")
 
 print(model)
 
-# for name, param in model.named_parameters():
-#     print(f"{name}: {param}")
+"""
+    Description: Logging derived layers
+"""
 
-# for child in decoder_model.children():
-#     for num, c in enumerate(child):
-        # print(f"{num}: {c}")
-        # print(c.self_attention.inner_attention)
-        # for name, param in c.self_attention.named_parameters():
-        #     param.requires_grad = True
-        #     print(f"{num}./{name}: {param}")
+# # for name, param in model.named_parameters():
+# #     print(f"{name}: {param}")
 
-# print(decoder_model.layers)
 # # for child in decoder_model.children():
-# #     print(child)
+# #     for num, c in enumerate(child):
+# #         print(f"{num}: {c}")
+# #         print(c.self_attention.inner_attention)
+# #         for name, param in c.self_attention.named_parameters():
+# #             param.requires_grad = True
+# #             print(f"{num}./{name}: {param}")
+
+# # print(decoder_model.layers)
+
 # for num, c in enumerate(decoder_model.layers):
-#     # print(f"{num}: {c}")
 #     for name, param in c.self_attention.named_parameters():
 #         param.requires_grad = True
 #         print(f"{num}./{name}: {param}")

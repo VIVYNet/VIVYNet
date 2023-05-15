@@ -185,6 +185,10 @@ class LinearTransformerMultiHeadLM(FairseqLanguageModel):
         return cls(LinearTransformerMultiHeadDecoder(args, task))
 
 
+"""
+    Description: A Linear Encoder2Decoder Transformer model module
+"""
+
 class LinearTransformerMultiHeadDecoder(FairseqDecoder):
     def __init__(self, args, task):
         #TODO: Add dictionary for encoder
@@ -284,14 +288,13 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         return (evt_logits, dur_logits, trk_logits, ins_logits)
 
 
-    # TODO: Understand how SymphonyNet masks work, including LengthMask and TriangularMask
     # TODO: Understand Permutiation Imvariant in code
     def extract_features(
         self,
-        x,
-        encoder_out = None,
-        src_lengths = None,
-        encoder_out_lengths = None
+        x,                          # Target input (Decoder input)
+        encoder_out = None,         # The encoder's output and to be passed in decoder as input
+        src_lengths = None,         # Target input (Decoder input)'s length
+        encoder_out_lengths = None  # Length of the encoder's output
     ):
         bsz, seq_len, ratio = x.size()
         enc_bsz, enc_len = encoder_out.size()
@@ -321,14 +324,14 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
                 max_len=seq_len, 
                 device= x.device)
         
-        # Note: Calc LengthMask for endoer_out_lengths
+        # Note: Calculate LengthMask for endoer_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
                 encoder_out_lengths, 
                 max_len = enc_len,
                 device= encoder_out.device)
         else:
-            # WIP: Calc LengthMask when enc_out_len is none
+            # WIP: Calculate LengthMask when enc_out_len is none
             enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
             enc_len_mask = LengthMask(
                 torch.sum(enc_pad_mask, axis=1),
@@ -363,8 +366,11 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
             pos_emb = self.wpe(position_ids)
         
         x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
-
+        
+        # Note: Output from the original encoder-based model
         outputs = self.model(x, self.attn_mask, len_mask)
+
+        # Note: Output from the modified enc2dec model
         doutputs = self.decoder_model(
             x = x,
             memory = encoder_out,
