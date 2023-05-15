@@ -1,0 +1,16 @@
+fairseq-train /home/blherre4/Projects/VIVY/VIVYNet/data/final \
+  --user-dir /home/blherre4/Projects/VIVY/VIVYNet/vivynet \
+  --task text2music \
+  --criterion nll_loss \
+  --arch vivy_train \
+  --optimizer adam \
+  --lr 0.001 \
+  --max-tokens 1000 \
+  --shorten_method none \
+  --shorten_data_split_list '' \
+  --tokens_per_sample 4096 \
+  --seed 1998 \
+  --sample_break_mode complete_doc --ratio 4 \
+  --sample_overlap_rate 4 \
+  --perm_inv 2 \
+  --evt_voc_size 237 --trk_voc_size 36 

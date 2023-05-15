@@ -1,0 +1,10 @@
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/h.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/g.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/c.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/e.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/d.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/f.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/b.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/a.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/j.mid
+/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis/i.mid
