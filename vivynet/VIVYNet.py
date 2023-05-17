@@ -1,33 +1,33 @@
-# Import
+# Fairseq Imports
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
-from fairseq.tasks.language_modeling import LanguageModelingConfig
-from fairseq.tasks.language_modeling import LanguageModelingTask
-from fairseq.data.shorten_dataset import maybe_shorten_dataset
 from fairseq.criterions import register_criterion
-from fairseq.models import ( 
-    FairseqEncoder, 
-    BaseFairseqModel, 
-    register_model,
-    register_model_architecture
-)
-from fairseq.tasks import (
-    FairseqTask, 
-    register_task
-)
+from fairseq.tasks.language_modeling import LanguageModelingTask
+from fairseq.tasks import register_task
+from fairseq.data.shorten_dataset import maybe_shorten_dataset
 from fairseq.data import (
-    Dictionary, 
+    LanguagePairDataset,
+    MonolingualDataset,
     TokenBlockDataset,
-    data_utils, 
+    Dictionary, 
     plasma_utils,
-    LanguagePairDataset
+    data_utils, 
+)
+from fairseq.models import ( 
+    BaseFairseqModel, 
+    FairseqEncoder,
+    register_model_architecture, 
+    register_model,
 )
 from fairseq import utils
 
+# HuggingFace Imports
 from transformers import BertForSequenceClassification
 
+# Torch Imports
 import torch.nn.functional as F
 import torch
 
+# Miscellaneous Imports
 import numpy as np
 import math
 import os
@@ -160,8 +160,100 @@ def train(args):
     pass
  
 #
-#   DATASET SPECIFICATION
+#   DATASET SPECIFICATIONS
 #
+
+def copy_tensor(src, dst):
+    """Tensor Copying Function"""
+    
+    # Check if the source and target tensors are equal in length
+    assert dst.numel() == src.numel()
+    
+    # Copy the target tokens to the source information
+    dst.copy_(src)
+
+def collate_tokens(
+    values,
+    pad_idx,
+    eos_idx=None,
+    left_pad=False,
+):
+    """2D to 3D Tensor Function"""
+    # Max batch size
+    size = max(v.size(0) for v in values)
+    
+    # Generate the resulting values from the merge
+    res = values[0].new(len(values), size, values[0].size(-1)).fill_(pad_idx)
+        
+    # Iterate through the provided values for collation and copy the 
+    # tensor values to the resulting list 
+    for i, v in enumerate(values):
+        copy_tensor(v, res[i][size - len(v) :] if left_pad else res[i][: len(v)])
+
+    # Return the result 
+    return res
+
+def collate(samples, pad_idx, eos_idx):
+    """Collater Function"""
+    
+    def merge(key, is_list=False):
+        """Merge inner function"""
+        
+        # Check if the the provided key's value is a list datatype
+        if is_list:
+            # If so, append each iterated collated item to a resulting list
+            res = []
+            for i in range(len(samples[0][key])):
+                # Apped the collated tokens to the resulting list
+                res.append(
+                    collate_tokens(
+                        [s[key][i] for s in samples],
+                        pad_idx,
+                        eos_idx,
+                        left_pad=False,
+                    )
+                )
+            
+            # Retun the result of the appending 
+            return res
+        
+        # If the given key is not a list, move here 
+        else:
+            # Just return the collated tokens normally
+            return collate_tokens(
+                [s[key] for s in samples],
+                pad_idx,
+                eos_idx,
+                left_pad=False,
+            )
+            
+    # Return nothing if samples provided is nothing
+    if len(samples) == 0:
+        return {}
+    
+    # Merge the source tokens
+    src_tokens = merge("source")
+    
+    # If the sample's target is empty, merge the target tokens
+    if samples[0]["target"] is not None:
+        is_target_list = isinstance(samples[0]["target"], list)
+        target = merge("target", is_target_list)
+    # If not, set the target equal to the source dataset 
+    else:
+        target = src_tokens
+
+    # Return the resulting information
+    return {
+        "id": torch.LongTensor([s["id"] for s in samples]),
+        "nsentences": len(samples),
+        "ntokens": sum(s["source"].size(0)  for s in samples),
+        "net_input": {
+            "src_tokens": src_tokens,
+            "src_lengths": torch.LongTensor([s["source"].size(0) for s in samples]),
+        },
+        "target": target,
+        "ontokens": sum(s["on"] for s in samples)
+    }
 
 class TupleMultiHeadDataset(TokenBlockDataset):
     """Class Specification for Multiheaded Information"""
@@ -278,15 +370,12 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         start_ds_idx, start_offset, end_ds_idx = self.block_to_dataset_index[index]
         assert start_offset == 0, (start_ds_idx, start_offset, end_ds_idx)
         
-        # Create a starting point randomly
-        st = np.random.randint(start_ds_idx, end_ds_idx+1)
-        
         # Create temporary variables
         buffer = []
         cur_len = 0
         
         # Process information
-        for idx in range(st, end_ds_idx+1):
+        for idx in range(0, end_ds_idx+1):
             tmp = self.dataset[idx].view(-1, self.ratio)
             if self.perm_inv % 2 == 1:
                 all_cc_pos = torch.nonzero(tmp[..., 0] == self.cc_idx).view(-1).tolist()
@@ -296,7 +385,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                     to_swap.append(tmp[pos:nexp, ...])
                 to_swap_idx = torch.randperm(len(to_swap))
                 tmp = torch.cat([tmp[:all_cc_pos[0], ...]] + [to_swap[x] for x in to_swap_idx])
-            mea = (idx-st+1) * 3
+            mea = (idx-1) * 3
             mea_num = torch.zeros((tmp.size(0),1), dtype=int)
             mea_num[2:, 0] = mea
             mea_num[1][0] = mea-1
@@ -324,6 +413,72 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         
         # Return item
         return source, item, on
+
+class MultiheadDataset(MonolingualDataset):
+    """Final Preprocessing of the Multiheaded Datapoints"""
+    def __init__(
+        self,
+        dataset,
+        sizes,
+        src_vocab,
+        tgt_vocab,
+        add_eos_for_other_targets,
+        shuffle,
+        targets=None,
+        add_bos_token=False,
+    ):
+        """Contstructor for the class"""
+        
+        # Variable declaration and initialization
+        self.dataset = dataset
+        self.sizes = np.array(sizes)
+        self.vocab = src_vocab
+        self.tgt_vocab = tgt_vocab
+        self.add_eos_for_other_targets = add_eos_for_other_targets
+        self.shuffle = shuffle
+        self.add_bos_token = add_bos_token
+        
+        # Check if the a token in the given dataset 
+        # is taken the intended <bos> token
+        assert not self.add_bos_token, "<bos> is occupied"
+
+        # Format the target data into correct format where
+        # its geared for future format
+        assert targets is None or all(
+            t in {"self", "future", "past"} for t in targets
+        ), "targets must be none or one of 'self', 'future', 'past'"
+        if targets is not None and len(targets) == 0:
+            targets = None
+        assert len(targets) == 1 and targets[0] == 'future'
+        
+        # Set target data
+        self.targets = targets
+        
+    def collater(self, samples):
+        """Token collater method"""
+        
+        # Return the collated information of the given sample
+        return collate(samples, self.vocab.pad(), self.vocab.eos())
+        
+    def __getitem__(self, index):
+        """Get item of an iterable based on its index"""
+        
+        # Make sure that the target data is not empty
+        assert self.targets is not None
+        
+        # Get the source, target, and on of the passed in dataset
+        source, target, on = self.dataset[index]
+        
+        # Generate the source and target information from the parsed info
+        source, target = self._make_source_target(
+            source, target, None
+        )
+
+        # Add the BOS token 
+        source, target = self._maybe_add_bos(source, target)
+        
+        # Return the processed information
+        return {"id": index, "source": source, "target": target, "on": on}
 
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
@@ -428,32 +583,51 @@ class VIVYData(LanguageModelingTask):
                 continue
         
         #
-        # Generate TupleMultiHeadDataset from the spliced target data
+        # Generate The Target Tokens for the Target Section of the Data
         #
+        
+        # Specification for EOS 
+        add_eos_for_other_targets = (
+            self.args.sample_break_mode is not None
+            and self.args.sample_break_mode != "none"
+        )
         
         # Create a list to store the tupled result
         tgt_tupled_sentences = []
-        
-        # Iterate through the spliced sentences and make a 
-        # TupleMultiHeadDataset instance from each iterations
+
+        # Iterate through the spliced sentences and get the token
+        # representation instances from each iterations
         for idx, item in enumerate(tgt_sentences):
-            # Append the instance to tgt_tupled_sentences
-            tgt_tupled_sentences.append(
-                TupleMultiHeadDataset(
-                    item,
-                    tgt_sentence_sizes[idx],
-                    self.args.tokens_per_sample,
-                    pad=self.tgt_vocab.pad(),
-                    eos=self.tgt_vocab.eos(),
-                    break_mode=self.args.sample_break_mode,
-                    include_targets=True,
-                    ratio=self.args.ratio + 1,
-                    sample_overlap_rate=self.args.sample_overlap_rate,
-                    permutation_invariant=self.args.perm_inv,
-                    evt_vocab_size=self.args.evt_voc_size,
-                    trk_vocab_size=self.args.trk_voc_size,
-                )
+            # Generate the TupleMultiHeadDataset of the dataset
+            tmhd = TupleMultiHeadDataset(
+                item,
+                tgt_sentence_sizes[idx],
+                self.args.tokens_per_sample,
+                pad=self.tgt_vocab.pad(),
+                eos=self.tgt_vocab.eos(),
+                break_mode=self.args.sample_break_mode,
+                include_targets=True,
+                ratio=self.args.ratio + 1,
+                sample_overlap_rate=self.args.sample_overlap_rate,
+                permutation_invariant=self.args.perm_inv,
+                evt_vocab_size=self.args.evt_voc_size,
+                trk_vocab_size=self.args.trk_voc_size,
             )
+            
+            # Generate a MultiheadDataset
+            mhd = self._initialize_dataset(
+                dataset=tmhd,
+                sizes=tmhd.sizes,
+                src_vocab=self.src_vocab,
+                tgt_vocab=self.tgt_vocab,
+                add_eos_for_other_targets=add_eos_for_other_targets,
+                shuffle=True,
+                targets=["future"],
+                add_bos_token=False,
+            )
+            
+            # Append the instance to tgt_tupled_sentences
+            tgt_tupled_sentences.append(mhd[0]["target"])
         
         """
         SOURCE DATA HANDLING
@@ -477,24 +651,28 @@ class VIVYData(LanguageModelingTask):
         """
         
         # Generate the dataset
-        actualdataset = LanguagePairDataset(
+        self.dataset = LanguagePairDataset(
             src=src_dataset,    
             src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
             tgt=tgt_tupled_sentences,
-            tgt_sizes=[i.sizes for i in tgt_tupled_sentences],
+            tgt_sizes=[len(i) for i in tgt_tupled_sentences],
             tgt_dict=self.tgt_vocab
         )        
         
     @property
     def source_dictionary(self):
         """Return the source :class:`~fairseq.data.Dictionary`."""
-        return self.input_vocab
+        return self.src_vocab
 
     @property
     def target_dictionary(self):
         """Return the target :class:`~fairseq.data.Dictionary`."""
-        return self.label_vocab
+        return self.tgt_vocab
+    
+    def _initialize_dataset(self, **kwargs):
+        """Method to Initialize the Target Data"""
+        return MultiheadDataset(**kwargs)
 
 #
 #   CRITERION SPECIFICATION
