@@ -2,7 +2,7 @@
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
 from fairseq.criterions import register_criterion
 from fairseq.tasks.language_modeling import LanguageModelingTask
-from fairseq.tasks import FairseqTask, register_task
+from fairseq.tasks import register_task
 from fairseq.data.shorten_dataset import maybe_shorten_dataset
 from fairseq.data import (
     LanguagePairDataset,
@@ -28,50 +28,9 @@ import torch.nn.functional as F
 import torch
 
 # Miscellaneous Import
-from colorama import Fore, Style, init
 import numpy as np
-import inspect
 import math
 import os
-
-#
-#   DEBUGGING
-#
-
-class Debug():
-    """Debug Class"""
-    
-    # Color dictionary
-    colors = {
-        0: Fore.WHITE,
-        1: Fore.BLACK,
-        2: Fore.RED,
-        3: Fore.GREEN,
-        4: Fore.YELLOW,
-        5: Fore.BLUE,
-        6: Fore.MAGENTA,
-        7: Fore.CYAN
-    }
-    
-    def __init__(self, name, color):
-        """Constructor Method"""
-        
-        # Get the color
-        self.color = Debug.colors[color]
-        
-        # Get the class name
-        self.name = name
-        
-
-    def ldf(self, iter):
-        """Litmus Debug Method"""
-        
-        # Get function name
-        frame = inspect.currentframe().f_back
-        func_name = inspect.getframeinfo(frame).function
-    
-        # Litmus print
-        print(f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}")
 
 #
 #   MODEL SPECIFICATION
@@ -80,58 +39,41 @@ class Debug():
 class BERT(FairseqEncoder):
     """BERT Model Declaration"""    
     
-    debug = Debug("BERT", 6)
-    
     def __init__(self, args, dictionary):
         """Constructor for BERT specifications"""
         
-        BERT.debug.ldf("<< START >>")
-        
         # Super module call
         super().__init__(dictionary)
-        BERT.debug.ldf("super()")
         
         # Instance variables
         self.device = torch.device("cuda")
         self.args = args
-        BERT.debug.ldf("var dev")
         
         # Initialize model
         self.model = BertForSequenceClassification.from_pretrained(
             "bert-base-multilingual-cased"
         )
-        BERT.debug.ldf("pretrained model")
         
         # Run model of CUDA
         self.model.cuda()
-        BERT.debug.ldf("model CUDA")
-        BERT.debug.ldf("<< END >>")
         
     def forward(self, src_token, src_length):
         """Forward function to specify forward propogation"""
         
-        BERT.debug.ldf("<< START >>")
-        print("\n>>>>>>>>>>>>>>>>>>>>>>>")
+        print(">>>>>>")
         input(src_token)
         
         # Send data to device
         src_token = src_token.to(self.device).long()
-        BERT.debug.ldf("src_token")
         
         # Return logits from BERT
         output = self.model(src_token)
-        BERT.debug.ldf("output")
         
         # Return result
-        BERT.debug.ldf("<< END >>")
         return output
     
 class SymphonyNet():
     """SymphonyNet Model Specification"""
-    
-    # DEBUG
-    debug = Debug("SymphonyNet", 2)
-    debug.ldf("<< SymphonyNet >>")
     
     # Pass
     pass
@@ -144,113 +86,79 @@ class SymphonyNet():
 class VIVYNet(BaseFairseqModel):
     """Encoder and Decoder Specification for Full Training"""
     
-    # DEBUG
-    debug = Debug("VIVYNet", 3)
-    
     @staticmethod
     def add_args(parser):
         """Argument Definition class"""
-        VIVYNet.debug.ldf("<< START >>")
         
         # Shorten Method
         parser.add_argument('--shorten_method', type=str, metavar='N')
-        VIVYNet.debug.ldf("shorten_method")
         
         # Shorten Data Split List
         parser.add_argument('--shorten_data_split_list', type=str, metavar='N')
-        VIVYNet.debug.ldf("shorten_data_split_list")
         
         # Token Per Sample
         parser.add_argument('--tokens_per_sample', type=int, metavar='N')
-        VIVYNet.debug.ldf("tokens_per_sample")
         
         # Sample Break Mode
         parser.add_argument('--sample_break_mode', type=str, metavar='N')
-        VIVYNet.debug.ldf("sample_break_mode")
         
         # Ratio
         parser.add_argument('--ratio', type=int, metavar='N')
-        VIVYNet.debug.ldf("ratio")
         
         # Sample Overlap Rate
         parser.add_argument('--sample_overlap_rate', type=int, metavar='N')
-        VIVYNet.debug.ldf("sample_overlap_rate")
         
         # Permutation invariance
         parser.add_argument('--perm_inv', type=int, metavar='N')
-        VIVYNet.debug.ldf("perm_inv")
         
         # Event Token Size
         parser.add_argument('--evt_voc_size', type=int, metavar='N')
-        VIVYNet.debug.ldf("evt_voc_size")
         
         # Track Token Size
         parser.add_argument('--trk_voc_size', type=int, metavar='N')
-        VIVYNet.debug.ldf("trk_voc_size")
-        VIVYNet.debug.ldf("<< END >>")
     
     @classmethod
     def build_model(cls, args, task):
         """Build model function"""
         
-        VIVYNet.debug.ldf("<< START >>")
-        
         # Create BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
-        VIVYNet.debug.ldf("bert")
         
         # Create SymphonyNet model
         symphony_net = SymphonyNet()
-        VIVYNet.debug.ldf("symphony_net")
         
-        # Return
-        VIVYNet.debug.ldf("<< END >>") 
+        # Return 
         return VIVYNet(bert, symphony_net, task.source_dictionary)
 
     def __init__(self, encoder, decoder, input_vocab):
         """Constructor for the VIVYNet model"""
         
-        VIVYNet.debug.ldf("<< START >>")
-        
         # Retrieves attributes
         super(VIVYNet, self).__init__()
-        VIVYNet.debug.ldf("super()")
         
         # Create instance variables based on parameters given
         self.encoder = encoder
         # self.decoder = decoder
         self.input_vocab = input_vocab
-        VIVYNet.debug.ldf("var dec")
         
         # Put models into train mode
         self.encoder.train()
-        VIVYNet.debug.ldf("encoder.train")
-        VIVYNet.debug.ldf("<< END >>")
     
     def forward(self, src_tokens, src_lengths):
         """Forward propagation method"""
         
-        VIVYNet.debug.ldf("<< START >>")
-        
         # Clear previously caluclated gradients
         self.encoder.zero_grad()
-        VIVYNet.debug.ldf("encoder.zero_grad()")
         
         # Get loss and the logits from the model
         result = self.encoder(src_tokens, len(src_lengths))
-        VIVYNet.debug.ldf("res 1")
         
         # Return the logits
-        VIVYNet.debug.ldf("<< END >>")
         return result
 
 @register_model_architecture('vivy', 'vivy_train')
 def train(args):
     """Train function"""
-    
-    # DEBUG
-    debug = Debug("train", 4)
-    debug.ldf("<< train >>")
     
     # Do nothing
     pass
@@ -577,52 +485,37 @@ class MultiheadDataset(MonolingualDataset):
         return {"id": index, "source": source, "target": target, "on": on}
 
 @register_task('text2music')
-class VIVYData(FairseqTask):
+class VIVYData(LanguageModelingTask):
     """Dataset Class Specification"""
-    
-    debug = Debug("VIVYData", 7)
     
     @staticmethod
     def add_args(parser):
         """Argument parsing"""
         
-        VIVYData.debug.ldf("<< START >>")
-        
         # Get the data 
         parser.add_argument('data', metavar='FILE', help='data')
-        VIVYData.debug.ldf("data")
-        VIVYData.debug.ldf("<< END >>")
     
     @classmethod
     def setup_task(cls, args, **kwargs):
         """Task setup method"""
         
-        VIVYData.debug.ldf("<< START >>")
-        
         # Load dictionaries from the data
         src_vocab = Dictionary.load(os.path.join(args.data + "/features", 'dict.txt'))
-        VIVYData.debug.ldf("src_vocab")
         tgt_vocab = Dictionary.load(os.path.join(args.data + "/labels/bin", 'dict.txt'))
-        VIVYData.debug.ldf("tgt_vocab")
         print('| [input] dictionary: {} types'.format(len(src_vocab)))
         print('| [label] dictionary: {} types'.format(len(tgt_vocab)))
         
         # Return the instance of the training class
-        VIVYData.debug.ldf("<< END >>")
         return VIVYData(args, tgt_vocab, src_vocab)
 
     def __init__(self, args, label_vocab, input_vocab):
         """Constructor for VIVYTrain class"""
         
-        VIVYData.debug.ldf("<< START >>")
-        
         # Set instance variables
-        super().__init__(args)
-        # self.args = args
+        # super().__init__(args)
+        self.args = args
         self.src_vocab = input_vocab
         self.tgt_vocab = label_vocab
-        VIVYData.debug.ldf("var dec")
-        VIVYData.debug.ldf("<< END >>")
     
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         """Load a given dataset split.
@@ -635,23 +528,18 @@ class VIVYData(FairseqTask):
         TARGET DATA HANDLING
         """
         
-        VIVYData.debug.ldf("<< START >>")
-        
         # Split the paths to the data
         paths = utils.split_paths(self.args.data  + "/labels/bin")
         assert len(paths) > 0
-        VIVYData.debug.ldf("TGT - paths")
         
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
-        VIVYData.debug.ldf("TGT - path split")
         
         # Read and get the information from the .bin and .idx files
         tgt_datasets = data_utils.load_indexed_dataset(
             split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf("TGT - tgt_datasets")
         
         # If no dataset instance is created, raise an error
         if tgt_datasets is None:
@@ -668,7 +556,6 @@ class VIVYData(FairseqTask):
             self.args.tokens_per_sample,
             self.args.seed,
         )
-        VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
         
         #
         # Split the combined measures into their corresponding sentences
@@ -679,7 +566,6 @@ class VIVYData(FairseqTask):
         temp_sizes_arr = []
         tgt_sentences = []
         tgt_sentence_sizes = []
-        VIVYData.debug.ldf("TGT - split setup")
         
         # Iterate through the parsed data and make the splits
         for idx, item in enumerate(tgt_datasets):
@@ -699,7 +585,6 @@ class VIVYData(FairseqTask):
                 
                 # Continue
                 continue
-        VIVYData.debug.ldf("TGT - split iteration")
         
         #
         # Generate The Target Tokens for the Target Section of the Data
@@ -710,11 +595,9 @@ class VIVYData(FairseqTask):
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
         )
-        VIVYData.debug.ldf("TGT - add_eos_for_other_targets")
         
         # Create a list to store the tupled result
         tgt_tupled_sentences = []
-        VIVYData.debug.ldf("TGT - tupled setup")
 
         # Iterate through the spliced sentences and get the token
         # representation instances from each iterations
@@ -749,7 +632,6 @@ class VIVYData(FairseqTask):
             
             # Append the instance to tgt_tupled_sentences
             tgt_tupled_sentences.append(mhd[0]["target"])
-        VIVYData.debug.ldf("TGT - *FINALIZED*")
         
         """
         SOURCE DATA HANDLING
@@ -758,25 +640,22 @@ class VIVYData(FairseqTask):
         # Split the paths to the data
         paths = utils.split_paths(self.args.data  + "/features")
         assert len(paths) > 0
-        VIVYData.debug.ldf("SRC - paths")
         
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
-        VIVYData.debug.ldf("SRC - path split")
         
         # Create dataset instance
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
-        )
-        VIVYData.debug.ldf("SRC - *FINALIZED*")       
+        )       
         
         """
         DATASET COMPILATION
         """
         
         # Generate the dataset
-        self.datasets[split] = LanguagePairDataset(
+        self.dataset = LanguagePairDataset(
             src=src_dataset,    
             src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
@@ -784,19 +663,15 @@ class VIVYData(FairseqTask):
             tgt_sizes=[len(i) for i in tgt_tupled_sentences],
             tgt_dict=self.tgt_vocab
         )
-        VIVYData.debug.ldf("COMPILATION")
-        VIVYData.debug.ldf("<< END >>")
         
     @property
     def source_dictionary(self):
         """Return the source :class:`~fairseq.data.Dictionary`."""
-        VIVYData.debug.ldf("<< src_vocab >>")
         return self.src_vocab
 
     @property
     def target_dictionary(self):
         """Return the target :class:`~fairseq.data.Dictionary`."""
-        VIVYData.debug.ldf("<< tgt_vocab >>")
         return self.tgt_vocab
     
     def _initialize_dataset(self, **kwargs):
