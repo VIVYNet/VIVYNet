@@ -278,7 +278,7 @@ class SymphonyNet(FairseqDecoder):
 #
 
 @register_model('vivy')
-class VIVYNet(BaseFairseqModel):
+class VIVYNet(FairseqEncoderDecoderModel):
     """Encoder and Decoder Specification for Full Training"""
     
     @staticmethod
@@ -319,10 +319,10 @@ class VIVYNet(BaseFairseqModel):
         bert = BERT(args=args, dictionary=task.source_dictionary)
         
         # Create SymphonyNet model
-        symphony_net = SymphonyNet()
+        symphony_net = SymphonyNet(args=args, task= task)
         
         # Return 
-        return VIVYNet()
+        return VIVYNet(bert, symphony_net)
 
     def __init__(self, encoder, decoder, input_vocab):
         """Constructor for the VIVYNet model"""
