@@ -13,8 +13,10 @@ from fairseq.data import (
     data_utils, 
 )
 from fairseq.models import ( 
-    BaseFairseqModel, 
+    BaseFairseqModel,
+    FairseqDecoder, 
     FairseqEncoder,
+    FairseqEncoderDecoderModel,
     register_model_architecture, 
     register_model,
 )
@@ -24,11 +26,19 @@ from fairseq import utils
 from transformers import BertForSequenceClassification
 
 # Torch Imports
-import torch.nn.functional as F
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import Tensor
+
+# FastTransformer Imports
+from fast_transformers.builders import TransformerEncoderBuilder, TransformerDecoderBuilder
+from fast_transformers.masking import TriangularCausalMask, LengthMask, FullMask
 
 # Miscellaneous Imports
 import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
 import math
 import os
 
@@ -69,11 +79,199 @@ class BERT(FairseqEncoder):
         # Return result
         return output
     
-class SymphonyNet():
+class SymphonyNet(FairseqDecoder):
     """SymphonyNet Model Specification"""
+    def __init__(self, args, task):
+        #TODO: Add dictionary for encoder
+        super().__init__(task.target_dictionary)
+        #print(task.target_dictionary)
+        # for i in range(len(task.target_dictionary)):
+        #     print(i, task.target_dictionary[i])
+        self.embed_dim = args.embed_dim
+        self.wEvte = nn.Embedding(args.evt_voc_size, args.embed_dim)
+        self.wTrke = nn.Embedding(args.trk_voc_size, args.embed_dim)
+        self.wDure = nn.Embedding(args.dur_voc_size, args.embed_dim)
+        self.max_pos = args.tokens_per_sample
+
+        self.perm_inv = args.perm_inv
+        if self.perm_inv > 1:
+            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.embed_dim) 
+            self.wMpe = nn.Embedding(args.max_mea_pos+1, args.embed_dim)
+        else:
+            self.wpe = nn.Embedding(self.max_pos+1, args.embed_dim) # max_pos_len = 4096
+        self.drop = nn.Dropout(args.dropout)
+        self.ln_f = nn.LayerNorm(args.embed_dim, eps=1e-6)
+        
+        self.decoder_model = TransformerDecoderBuilder.from_kwargs(
+                n_layers = args.num_layers,
+                n_heads=args.num_attention_heads,
+                query_dimensions=args.embed_dim // args.num_attention_heads,
+                value_dimensions=args.embed_dim // args.num_attention_heads,
+                feed_forward_dimensions=4 * args.embed_dim,
+                activation='gelu',
+                #final_normalization=True,
+                dropout=args.dropout,
+                self_attention_type="causal-linear", 
+                cross_attention_type="full", # Fully masked so that each domain can be merged
+            ).get()
+
+        self.attn_mask = TriangularCausalMask(self.max_pos)
+        self.proj_evt = nn.Linear(args.embed_dim, args.evt_voc_size, bias=False)
+        self.proj_dur = nn.Linear(args.embed_dim, args.dur_voc_size, bias=False)
+        self.proj_trk = nn.Linear(args.embed_dim, args.trk_voc_size, bias=False)
+        self.proj_ins = nn.Linear(args.embed_dim, args.ins_voc_size, bias=False)
+
+        self.apply(self._init_weights)
+        # set zero embedding for padding symbol
+        #TODO: check will the pad id be trained? (as TZ RZ YZ)
+        self.pad_idx = task.target_dictionary.pad()
+        self.wEvte.weight.data[self.pad_idx].zero_()
+        self.wDure.weight.data[self.pad_idx].zero_()
+        self.wTrke.weight.data[self.pad_idx].zero_()
+        if self.perm_inv > 1:
+            self.wRpe.weight.data[0].zero_()
+            self.wMpe.weight.data[0].zero_()
+        else:
+            self.wpe.weight.data[0].zero_()
+            
+    def _init_weights(self, module):
+        if isinstance(module, (nn.Linear, nn.Embedding)):
+            module.weight.data.normal_(mean=0.0, std=self.embed_dim ** -0.5)
+            if isinstance(module, nn.Linear) and module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
+
+    def forward(
+        self,
+        encoder_out,
+        x,
+        src_lengths = None,
+        encoder_out_lengths = None,
+    ):
+        features = self.extract_features(
+            x = x, 
+            encoder_out = encoder_out,
+            src_lengths = src_lengths,
+            encoder_out_lengths = encoder_out_lengths
+            )
+        
+        evt_logits = self.proj_evt(features)
+        dur_logits = self.proj_dur(features)
+        trk_logits = self.proj_trk(features)
+        ins_logits = self.proj_ins(features)
+
+        return (evt_logits, dur_logits, trk_logits, ins_logits)
+
+    # TODO: Understand how SymphonyNet masks work, including LengthMask and TriangularMask
+    # TODO: Understand Permutiation Imvariant in code
+    def extract_features(
+        self,
+        x,
+        encoder_out = None,
+        src_lengths = None,
+        encoder_out_lengths = None
+    ):
+        bsz, seq_len, ratio = x.size()
+        enc_bsz, enc_len = encoder_out.size()
+
+        evt_emb = self.wEvte(x[..., 0])
+
+        # if not mapping to pad, padding idx will only occer at last
+        evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) 
+        tmp = self.wDure(x[..., 1])
+        dur_emb = tmp * evton_mask
+        # assert ((tmp==dur_emb).all())
+        tmp = self.wTrke(x[..., 2])
+        trk_emb = tmp * evton_mask
+        # assert ((tmp==trk_emb).all())
+
+        # Note: Calc LengthMask for src_lengths
+        pad_mask = x[..., 0].ne(self.pad_idx).long().to(x.device)
+        if src_lengths is not None:
+            len_mask = LengthMask(
+                src_lengths, 
+                max_len=seq_len, 
+                device=x.device
+                )
+        else:
+            len_mask = LengthMask(
+                torch.sum(pad_mask, axis=1), 
+                max_len=seq_len, 
+                device= x.device)
+        
+        # Note: Calc LengthMask for endoer_out_lengths
+        if encoder_out_lengths is not None:
+            enc_len_mask = LengthMask(
+                encoder_out_lengths, 
+                max_len = enc_len,
+                device= encoder_out.device)
+        else:
+            # WIP: Calc LengthMask when enc_out_len is none
+            enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
+            enc_len_mask = LengthMask(
+                torch.sum(enc_pad_mask, axis=1),
+                max_len=enc_len,
+                device= encoder_out.device)
+            
+        
+        # WIP: Implement FullMask for Cross Attention layer
+        full_mask = FullMask(
+            N = seq_len,
+            M = enc_len,
+            device = x.device
+        )
+        
+        # Note: Perform Permutation Invariant
+        if self.perm_inv > 1:
+            rel_pos = pad_mask * x[..., 4]
+            rel_pos_mask = rel_pos.ne(0).float()[..., None].to(x.device) # ignore bom, chord, eos
+
+            measure_ids = pad_mask * x[..., 5]
+            mea_mask = measure_ids.ne(0).float()[..., None].to(x.device) # ignore eos
+            
+            pos_emb = rel_pos_mask * self.wRpe(rel_pos) + mea_mask * self.wMpe(measure_ids)
+
+        else:
+            # set position ids to exclude padding symbols
+            position_ids = pad_mask * (
+                torch.arange(1, 1 + seq_len)
+                .to(x.device)
+                .repeat(bsz, 1)
+            )
+            pos_emb = self.wpe(position_ids)
+        
+        x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
+
+        doutputs = self.decoder_model(
+            x = x,
+            memory = encoder_out,
+            x_mask = self.attn_mask,
+            x_length_mask = len_mask,
+            memory_mask = full_mask, #WIP
+            memory_length_mask = enc_len_mask #WIP
+        )
+        # print("Output: ",outputs)
+        doutputs = self.ln_f(doutputs)
+        
+        return doutputs
     
-    # Pass
-    pass
+    def get_normalized_probs(
+        self,
+        net_output: Tuple[Tensor, Optional[Dict[str, List[Optional[Tensor]]]]],
+        log_probs: bool,
+        sample: Optional[Dict[str, Tensor]] = None,
+    ):
+        """Get normalized probabilities (or log probs) from a net's output."""
+
+        if log_probs:
+            return tuple(utils.log_softmax(logits, dim=-1, onnx_trace=self.onnx_trace) for logits in net_output)
+        else:
+            return tuple(utils.softmax(logits, dim=-1, onnx_trace=self.onnx_trace) for logits in net_output)
+
+    def max_positions(self):
+        return None
 
 #
 #   FULL MODEL DEFINITION
