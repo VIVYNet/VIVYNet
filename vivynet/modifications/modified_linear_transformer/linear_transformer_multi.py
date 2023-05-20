@@ -25,7 +25,8 @@ from fairseq.models import (
     register_model_architecture,
 )
 from fairseq.data import (
-    MonolingualDataset, 
+    MonolingualDataset,
+    LanguagePairDataset, 
     TokenBlockDataset,
     plasma_utils,
     data_utils,
@@ -207,20 +208,6 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         self.drop = nn.Dropout(args.dropout)
         self.ln_f = nn.LayerNorm(args.embed_dim, eps=1e-6)
         
-
-        self.model = TransformerEncoderBuilder.from_kwargs(
-                n_layers=args.num_layers,
-                n_heads=args.num_attention_heads,
-                query_dimensions=args.embed_dim // args.num_attention_heads,
-                value_dimensions=args.embed_dim // args.num_attention_heads,
-                feed_forward_dimensions=4 * args.embed_dim,
-                activation='gelu',
-                #final_normalization=True,
-                dropout=args.dropout,
-                attention_type="causal-linear",
-                #feature_map=Favor.factory(n_dims=self.d_model)
-            ).get()
-        
         self.decoder_model = TransformerDecoderBuilder.from_kwargs(
                 n_layers = args.num_layers,
                 n_heads=args.num_attention_heads,
@@ -364,7 +351,6 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
         
         x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
 
-        outputs = self.model(x, self.attn_mask, len_mask)
         doutputs = self.decoder_model(
             x = x,
             memory = encoder_out,
@@ -374,9 +360,9 @@ class LinearTransformerMultiHeadDecoder(FairseqDecoder):
             memory_length_mask = enc_len_mask #WIP
         )
         # print("Output: ",outputs)
-        outputs = self.ln_f(outputs)
+        doutputs = self.ln_f(doutputs)
         
-        return outputs
+        return doutputs
 
     def get_normalized_probs(
         self,
@@ -657,6 +643,37 @@ def collate(samples, pad_idx, eos_idx):
         "ontokens": sum(s["on"] for s in samples)
     }
 
+class PairDataset(LanguagePairDataset):
+    def __init__(
+        self, 
+        src, 
+        src_sizes, 
+        src_dict, 
+        tgt=None, 
+        tgt_sizes=None, 
+        tgt_dict=None, 
+        left_pad_source=True, 
+        left_pad_target=False, 
+        shuffle=True, 
+        input_feeding=True, 
+        remove_eos_from_source=False, 
+        append_eos_to_target=False, 
+        align_dataset=None, 
+        constraints=None, 
+        append_bos=False, 
+        eos=None, 
+        num_buckets=0, 
+        src_lang_id=None, 
+        tgt_lang_id=None, 
+        pad_to_multiple=1):
+        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, left_pad_source, left_pad_target, shuffle, input_feeding, remove_eos_from_source, append_eos_to_target, align_dataset, constraints, append_bos, eos, num_buckets, src_lang_id, tgt_lang_id, pad_to_multiple)
+        #TODO: Initialization
+
+    def __getitem__(self, index):
+        #TODO:
+        return super().__getitem__(index)
+    
+
 class MultiheadDataset(MonolingualDataset):
     def __init__(
         self,
@@ -798,6 +815,10 @@ class SymphonyModelingTask(LanguageModelingTask):
             add_bos_token=self.args.add_bos_token,
         )
         #print('_initialize_dataset finished')
+
+    def _pair_dataset(self, **kwargs):
+        #TODO: Return LanguagePairDataset module 
+        pass
 
     def _initialize_dataset(self, **kwargs):
         return MultiheadDataset(**kwargs)

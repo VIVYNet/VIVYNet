@@ -1,5 +1,5 @@
-fairseq-train /home/blherre4/Projects/VIVY/VIVYNet/data/final \
-  --user-dir /home/blherre4/Projects/VIVY/VIVYNet/vivynet \
+fairseq-train ../data/final \
+  --user-dir ./ \
   --task text2music \
   --criterion nll_loss \
   --arch vivy_train \
