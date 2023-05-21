@@ -703,6 +703,7 @@ class PairDataset(LanguagePairDataset):
         tgt_lang_id=None, 
         pad_to_multiple=1):
         super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, left_pad_source, left_pad_target, shuffle, input_feeding, remove_eos_from_source, append_eos_to_target, align_dataset, constraints, append_bos, eos, num_buckets, src_lang_id, tgt_lang_id, pad_to_multiple)
+        #TODO: Add padding and special tokens for each modality
         self.src = src
         self.src_dict = src_dict
         self.tgt = tgt
@@ -912,7 +913,8 @@ class VIVYData(LanguageModelingTask):
         return MultiheadDataset(**kwargs)
 
     def _initialize_pair_dataset(self, **kwargs):
-        pass
+        """Method to Initialize the Pair Dataset (Text, Midi)"""
+        return PairDataset(**kwargs)
 #
 #   CRITERION SPECIFICATION
 #
