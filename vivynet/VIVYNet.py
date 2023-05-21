@@ -678,6 +678,45 @@ class MultiheadDataset(MonolingualDataset):
         # Return the processed information
         return {"id": index, "source": source, "target": target, "on": on}
 
+
+class PairDataset(LanguagePairDataset):
+    def __init__(
+        self, 
+        src, 
+        src_sizes, 
+        src_dict, 
+        tgt=None, 
+        tgt_sizes=None, 
+        tgt_dict=None, 
+        left_pad_source=True, 
+        left_pad_target=False, 
+        shuffle=True, 
+        input_feeding=True, 
+        remove_eos_from_source=False, 
+        append_eos_to_target=False, 
+        align_dataset=None, 
+        constraints=None, 
+        append_bos=False, 
+        eos=None, 
+        num_buckets=0, 
+        src_lang_id=None, 
+        tgt_lang_id=None, 
+        pad_to_multiple=1):
+        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, left_pad_source, left_pad_target, shuffle, input_feeding, remove_eos_from_source, append_eos_to_target, align_dataset, constraints, append_bos, eos, num_buckets, src_lang_id, tgt_lang_id, pad_to_multiple)
+        self.src = src
+        self.src_dict = src_dict
+        self.tgt = tgt
+        self.tgt_dict = tgt_dict
+        self.append_bos = append_bos
+        self.append_eos_to_target = append_eos_to_target
+
+    def __getitem__(self, index):
+        enc_input = self.src[index]
+        dec_input, target, on = self.tgt[index]
+
+        return {"id": index, "enc_input": enc_input, "dec_input:": dec_input, "target": target, "on": on}
+    
+
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
     """Dataset Class Specification"""
@@ -872,6 +911,8 @@ class VIVYData(LanguageModelingTask):
         """Method to Initialize the Target Data"""
         return MultiheadDataset(**kwargs)
 
+    def _initialize_pair_dataset(self, **kwargs):
+        pass
 #
 #   CRITERION SPECIFICATION
 #
