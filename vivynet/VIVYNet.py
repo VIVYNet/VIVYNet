@@ -13,8 +13,11 @@ from fairseq.data import (
     data_utils, 
 )
 from fairseq.models import ( 
+    FairseqEncoderDecoderModel,
+    FairseqLanguageModel,
     BaseFairseqModel, 
     FairseqEncoder,
+    FairseqDecoder,
     register_model_architecture, 
     register_model,
 )
@@ -126,22 +129,55 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("<< END >>")
         return output
     
-class SymphonyNet():
+class SymphonyNet(FairseqDecoder):
     """SymphonyNet Model Specification"""
     
     # DEBUG
     debug = Debug("SymphonyNet", 2)
-    debug.ldf("<< SymphonyNet >>")
     
-    # Pass
-    pass
-
+    def __init__(self, args, dictionary):
+        """Constructor for BERT specifications"""
+        
+        SymphonyNet.debug.ldf("<< START >>")
+        
+        # Super module call
+        super().__init__(dictionary)
+        SymphonyNet.debug.ldf("super()")
+        
+        # Instance variables
+        self.device = torch.device("cuda")
+        self.args = args
+        SymphonyNet.debug.ldf("var dev")
+        
+        # Initialize model
+        self.model = BertForSequenceClassification.from_pretrained(
+            "bert-base-multilingual-cased"
+        )
+        SymphonyNet.debug.ldf("pretrained model")
+        
+        # Run model of CUDA
+        self.model.cuda()
+        SymphonyNet.debug.ldf("model CUDA")
+        SymphonyNet.debug.ldf("<< END >>")
+    
+    def forward(self, prev_output_tokens, encoder_out=None):
+        """Forward function to specify forward propogation"""
+        
+        SymphonyNet.debug.ldf("<< START >>")
+        
+        print(prev_output_tokens)
+        print(encoder_out)
+        
+        # Return information
+        SymphonyNet.debug.ldf("<< END >>")
+        return(prev_output_tokens)
+        
 #
 #   FULL MODEL DEFINITION
 #
 
 @register_model('vivy')
-class VIVYNet(BaseFairseqModel):
+class VIVYNet(FairseqEncoderDecoderModel):
     """Encoder and Decoder Specification for Full Training"""
     
     # DEBUG
@@ -200,26 +236,25 @@ class VIVYNet(BaseFairseqModel):
         VIVYNet.debug.ldf("bert")
         
         # Create SymphonyNet model
-        symphony_net = SymphonyNet()
+        symphony_net = SymphonyNet(args=args, dictionary=task.target_dictionary)
         VIVYNet.debug.ldf("symphony_net")
         
         # Return
         VIVYNet.debug.ldf("<< END >>") 
-        return VIVYNet(bert, symphony_net, task.source_dictionary)
+        return VIVYNet(bert, symphony_net)
 
-    def __init__(self, encoder, decoder, input_vocab):
+    def __init__(self, encoder, decoder):
         """Constructor for the VIVYNet model"""
         
         VIVYNet.debug.ldf("<< START >>")
         
         # Retrieves attributes
-        super(VIVYNet, self).__init__()
+        super().__init__(encoder, decoder)
         VIVYNet.debug.ldf("super()")
         
         # Create instance variables based on parameters given
         self.encoder = encoder
-        # self.decoder = decoder
-        self.input_vocab = input_vocab
+        self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
         
         # Put models into train mode
@@ -243,6 +278,12 @@ class VIVYNet(BaseFairseqModel):
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
         return result
+
+    @property
+    def supported_targets(self):
+        """Supported Targets Property"""
+        VIVYNet.debug.ldf("<< supported_targets >>")
+        return {"future"}
 
 @register_model_architecture('vivy', 'vivy_train')
 def train(args):
@@ -470,8 +511,10 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         buffer = []
         cur_len = 0
         
+        st = 0
+        
         # Process information
-        for idx in range(0, end_ds_idx+1):
+        for idx in range(st, end_ds_idx+1):
             tmp = self.dataset[idx].view(-1, self.ratio)
             if self.perm_inv % 2 == 1:
                 all_cc_pos = torch.nonzero(tmp[..., 0] == self.cc_idx).view(-1).tolist()
@@ -481,7 +524,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                     to_swap.append(tmp[pos:nexp, ...])
                 to_swap_idx = torch.randperm(len(to_swap))
                 tmp = torch.cat([tmp[:all_cc_pos[0], ...]] + [to_swap[x] for x in to_swap_idx])
-            mea = (idx-1) * 3
+            mea = (idx-st+1) * 3
             mea_num = torch.zeros((tmp.size(0),1), dtype=int)
             mea_num[2:, 0] = mea
             mea_num[1][0] = mea-1
@@ -501,6 +544,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         if self.perm_inv > 0:
             perm = torch.cat([torch.arange(self.spec_tok_cnt), torch.randperm(self.max_trk_cnt) + self.spec_tok_cnt])
             item[..., self.trk_idx].apply_(lambda x: perm[x])
+
         assert self.include_targets
         
         # Process item
@@ -577,7 +621,7 @@ class MultiheadDataset(MonolingualDataset):
         return {"id": index, "source": source, "target": target, "on": on}
 
 @register_task('text2music')
-class VIVYData(FairseqTask):
+class VIVYData(LanguageModelingTask):
     """Dataset Class Specification"""
     
     debug = Debug("VIVYData", 7)
@@ -617,7 +661,7 @@ class VIVYData(FairseqTask):
         VIVYData.debug.ldf("<< START >>")
         
         # Set instance variables
-        super().__init__(args)
+        super().__init__(args, input_vocab, output_dictionary=label_vocab)
         # self.args = args
         self.src_vocab = input_vocab
         self.tgt_vocab = label_vocab
@@ -635,7 +679,7 @@ class VIVYData(FairseqTask):
         TARGET DATA HANDLING
         """
         
-        VIVYData.debug.ldf("<< START >>")
+        VIVYData.debug.ldf(f"<< START (split: {split}) >>")
         
         # Split the paths to the data
         paths = utils.split_paths(self.args.data  + "/labels/bin")
@@ -749,7 +793,7 @@ class VIVYData(FairseqTask):
             
             # Append the instance to tgt_tupled_sentences
             tgt_tupled_sentences.append(mhd[0]["target"])
-        VIVYData.debug.ldf("TGT - *FINALIZED*")
+        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(tgt_tupled_sentences)})")
         
         """
         SOURCE DATA HANDLING
@@ -769,11 +813,14 @@ class VIVYData(FairseqTask):
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf("SRC - *FINALIZED*")       
+        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset)})")       
         
         """
         DATASET COMPILATION
         """
+        
+        # print(src_dataset[1106])
+        # print(src_dataset.sizes[1106])
         
         # Generate the dataset
         self.datasets[split] = LanguagePairDataset(
@@ -785,7 +832,7 @@ class VIVYData(FairseqTask):
             tgt_dict=self.tgt_vocab
         )
         VIVYData.debug.ldf("COMPILATION")
-        VIVYData.debug.ldf("<< END >>")
+        VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
     @property
     def source_dictionary(self):
