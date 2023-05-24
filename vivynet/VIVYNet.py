@@ -810,11 +810,11 @@ class PairDataset(LanguagePairDataset):
         self.append_bos = append_bos
         self.append_eos_to_target = append_eos_to_target
 
-    # def __getitem__(self, index):
-    #     enc_input = self.src[index]
-    #     dec_input, target, on = self.tgt[index]
+    def __getitem__(self, index):
+        enc_input = self.src[index]
+        dec_input, target, on = self.tgt[index]
 
-    #     return {"id": index, "enc_input": enc_input, "dec_input:": dec_input, "target": target, "on": on}
+        return {"id": index, "enc_input": enc_input, "dec_input:": dec_input, "target": target, "on": on}
     
     
     def collater(self, samples):
@@ -823,11 +823,11 @@ class PairDataset(LanguagePairDataset):
         # Return the collated information of the given sample
         return samples[0]
     
-    def __getitem__(self, index):
-        """Get item function"""
+    # def __getitem__(self, index):
+    #     """Get item function"""
 
-        # return item
-        return {"id": index, "source": self.src[index], "target": self.tgt[index]}
+    #     # return item
+    #     return {"id": index, "source": self.src[index], "target": self.tgt[index]}
 
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
