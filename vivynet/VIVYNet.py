@@ -110,18 +110,16 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("model CUDA")
         BERT.debug.ldf("<< END >>")
         
-    def forward(self, src_token, src_length):
+    def forward(self, src_token):
         """Forward function to specify forward propogation"""
         
         BERT.debug.ldf("<< START >>")
-        print("\n>>>>>>>>>>>>>>>>>>>>>>>")
-        input(src_token)
         
         # Send data to device
         src_token = src_token.to(self.device).long()
         BERT.debug.ldf("src_token")
         
-        # Return logits from BERT
+        # Return logits from BERT << BROKEN >>
         output = self.model(src_token)
         BERT.debug.ldf("output")
         
@@ -262,7 +260,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.train")
         VIVYNet.debug.ldf("<< END >>")
     
-    def forward(self, src_tokens, src_lengths):
+    def forward(self, src_tokens):
         """Forward propagation method"""
         
         VIVYNet.debug.ldf("<< START >>")
@@ -272,7 +270,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.zero_grad()")
         
         # Get loss and the logits from the model
-        result = self.encoder(src_tokens, len(src_lengths))
+        result = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
         
         # Return the logits
@@ -620,6 +618,41 @@ class MultiheadDataset(MonolingualDataset):
         # Return the processed information
         return {"id": index, "source": source, "target": target, "on": on}
 
+class PairDataset(LanguagePairDataset):
+    """Pair dataset class"""
+    
+    def __init__(
+        self,
+        src,
+        src_sizes,
+        src_dict,
+        tgt=None,
+        tgt_sizes=None,
+        tgt_dict=None
+    ):
+        """Constructor for the dataset class"""
+        
+        # Super call
+        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict)
+
+        # Instance variables
+        self.src = src
+        self.src_dict = src_dict
+        self.tgt = tgt
+        self.tgt_dict = tgt_dict
+    
+    def collater(self, samples):
+        """Token collater method"""
+        
+        # Return the collated information of the given sample
+        return samples[0]
+    
+    def __getitem__(self, index):
+        """Get item function"""
+
+        # return item
+        return {"id": index, "source": self.src[index], "target": self.tgt[index]}
+
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
     """Dataset Class Specification"""
@@ -758,6 +791,7 @@ class VIVYData(LanguageModelingTask):
         
         # Create a list to store the tupled result
         tgt_tupled_sentences = []
+        tgt_tupled_sentences_sizes = []
         VIVYData.debug.ldf("TGT - tupled setup")
 
         # Iterate through the spliced sentences and get the token
@@ -780,7 +814,7 @@ class VIVYData(LanguageModelingTask):
             )
             
             # Generate a MultiheadDataset
-            mhd = self._initialize_dataset(
+            mhd = MultiheadDataset(
                 dataset=tmhd,
                 sizes=tmhd.sizes,
                 src_vocab=self.src_vocab,
@@ -792,6 +826,7 @@ class VIVYData(LanguageModelingTask):
             )
             
             # Append the instance to tgt_tupled_sentences
+            tgt_tupled_sentences_sizes.append(mhd.sizes[0])
             tgt_tupled_sentences.append(mhd[0]["target"])
         VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(tgt_tupled_sentences)})")
         
@@ -823,12 +858,12 @@ class VIVYData(LanguageModelingTask):
         # print(src_dataset.sizes[1106])
         
         # Generate the dataset
-        self.datasets[split] = LanguagePairDataset(
+        self.datasets[split] = PairDataset(
             src=src_dataset,    
             src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
             tgt=tgt_tupled_sentences,
-            tgt_sizes=[len(i) for i in tgt_tupled_sentences],
+            tgt_sizes=tgt_tupled_sentences_sizes,
             tgt_dict=self.tgt_vocab
         )
         VIVYData.debug.ldf("COMPILATION")
@@ -845,10 +880,6 @@ class VIVYData(LanguageModelingTask):
         """Return the target :class:`~fairseq.data.Dictionary`."""
         VIVYData.debug.ldf("<< tgt_vocab >>")
         return self.tgt_vocab
-    
-    def _initialize_dataset(self, **kwargs):
-        """Method to Initialize the Target Data"""
-        return MultiheadDataset(**kwargs)
 
 #
 #   CRITERION SPECIFICATION
@@ -857,14 +888,10 @@ class VIVYData(LanguageModelingTask):
 @register_criterion("nll_loss")
 class ModelCriterion(CrossEntropyCriterion):
     
-    #
-    #   NOT NEEDED ANYMORE
-    #
-    
     def forward(self, model, sample, reduce=True):
         
         # Get output of the model
-        net_output = model(**sample["net_input"])
+        net_output = model(sample["source"])
         
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
