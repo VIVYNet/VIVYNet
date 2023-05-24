@@ -5,7 +5,7 @@ fairseq-train ../data/final \
   --arch vivy_train \
   --optimizer adam \
   --lr 0.001 \
-  --max-tokens 1000 \
+  --max-tokens 4096 \
   --shorten_method none \
   --shorten_data_split_list '' \
   --tokens_per_sample 4096 \

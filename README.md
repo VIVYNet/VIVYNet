@@ -7,7 +7,3 @@ Whenever you are working on a new task, subsection, or issue, please create a ne
 The following are the general purposes of each branch:
 
 `Development` - Houses all developed code from its children branches. May or may not be stable
-
-`Encoder Development` - Development branch for the encoding section of the model
-
-`Decoder Development` - Development branch for the decoding section of the model
