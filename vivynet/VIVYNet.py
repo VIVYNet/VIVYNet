@@ -119,6 +119,8 @@ class BERT(FairseqEncoder):
         src_token = src_token.to(self.device).long()
         BERT.debug.ldf("src_token")
         
+        input(src_token)
+        
         # Return logits from BERT << BROKEN >>
         output = self.model(src_token)
         BERT.debug.ldf("output")
@@ -758,8 +760,23 @@ class VIVYData(LanguageModelingTask):
         tgt_sentence_sizes = []
         VIVYData.debug.ldf("TGT - split setup")
         
+        # <!><!><!> DEBUG: LIMITER SECTION A <!><!><!>
+        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
+        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
+        #   to enable this limiter
+        VIVYData.debug.ldf("<!> DEBUG: LIMITER APPLIED <!>")
+        count = 0
+        
         # Iterate through the parsed data and make the splits
         for idx, item in enumerate(tgt_datasets):
+            
+            # <!><!><!> DEBUG: LIMITER SECTION B <!><!><!>
+            #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
+            #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
+            #   to enable this limiter
+            if count > 49:
+                break
+            
             # Save the parsed information into the temporary arrays
             temp_arr.append(item)
             temp_sizes_arr.append(tgt_datasets.sizes[idx])
@@ -773,6 +790,12 @@ class VIVYData(LanguageModelingTask):
                 # Reset temporary arrays
                 temp_arr = []
                 temp_sizes_arr = []
+                
+                # <!><!><!> DEBUG: LIMITER SECTION C <!><!><!>
+                #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
+                #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
+                #   to enable this limiter
+                count += 1
                 
                 # Continue
                 continue
@@ -848,24 +871,50 @@ class VIVYData(LanguageModelingTask):
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset)})")       
+        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset)})") 
+        
+        # <!><!><!> DEBUG: LIMITER SECTION D <!><!><!>
+        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
+        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
+        #   to enable this limiter
+        debug_src = []
+        debug_src_lengths = []
+        for idx, i in enumerate(src_dataset):
+            if idx > 49:
+                break
+            debug_src.append(i)
+            debug_src_lengths.append(len(i))
         
         """
         DATASET COMPILATION
         """
         
-        # print(src_dataset[1106])
-        # print(src_dataset.sizes[1106])
-        
+        # <!><!><!> DEBUG: LIMITER SECTION E <!><!><!>
+        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
+        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
+        #   to enable this limiter
+        #
+        #   NOTE: COMMENT the below `self.datasets[split] = PairDataset(` if you
+        #   have this section uncommented.
         # Generate the dataset
         self.datasets[split] = PairDataset(
-            src=src_dataset,    
-            src_sizes=src_dataset.sizes,
+            src=debug_src,    
+            src_sizes=debug_src_lengths,
             src_dict=self.src_vocab,
             tgt=tgt_tupled_sentences,
             tgt_sizes=tgt_tupled_sentences_sizes,
             tgt_dict=self.tgt_vocab
         )
+        
+        # # Generate the dataset
+        # self.datasets[split] = PairDataset(
+        #     src=src_dataset,    
+        #     src_sizes=src_dataset.sizes,
+        #     src_dict=self.src_vocab,
+        #     tgt=tgt_tupled_sentences,
+        #     tgt_sizes=tgt_tupled_sentences_sizes,
+        #     tgt_dict=self.tgt_vocab
+        # )
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
