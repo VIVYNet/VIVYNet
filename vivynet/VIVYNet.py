@@ -143,39 +143,39 @@ class SymphonyNet(FairseqDecoder):
         #print(task.target_dictionary)
         # for i in range(len(task.target_dictionary)):
         #     print(i, task.target_dictionary[i])
-        self.embed_dim = args.embed_dim
-        self.wEvte = nn.Embedding(args.evt_voc_size, args.embed_dim)
-        self.wTrke = nn.Embedding(args.trk_voc_size, args.embed_dim)
-        self.wDure = nn.Embedding(args.dur_voc_size, args.embed_dim)
+        self.dec_embed_dim = args.dec_embed_dim
+        self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
+        self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
+        self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
         self.max_pos = args.tokens_per_sample
 
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
-            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.embed_dim) 
-            self.wMpe = nn.Embedding(args.max_mea_pos+1, args.embed_dim)
+            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.dec_embed_dim) 
+            self.wMpe = nn.Embedding(args.max_mea_pos+1, args.dec_embed_dim)
         else:
-            self.wpe = nn.Embedding(self.max_pos+1, args.embed_dim) # max_pos_len = 4096
-        self.drop = nn.Dropout(args.dropout)
-        self.ln_f = nn.LayerNorm(args.embed_dim, eps=1e-6)
+            self.wpe = nn.Embedding(self.max_pos+1, args.dec_embed_dim) # max_pos_len = 4096
+        self.drop = nn.Dropout(args.dec_dropout)
+        self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
         
         self.decoder_model = TransformerDecoderBuilder.from_kwargs(
-                n_layers = args.num_layers,
+                n_layers = args.dec_num_layers,
                 n_heads=args.num_attention_heads,
-                query_dimensions=args.embed_dim // args.num_attention_heads,
-                value_dimensions=args.embed_dim // args.num_attention_heads,
-                feed_forward_dimensions=4 * args.embed_dim,
+                query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+                value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+                feed_forward_dimensions=4 * args.dec_embed_dim,
                 activation='gelu',
                 #final_normalization=True,
-                dropout=args.dropout,
+                dropout=args.dec_dropout,
                 self_attention_type="causal-linear", 
                 cross_attention_type="full", # Fully masked so that each domain can be merged
             ).get()
 
         self.attn_mask = TriangularCausalMask(self.max_pos)
-        self.proj_evt = nn.Linear(args.embed_dim, args.evt_voc_size, bias=False)
-        self.proj_dur = nn.Linear(args.embed_dim, args.dur_voc_size, bias=False)
-        self.proj_trk = nn.Linear(args.embed_dim, args.trk_voc_size, bias=False)
-        self.proj_ins = nn.Linear(args.embed_dim, args.ins_voc_size, bias=False)
+        self.proj_evt = nn.Linear(args.dec_embed_dim, args.evt_voc_size, bias=False)
+        self.proj_dur = nn.Linear(args.dec_embed_dim, args.dur_voc_size, bias=False)
+        self.proj_trk = nn.Linear(args.dec_embed_dim, args.trk_voc_size, bias=False)
+        self.proj_ins = nn.Linear(args.dec_embed_dim, args.ins_voc_size, bias=False)
 
         self.apply(self._init_weights)
         # set zero embedding for padding symbol
@@ -192,7 +192,7 @@ class SymphonyNet(FairseqDecoder):
             
     def _init_weights(self, module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            module.weight.data.normal_(mean=0.0, std=self.embed_dim ** -0.5)
+            module.weight.data.normal_(mean=0.0, std=self.dec_embed_dim ** -0.5)
             if isinstance(module, nn.Linear) and module.bias is not None:
                 module.bias.data.zero_()
         elif isinstance(module, nn.LayerNorm):
@@ -380,6 +380,44 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Track Token Size
         parser.add_argument('--trk_voc_size', type=int, metavar='N')
         VIVYNet.debug.ldf("trk_voc_size")
+
+        # Duration Vocab Size
+        parser.add_argument('--dur_voc_size', type=int, metavar='N')
+        VIVYNet.debug.ldf("dur_voc_size")
+
+        # Instrument Vocab Size
+        parser.add_argument('--ins_voc_size', type=int, metavar='N')
+        VIVYNet.debug.ldf("ins_voc_size")
+
+        # Maximum Relative Position
+        parser.add_argument('--max_rel_pos', type=int, metavar='N')
+        VIVYNet.debug.ldf("max_rel_pos")
+
+        # Maximum Measure Count within a Sample
+        parser.add_argument('--max_mea_pos', type=int, metavar='N')
+        VIVYNet.debug.ldf("max_mea_pos")
+
+        # Decoder Embedding Dimension
+        parser.add_argument('--dec-embed-dim', type=int, metavar='N',
+                            help='embedding dimension')
+        VIVYNet.debug.ldf("dec-embed-dim")
+
+        # Decoder Attention Head Numbers
+        parser.add_argument('--dec-num-attention-heads', type=int, metavar='N',
+                            help='num attention heads')
+        VIVYNet.debug.ldf("dec-num-attention-heads")
+
+        # Number Decoder Layers
+        parser.add_argument('--dec-num-layers', type=int, metavar='N',
+                            help='num layers')
+        VIVYNet.debug.ldf("dec-num-layers")
+
+        # Decoder Dropout
+        parser.add_argument('--dec-dropout', type=float, metavar='D',
+                            help='dropout probability for all fully connected layers '
+                                 'in the embeddings, encoder, and pooler')
+        VIVYNet.debug.ldf("dec-dropout")
+
         VIVYNet.debug.ldf("<< END >>")
     
     @classmethod
@@ -393,7 +431,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("bert")
         
         # Create SymphonyNet model
-        symphony_net = SymphonyNet(args=args, dictionary=task.target_dictionary)
+        symphony_net = SymphonyNet(args=args, task=task) # Nick's note: SymphonyNet takes args and tasks instead of dict
         VIVYNet.debug.ldf("symphony_net")
         
         # Return
@@ -450,8 +488,10 @@ def train(args):
     debug = Debug("train", 4)
     debug.ldf("<< train >>")
     
-    # Do nothing
-    pass
+    args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
+    args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
+    args.dec_num_layers = getattr(args, "dec_num_layers", 12)
+    args.dec_dropout = getattr(args, "dec_dropout", 0.1)
  
 #
 #   DATASET SPECIFICATIONS
@@ -800,7 +840,8 @@ class PairDataset(LanguagePairDataset):
         num_buckets=0, 
         src_lang_id=None, 
         tgt_lang_id=None, 
-        pad_to_multiple=1):
+        pad_to_multiple=1
+    ):
         super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, left_pad_source, left_pad_target, shuffle, input_feeding, remove_eos_from_source, append_eos_to_target, align_dataset, constraints, append_bos, eos, num_buckets, src_lang_id, tgt_lang_id, pad_to_multiple)
         #TODO: Add padding and special tokens for each modality
         self.src = src
