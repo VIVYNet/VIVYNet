@@ -160,7 +160,7 @@ class SymphonyNet(FairseqDecoder):
         
         self.decoder_model = TransformerDecoderBuilder.from_kwargs(
                 n_layers = args.dec_num_layers,
-                n_heads=args.num_attention_heads,
+                n_heads=args.dec_num_attention_heads,
                 query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
                 value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
                 feed_forward_dimensions=4 * args.dec_embed_dim,
@@ -853,6 +853,8 @@ class PairDataset(LanguagePairDataset):
 
     def __getitem__(self, index):
         enc_input = self.src[index]
+        print(self.tgt[index])
+
         dec_input, target, on = self.tgt[index]
 
         return {"id": index, "enc_input": enc_input, "dec_input:": dec_input, "target": target, "on": on}
@@ -1083,6 +1085,9 @@ class VIVYData(LanguageModelingTask):
             tgt_sizes=tgt_tupled_sentences_sizes,
             tgt_dict=self.tgt_vocab
         )
+
+        print(self.datasets[split].__getitem__(0))
+
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
