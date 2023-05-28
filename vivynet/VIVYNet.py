@@ -24,7 +24,7 @@ from fairseq.models import (
 from fairseq import utils
 
 # HuggingFace Imports
-from transformers import BertForSequenceClassification
+from transformers import BertForSequenceClassification, BertModel
 
 # Torch Imports
 import torch.nn.functional as F
@@ -100,7 +100,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("var dev")
         
         # Initialize model
-        self.model = BertForSequenceClassification.from_pretrained(
+        self.model = BertModel.from_pretrained(
             "bert-base-multilingual-cased"
         )
         BERT.debug.ldf("pretrained model")
@@ -114,17 +114,17 @@ class BERT(FairseqEncoder):
         """Forward function to specify forward propogation"""
         
         BERT.debug.ldf("<< START >>")
-        
+
         # Send data to device
         src_token = src_token.to(self.device).long()
         BERT.debug.ldf("src_token")
         
-        input(src_token)
+        BERT.debug.ldf(src_token.shape)
         
         # Return logits from BERT << BROKEN >>
         output = self.model(src_token)
         BERT.debug.ldf("output")
-        
+        BERT.debug.ldf(output['last_hidden_state'].shape)
         # Return result
         BERT.debug.ldf("<< END >>")
         return output
@@ -257,6 +257,8 @@ class VIVYNet(FairseqEncoderDecoderModel):
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
         
+        self.linear = torch.nn.Linear(768, 512)
+
         # Put models into train mode
         self.encoder.train()
         VIVYNet.debug.ldf("encoder.train")
@@ -272,9 +274,11 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.zero_grad()")
         
         # Get loss and the logits from the model
-        result = self.encoder(src_tokens)
+        result = self.encoder(src_tokens.reshape(-1, 1))
         VIVYNet.debug.ldf("res 1")
-        
+        bert_out = self.linear(result[0])
+        VIVYNet.debug.ldf(bert_out.shape)
+        symphonynet_out = self.decoder(bert_out)
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
         return result
