@@ -128,7 +128,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("src_token")
         
         # Return logits from BERT << BROKEN >>
-        output = self.model(src_token)
+        output, _ = self.model(src_token)
         BERT.debug.ldf("output")
         
         # Return result
@@ -459,7 +459,14 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.train")
         VIVYNet.debug.ldf("<< END >>")
     
-    def forward(self, src_tokens):
+    def forward(
+            self, 
+            src_tokens, 
+            prev_output_tokens,
+            src_lengths = None, 
+            prev_output_tokens_lengths = None, 
+            **kwargs
+            ):
         """Forward propagation method"""
         
         VIVYNet.debug.ldf("<< START >>")
@@ -469,12 +476,20 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.zero_grad()")
         
         # Get loss and the logits from the model
-        result = self.encoder(src_tokens)
+        enc_output = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
         
+        # Get overall features from decoder
+        features = self.decoder(
+            encoder_out = enc_output,
+            x = prev_output_tokens,
+            src_lengths = prev_output_tokens_lengths,
+            encoder_out_lengths = None, #TODO: Pass in the Encoder Output length
+        )
+
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
-        return result
+        return features
 
     @property
     def supported_targets(self):
@@ -672,9 +687,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             slice_indices[i, :] = (sizes_cs[s] if s >= 0 else 0, sizes_cs[e-1])
             block_to_dataset_index[i, :] = (s+1, 0, e-1)
         
-        print("block: ", len(block_to_dataset_index))
-
-
         # Calculate the sample step
         sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
         
@@ -684,20 +696,20 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         
         # Note: This parts adds more dimensions into block_to_dataset_index
 
-        # Add line information into slice and block indexes
-        for line, line_piece in zip(slice_indices, block_to_dataset_index):
-            l_piece_tot = line[1] - line[0]
-            assert l_piece_tot % self.ratio == 0, (line[0], line[1])
-            l_toks = l_piece_tot // self.ratio
-            chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
-            new_slice_indices.append(np.stack([line]*chosen_cnt))
-            new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
+        # # Add line information into slice and block indexes
+        # for line, line_piece in zip(slice_indices, block_to_dataset_index):
+        #     l_piece_tot = line[1] - line[0]
+        #     assert l_piece_tot % self.ratio == 0, (line[0], line[1])
+        #     l_toks = l_piece_tot // self.ratio
+        #     chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
+        #     new_slice_indices.append(np.stack([line]*chosen_cnt))
+        #     new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
 
-        # Concatentate new slice and block indexes together with their other counterparts
-        slice_indices = np.concatenate(new_slice_indices)
-        block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
+        # # Concatentate new slice and block indexes together with their other counterparts
+        # slice_indices = np.concatenate(new_slice_indices)
+        # block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
         
-        # Transform the slices, sizes, and block information
+        # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
         self._sizes[:] = self.sample_len_max
         self._slice_indices = plasma_utils.PlasmaArray(slice_indices)
@@ -860,11 +872,11 @@ class PairDataset(LanguagePairDataset):
 
     def __getitem__(self, index):
         enc_input = self.src[index]
-        print(self.tgt[index])
+        tgt_input = self.tgt[index]
+        dec_input = tgt_input["source"]
+        target = tgt_input["target"]
 
-        dec_input, target, on = self.tgt[index]
-
-        return {"id": index, "enc_input": enc_input, "dec_input:": dec_input, "target": target, "on": on}
+        return {"id": index, "enc_input": enc_input, "dec_input": dec_input, "target": target}
     
     
     def collater(self, samples):
@@ -927,182 +939,191 @@ class VIVYData(LanguageModelingTask):
         VIVYData.debug.ldf("var dec")
         VIVYData.debug.ldf("<< END >>")
     
+    # def load_dataset(self, split, epoch=1, combine=False, **kwargs):
+    #     """Load a given dataset split.
+
+    #     Args:
+    #         split (str): name of the split (e.g., train, valid, test)
+    #     """
+        
+    #     """
+    #     TARGET DATA HANDLING
+    #     """
+        
+    #     VIVYData.debug.ldf(f"<< START (split: {split}) >>")
+        
+    #     # Split the paths to the data
+    #     paths = utils.split_paths(self.args.data  + "/labels/bin")
+    #     assert len(paths) > 0
+    #     VIVYData.debug.ldf("TGT - paths")
+        
+    #     # Get the path splits
+    #     data_path = paths[(epoch - 1) % len(paths)]
+    #     split_path = os.path.join(data_path, split)
+    #     VIVYData.debug.ldf("TGT - path split")
+        
+    #     # Read and get the information from the .bin and .idx files
+    #     tgt_datasets = data_utils.load_indexed_dataset(
+    #         split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
+    #     )
+    #     VIVYData.debug.ldf("TGT - tgt_datasets")
+        
+    #     # If no dataset instance is created, raise an error
+    #     if tgt_datasets is None:
+    #         raise FileNotFoundError(
+    #             "Dataset not found: {} ({})".format(split, split_path)
+    #         )
+
+    #     # Shorten dataset if need be
+    #     tgt_datasets = maybe_shorten_dataset(
+    #         tgt_datasets,
+    #         split,
+    #         self.args.shorten_data_split_list,
+    #         self.args.shorten_method,
+    #         self.args.tokens_per_sample,
+    #         self.args.seed,
+    #     )
+    #     VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
+        
+    #     #
+    #     # Split the combined measures into their corresponding sentences
+    #     #
+        
+    #     # Set arrays for splitting
+    #     temp_arr = []
+    #     temp_sizes_arr = []
+    #     tgt_sentences = []
+    #     tgt_sentence_sizes = []
+    #     VIVYData.debug.ldf("TGT - split setup")
+        
+    #     # Iterate through the parsed data and make the splits
+    #     for idx, item in enumerate(tgt_datasets):
+    #         # Save the parsed information into the temporary arrays
+    #         temp_arr.append(item)
+    #         temp_sizes_arr.append(tgt_datasets.sizes[idx])
+            
+    #         # Check if the iterated item is an EOS measure
+    #         if item.tolist() == [2]:
+    #             # If so, append the temporary information into the resulting arrays
+    #             tgt_sentences.append(temp_arr)
+    #             tgt_sentence_sizes.append(temp_sizes_arr)
+                
+    #             # Reset temporary arrays
+    #             temp_arr = []
+    #             temp_sizes_arr = []
+                
+    #             # Continue
+    #             continue
+    #     VIVYData.debug.ldf("TGT - split iteration")
+        
+    #     #
+    #     # Generate The Target Tokens for the Target Section of the Data
+    #     #
+        
+    #     # Specification for EOS 
+    #     add_eos_for_other_targets = (
+    #         self.args.sample_break_mode is not None
+    #         and self.args.sample_break_mode != "none"
+    #     )
+    #     VIVYData.debug.ldf("TGT - add_eos_for_other_targets")
+        
+    #     # Create a list to store the tupled result
+    #     tgt_tupled_sentences = []
+    #     tgt_tupled_sentences_sizes = []
+    #     VIVYData.debug.ldf("TGT - tupled setup")
+
+    #     # Iterate through the spliced sentences and get the token
+    #     # representation instances from each iterations
+    #     for idx, item in enumerate(tgt_sentences):
+    #         # Generate the TupleMultiHeadDataset of the dataset
+    #         tmhd = TupleMultiHeadDataset(
+    #             item,
+    #             tgt_sentence_sizes[idx],
+    #             self.args.tokens_per_sample,
+    #             pad=self.tgt_vocab.pad(),
+    #             eos=self.tgt_vocab.eos(),
+    #             break_mode=self.args.sample_break_mode,
+    #             include_targets=True,
+    #             ratio=self.args.ratio + 1,
+    #             sample_overlap_rate=self.args.sample_overlap_rate,
+    #             permutation_invariant=self.args.perm_inv,
+    #             evt_vocab_size=self.args.evt_voc_size,
+    #             trk_vocab_size=self.args.trk_voc_size,
+    #         )
+            
+    #         # Generate a MultiheadDataset
+    #         mhd = MultiheadDataset(
+    #             dataset=tmhd,
+    #             sizes=tmhd.sizes,
+    #             src_vocab=self.src_vocab,
+    #             tgt_vocab=self.tgt_vocab,
+    #             add_eos_for_other_targets=add_eos_for_other_targets,
+    #             shuffle=True,
+    #             targets=["future"],
+    #             add_bos_token=False,
+    #         )
+            
+    #         # Append the instance to tgt_tupled_sentences
+    #         tgt_tupled_sentences_sizes.append(mhd.sizes[0])
+    #         tgt_tupled_sentences.append(
+    #             (
+    #                 mhd[0]["source"],
+    #                 mhd[0]["target"]
+    #             )
+    #         )
+            
+    #     VIVYData.debug.ldf("TGT - print sample")
+    #     print(tgt_tupled_sentences[0])
+    #     input()
+
+    #     VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {tgt_tupled_sentences_sizes})")
+        
+    #     """
+    #     SOURCE DATA HANDLING
+    #     """
+        
+    #     # Split the paths to the data
+    #     paths = utils.split_paths(self.args.data  + "/features")
+    #     assert len(paths) > 0
+    #     VIVYData.debug.ldf("SRC - paths")
+        
+    #     # Get the path splits
+    #     data_path = paths[(epoch - 1) % len(paths)]
+    #     split_path = os.path.join(data_path, split)
+    #     VIVYData.debug.ldf("SRC - path split")
+        
+    #     # Create dataset instance
+    #     src_dataset = data_utils.load_indexed_dataset(
+    #         split_path, self.src_vocab, self.args.dataset_impl, combine=combine
+    #     )
+    #     VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {src_dataset.sizes})")       
+        
+
+    #     input()
+    #     """
+    #     DATASET COMPILATION
+    #     """
+        
+    #     # print(src_dataset[1106])
+    #     # print(src_dataset.sizes[1106])
+        
+    #     # Generate the dataset
+    #     self.datasets[split] = PairDataset(
+    #         src=src_dataset,    
+    #         src_sizes=src_dataset.sizes,
+    #         src_dict=self.src_vocab,
+    #         tgt=tgt_tupled_sentences,
+    #         tgt_sizes=tgt_tupled_sentences_sizes,
+    #         tgt_dict=self.tgt_vocab
+    #     )
+
+    #     print(self.datasets[split].__getitem__(0))
+
+    #     VIVYData.debug.ldf("COMPILATION")
+    #     VIVYData.debug.ldf(f"<< END (split: {split}) >>")
+    
+    
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-        """Load a given dataset split.
-
-        Args:
-            split (str): name of the split (e.g., train, valid, test)
-        """
-        
-        """
-        TARGET DATA HANDLING
-        """
-        
-        VIVYData.debug.ldf(f"<< START (split: {split}) >>")
-        
-        # Split the paths to the data
-        paths = utils.split_paths(self.args.data  + "/labels/bin")
-        assert len(paths) > 0
-        VIVYData.debug.ldf("TGT - paths")
-        
-        # Get the path splits
-        data_path = paths[(epoch - 1) % len(paths)]
-        split_path = os.path.join(data_path, split)
-        VIVYData.debug.ldf("TGT - path split")
-        
-        # Read and get the information from the .bin and .idx files
-        tgt_datasets = data_utils.load_indexed_dataset(
-            split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
-        )
-        VIVYData.debug.ldf("TGT - tgt_datasets")
-        
-        # If no dataset instance is created, raise an error
-        if tgt_datasets is None:
-            raise FileNotFoundError(
-                "Dataset not found: {} ({})".format(split, split_path)
-            )
-
-        # Shorten dataset if need be
-        tgt_datasets = maybe_shorten_dataset(
-            tgt_datasets,
-            split,
-            self.args.shorten_data_split_list,
-            self.args.shorten_method,
-            self.args.tokens_per_sample,
-            self.args.seed,
-        )
-        VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
-        
-        #
-        # Split the combined measures into their corresponding sentences
-        #
-        
-        # Set arrays for splitting
-        temp_arr = []
-        temp_sizes_arr = []
-        tgt_sentences = []
-        tgt_sentence_sizes = []
-        VIVYData.debug.ldf("TGT - split setup")
-        
-        # Iterate through the parsed data and make the splits
-        for idx, item in enumerate(tgt_datasets):
-            # Save the parsed information into the temporary arrays
-            temp_arr.append(item)
-            temp_sizes_arr.append(tgt_datasets.sizes[idx])
-            
-            # Check if the iterated item is an EOS measure
-            if item.tolist() == [2]:
-                # If so, append the temporary information into the resulting arrays
-                tgt_sentences.append(temp_arr)
-                tgt_sentence_sizes.append(temp_sizes_arr)
-                
-                # Reset temporary arrays
-                temp_arr = []
-                temp_sizes_arr = []
-                
-                # Continue
-                continue
-        VIVYData.debug.ldf("TGT - split iteration")
-        
-        #
-        # Generate The Target Tokens for the Target Section of the Data
-        #
-        
-        # Specification for EOS 
-        add_eos_for_other_targets = (
-            self.args.sample_break_mode is not None
-            and self.args.sample_break_mode != "none"
-        )
-        VIVYData.debug.ldf("TGT - add_eos_for_other_targets")
-        
-        # Create a list to store the tupled result
-        tgt_tupled_sentences = []
-        tgt_tupled_sentences_sizes = []
-        VIVYData.debug.ldf("TGT - tupled setup")
-
-        # Iterate through the spliced sentences and get the token
-        # representation instances from each iterations
-        print("TGT Size: ", len(tgt_sentences))
-        for idx, item in enumerate(tgt_sentences):
-            # Generate the TupleMultiHeadDataset of the dataset
-            tmhd = TupleMultiHeadDataset(
-                item,
-                tgt_sentence_sizes[idx],
-                self.args.tokens_per_sample,
-                pad=self.tgt_vocab.pad(),
-                eos=self.tgt_vocab.eos(),
-                break_mode=self.args.sample_break_mode,
-                include_targets=True,
-                ratio=self.args.ratio + 1,
-                sample_overlap_rate=self.args.sample_overlap_rate,
-                permutation_invariant=self.args.perm_inv,
-                evt_vocab_size=self.args.evt_voc_size,
-                trk_vocab_size=self.args.trk_voc_size,
-            )
-            
-            # Generate a MultiheadDataset
-            mhd = MultiheadDataset(
-                dataset=tmhd,
-                sizes=tmhd.sizes,
-                src_vocab=self.src_vocab,
-                tgt_vocab=self.tgt_vocab,
-                add_eos_for_other_targets=add_eos_for_other_targets,
-                shuffle=True,
-                targets=["future"],
-                add_bos_token=False,
-            )
-            
-            # Append the instance to tgt_tupled_sentences
-            tgt_tupled_sentences_sizes.append(mhd.sizes[0])
-            tgt_tupled_sentences.append(mhd[0]["target"])
-        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {tgt_tupled_sentences_sizes})")
-        
-        """
-        SOURCE DATA HANDLING
-        """
-        
-        # Split the paths to the data
-        paths = utils.split_paths(self.args.data  + "/features")
-        assert len(paths) > 0
-        VIVYData.debug.ldf("SRC - paths")
-        
-        # Get the path splits
-        data_path = paths[(epoch - 1) % len(paths)]
-        split_path = os.path.join(data_path, split)
-        VIVYData.debug.ldf("SRC - path split")
-        
-        # Create dataset instance
-        src_dataset = data_utils.load_indexed_dataset(
-            split_path, self.src_vocab, self.args.dataset_impl, combine=combine
-        )
-        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {src_dataset.sizes})")       
-        
-
-        input()
-        """
-        DATASET COMPILATION
-        """
-        
-        # print(src_dataset[1106])
-        # print(src_dataset.sizes[1106])
-        
-        # Generate the dataset
-        self.datasets[split] = PairDataset(
-            src=src_dataset,    
-            src_sizes=src_dataset.sizes,
-            src_dict=self.src_vocab,
-            tgt=tgt_tupled_sentences,
-            tgt_sizes=tgt_tupled_sentences_sizes,
-            tgt_dict=self.tgt_vocab
-        )
-
-        print(self.datasets[split].__getitem__(0))
-
-        VIVYData.debug.ldf("COMPILATION")
-        VIVYData.debug.ldf(f"<< END (split: {split}) >>")
-    
-    
-    def load_dataset_alt(self, split, epoch=1, combine=False, **kwargs):
         """Load a given dataset split.
 
         Args:
@@ -1166,10 +1187,6 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
 
-
-
-        print(tgt_datasets.__getitem__(0))
-        print(tgt_datasets.sizes)
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
@@ -1186,13 +1203,11 @@ class VIVYData(LanguageModelingTask):
             targets=self.targets,
             add_bos_token=False #Note: it should be from args,
         )
+
         VIVYData.debug.ldf("TGT - MultiheadDataset Init")
-
-        print(self.datasets[split].__getitem__(0))
-
-
-        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(self.datasets[split].sizes)})")
         
+        # print(self.datasets[split][0])
+        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(self.datasets[split].sizes)})")
 
         """
         SOURCE DATA HANDLING
@@ -1214,9 +1229,6 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")       
         
-
-        input()
-
         """
         DATASET COMPILATION
         """
@@ -1263,8 +1275,12 @@ class ModelCriterion(CrossEntropyCriterion):
     
     def forward(self, model, sample, reduce=True):
         
+        VIVYNet.debug.ldf("<< Criterion >>")
+        print(sample)
+        input()
+        
         # Get output of the model
-        net_output = model(sample["source"])
+        net_output = model(sample["enc_input"], sample["dec_input"])
         
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
@@ -1300,6 +1316,8 @@ class ModelCriterion(CrossEntropyCriterion):
             
             # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
+            print(target)
+            input()
 
             # Calculate loss
             loss = F.nll_loss(
