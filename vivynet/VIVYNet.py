@@ -1103,141 +1103,141 @@ class VIVYData(LanguageModelingTask):
     
     
     def load_dataset_alt(self, split, epoch=1, combine=False, **kwargs):
-    #     """Load a given dataset split.
+        """Load a given dataset split.
 
-    #     Args:
-    #         split (str): name of the split (e.g., train, valid, test)
-    #     """
+        Args:
+            split (str): name of the split (e.g., train, valid, test)
+        """
         
-    #     """
-    #     TARGET DATA HANDLING
-    #     """
+        """
+        TARGET DATA HANDLING
+        """
         
-    #     VIVYData.debug.ldf(f"<< START (split: {split}) >>")
+        VIVYData.debug.ldf(f"<< START (split: {split}) >>")
         
-    #     # Split the paths to the data
-    #     paths = utils.split_paths(self.args.data  + "/labels/bin")
-    #     assert len(paths) > 0
-    #     VIVYData.debug.ldf("TGT - paths")
+        # Split the paths to the data
+        paths = utils.split_paths(self.args.data  + "/labels/bin")
+        assert len(paths) > 0
+        VIVYData.debug.ldf("TGT - paths")
         
-    #     # Get the path splits
-    #     data_path = paths[(epoch - 1) % len(paths)]
-    #     split_path = os.path.join(data_path, split)
-    #     VIVYData.debug.ldf("TGT - path split")
+        # Get the path splits
+        data_path = paths[(epoch - 1) % len(paths)]
+        split_path = os.path.join(data_path, split)
+        VIVYData.debug.ldf("TGT - path split")
         
-    #     # Read and get the information from the .bin and .idx files
-    #     tgt_datasets = data_utils.load_indexed_dataset(
-    #         split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
-    #     )
-    #     VIVYData.debug.ldf("TGT - tgt_datasets")
+        # Read and get the information from the .bin and .idx files
+        tgt_datasets = data_utils.load_indexed_dataset(
+            split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
+        )
+        VIVYData.debug.ldf("TGT - tgt_datasets")
         
-    #     # If no dataset instance is created, raise an error
-    #     if tgt_datasets is None:
-    #         raise FileNotFoundError(
-    #             "Dataset not found: {} ({})".format(split, split_path)
-    #         )
+        # If no dataset instance is created, raise an error
+        if tgt_datasets is None:
+            raise FileNotFoundError(
+                "Dataset not found: {} ({})".format(split, split_path)
+            )
 
-    #     # Shorten dataset if need be
-    #     tgt_datasets = maybe_shorten_dataset(
-    #         tgt_datasets,
-    #         split,
-    #         self.args.shorten_data_split_list,
-    #         self.args.shorten_method,
-    #         self.args.tokens_per_sample,
-    #         self.args.seed,
-    #     )
-    #     VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
+        # Shorten dataset if need be
+        tgt_datasets = maybe_shorten_dataset(
+            tgt_datasets,
+            split,
+            self.args.shorten_data_split_list,
+            self.args.shorten_method,
+            self.args.tokens_per_sample,
+            self.args.seed,
+        )
+        VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
         
-    #     tgt_datasets = TupleMultiHeadDataset(
-    #         tgt_datasets,
-    #         tgt_datasets.sizes,
-    #         self.args.tokens_per_sample,
-    #         pad=self.dictionary.pad(),
-    #         eos=self.dictionary.eos(),
-    #         break_mode=self.args.sample_break_mode,
-    #         include_targets=True,
-    #         ratio=self.args.ratio + 1,
-    #         sample_overlap_rate=self.args.sample_overlap_rate,
-    #         permutation_invariant=self.args.perm_inv,
-    #         #trk_idx=self.args.trk_idx,
-    #         #spec_tok_cnt=self.args.spec_tok_cnt,
-    #         evt_vocab_size=self.args.evt_voc_size,
-    #         trk_vocab_size=self.args.trk_voc_size,
-    #     )
-    #     VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
-
-
-
-    #     print(tgt_datasets.__getitem__(0))
-    #     print(tgt_datasets.sizes)
-    #     add_eos_for_other_targets = (
-    #         self.args.sample_break_mode is not None
-    #         and self.args.sample_break_mode != "none"
-    #     )
-    #     VIVYData.debug.ldf("TGT - Add EOS for other targets")
-        
-    #     self.datasets[split] = MultiheadDataset(
-    #         dataset=tgt_datasets,
-    #         sizes=tgt_datasets.sizes,
-    #         src_vocab=self.dictionary,
-    #         tgt_vocab=self.output_dictionary,
-    #         add_eos_for_other_targets=add_eos_for_other_targets,
-    #         shuffle=True,
-    #         targets=self.targets,
-    #         add_bos_token=False #Note: it should be from args,
-    #     )
-    #     VIVYData.debug.ldf("TGT - MultiheadDataset Init")
-
-    #     print(self.datasets[split].__getitem__(0))
+        tgt_datasets = TupleMultiHeadDataset(
+            tgt_datasets,
+            tgt_datasets.sizes,
+            self.args.tokens_per_sample,
+            pad=self.dictionary.pad(),
+            eos=self.dictionary.eos(),
+            break_mode=self.args.sample_break_mode,
+            include_targets=True,
+            ratio=self.args.ratio + 1,
+            sample_overlap_rate=self.args.sample_overlap_rate,
+            permutation_invariant=self.args.perm_inv,
+            #trk_idx=self.args.trk_idx,
+            #spec_tok_cnt=self.args.spec_tok_cnt,
+            evt_vocab_size=self.args.evt_voc_size,
+            trk_vocab_size=self.args.trk_voc_size,
+        )
+        VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
 
 
-    #     VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(self.datasets[split].sizes)})")
+
+        print(tgt_datasets.__getitem__(0))
+        print(tgt_datasets.sizes)
+        add_eos_for_other_targets = (
+            self.args.sample_break_mode is not None
+            and self.args.sample_break_mode != "none"
+        )
+        VIVYData.debug.ldf("TGT - Add EOS for other targets")
+        
+        self.datasets[split] = MultiheadDataset(
+            dataset=tgt_datasets,
+            sizes=tgt_datasets.sizes,
+            src_vocab=self.dictionary,
+            tgt_vocab=self.output_dictionary,
+            add_eos_for_other_targets=add_eos_for_other_targets,
+            shuffle=True,
+            targets=self.targets,
+            add_bos_token=False #Note: it should be from args,
+        )
+        VIVYData.debug.ldf("TGT - MultiheadDataset Init")
+
+        print(self.datasets[split].__getitem__(0))
+
+
+        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(self.datasets[split].sizes)})")
         
 
-    #     """
-    #     SOURCE DATA HANDLING
-    #     """
+        """
+        SOURCE DATA HANDLING
+        """
         
-    #     # Split the paths to the data
-    #     paths = utils.split_paths(self.args.data  + "/features")
-    #     assert len(paths) > 0
-    #     VIVYData.debug.ldf("SRC - paths")
+        # Split the paths to the data
+        paths = utils.split_paths(self.args.data  + "/features")
+        assert len(paths) > 0
+        VIVYData.debug.ldf("SRC - paths")
         
-    #     # Get the path splits
-    #     data_path = paths[(epoch - 1) % len(paths)]
-    #     split_path = os.path.join(data_path, split)
-    #     VIVYData.debug.ldf("SRC - path split")
+        # Get the path splits
+        data_path = paths[(epoch - 1) % len(paths)]
+        split_path = os.path.join(data_path, split)
+        VIVYData.debug.ldf("SRC - path split")
         
-    #     # Create dataset instance
-    #     src_dataset = data_utils.load_indexed_dataset(
-    #         split_path, self.src_vocab, self.args.dataset_impl, combine=combine
-    #     )
-    #     VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")       
+        # Create dataset instance
+        src_dataset = data_utils.load_indexed_dataset(
+            split_path, self.src_vocab, self.args.dataset_impl, combine=combine
+        )
+        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")       
         
 
-    #     input()
+        input()
 
-    #     """
-    #     DATASET COMPILATION
-    #     """
+        """
+        DATASET COMPILATION
+        """
         
-    #     # print(src_dataset[1106])
-    #     # print(src_dataset.sizes[1106])
+        # print(src_dataset[1106])
+        # print(src_dataset.sizes[1106])
         
-    #     # Generate the dataset
-    #     self.datasets[split] = PairDataset(
-    #         src=src_dataset,    
-    #         src_sizes=src_dataset.sizes,
-    #         src_dict=self.src_vocab,
-    #         tgt=self.datasets[split],
-    #         tgt_sizes=self.datasets[split].sizes,
-    #         tgt_dict=self.tgt_vocab
-    #     )
+        # Generate the dataset
+        self.datasets[split] = PairDataset(
+            src=src_dataset,    
+            src_sizes=src_dataset.sizes,
+            src_dict=self.src_vocab,
+            tgt=self.datasets[split],
+            tgt_sizes=self.datasets[split].sizes,
+            tgt_dict=self.tgt_vocab
+        )
 
-    #     print(self.datasets[split].__getitem__(0))
+        print(self.datasets[split].__getitem__(0))
 
-    #     VIVYData.debug.ldf("COMPILATION")
-    #     VIVYData.debug.ldf(f"<< END (split: {split}) >>")
+        VIVYData.debug.ldf("COMPILATION")
+        VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
     @property
     def source_dictionary(self):
