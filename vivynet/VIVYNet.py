@@ -103,7 +103,6 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("super()")
         
         # Instance variables
-        self.device = torch.device("cuda")
         self.args = args
         BERT.debug.ldf("var dev")
         
@@ -124,7 +123,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("<< START >>")
 
         # Send data to device
-        src_token = src_token.to(self.device).long()
+        src_token = src_token.to(src_token.device).long()
         BERT.debug.ldf("src_token")
         
         BERT.debug.ldf(src_token.shape)
@@ -231,8 +230,13 @@ class SymphonyNet(FairseqDecoder):
         src_lengths = None,
         encoder_out_lengths = None
     ):
-        bsz, seq_len, ratio = x.size()
-        enc_bsz, enc_len = encoder_out.size()
+        # print(x)
+        print(x.size())
+        x = torch.unsqueeze(x, 0)
+        print(x.size())
+        input()
+        bsz ,seq_len, ratio = x.size()
+        enc_len, enc_bsz, enc_voc_size = encoder_out.size()
 
         evt_emb = self.wEvte(x[..., 0])
 
@@ -267,11 +271,12 @@ class SymphonyNet(FairseqDecoder):
                 device= encoder_out.device)
         else:
             # WIP: Calc LengthMask when enc_out_len is none
-            enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
-            enc_len_mask = LengthMask(
-                torch.sum(enc_pad_mask, axis=1),
-                max_len=enc_len,
-                device= encoder_out.device)
+            # enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
+            # enc_len_mask = LengthMask(
+            #     torch.sum(enc_pad_mask, axis=1),
+            #     max_len=enc_len,
+            #     device= encoder_out.device)
+            pass
             
         
         # WIP: Implement FullMask for Cross Attention layer
@@ -312,7 +317,9 @@ class SymphonyNet(FairseqDecoder):
         )
         # print("Output: ",outputs)
         doutputs = self.ln_f(doutputs)
-        
+        print("OUT: ", doutputs)
+        input()
+
         return doutputs
     
     def get_normalized_probs(
@@ -457,8 +464,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
         
-        self.linear = torch.nn.Linear(768, 512)
-
         # Put models into train mode
         self.encoder.train()
         VIVYNet.debug.ldf("encoder.train")
@@ -1212,7 +1217,7 @@ class VIVYData(LanguageModelingTask):
             add_bos_token=False #Note: it should be from args,
         )
         VIVYData.debug.ldf("TGT - MultiheadDataset Init")
-        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(self.datasets[split].sizes)})")
+        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(final_target.sizes)})")
 
         """
         SOURCE DATA HANDLING
@@ -1275,7 +1280,7 @@ class ModelCriterion(CrossEntropyCriterion):
     def forward(self, model, sample, reduce=True):
         
         VIVYNet.debug.ldf("<< Criterion >>")
-        print(sample)
+        print("Sample: ", sample)
         input()
         
         # Get output of the model
