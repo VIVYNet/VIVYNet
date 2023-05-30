@@ -27,12 +27,20 @@ from fairseq import utils
 from transformers import BertForSequenceClassification, BertModel
 
 # Torch Imports
-import torch.nn.functional as F
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import Tensor
+
+# FastTransformer Imports
+from fast_transformers.builders import TransformerEncoderBuilder, TransformerDecoderBuilder
+from fast_transformers.masking import TriangularCausalMask, LengthMask, FullMask
 
 # Miscellaneous Import
 from colorama import Fore, Style, init
 import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
 import inspect
 import math
 import os
@@ -131,47 +139,198 @@ class BERT(FairseqEncoder):
     
 class SymphonyNet(FairseqDecoder):
     """SymphonyNet Model Specification"""
-    
-    # DEBUG
-    debug = Debug("SymphonyNet", 2)
-    
-    def __init__(self, args, dictionary):
-        """Constructor for BERT specifications"""
+    def __init__(self, args, task):
+        #TODO: Add dictionary for encoder
+        super().__init__(task.target_dictionary)
+        #print(task.target_dictionary)
+        # for i in range(len(task.target_dictionary)):
+        #     print(i, task.target_dictionary[i])
+        self.dec_embed_dim = args.dec_embed_dim
+        self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
+        self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
+        self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
+        self.max_pos = args.tokens_per_sample
+
+        self.perm_inv = args.perm_inv
+        if self.perm_inv > 1:
+            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.dec_embed_dim) 
+            self.wMpe = nn.Embedding(args.max_mea_pos+1, args.dec_embed_dim)
+        else:
+            self.wpe = nn.Embedding(self.max_pos+1, args.dec_embed_dim) # max_pos_len = 4096
+        self.drop = nn.Dropout(args.dec_dropout)
+        self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
         
-        SymphonyNet.debug.ldf("<< START >>")
+        self.decoder_model = TransformerDecoderBuilder.from_kwargs(
+                n_layers = args.dec_num_layers,
+                n_heads=args.dec_num_attention_heads,
+                query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+                value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+                feed_forward_dimensions=4 * args.dec_embed_dim,
+                activation='gelu',
+                #final_normalization=True,
+                dropout=args.dec_dropout,
+                self_attention_type="causal-linear", 
+                cross_attention_type="full", # Fully masked so that each domain can be merged
+            ).get()
+
+        self.attn_mask = TriangularCausalMask(self.max_pos)
+        self.proj_evt = nn.Linear(args.dec_embed_dim, args.evt_voc_size, bias=False)
+        self.proj_dur = nn.Linear(args.dec_embed_dim, args.dur_voc_size, bias=False)
+        self.proj_trk = nn.Linear(args.dec_embed_dim, args.trk_voc_size, bias=False)
+        self.proj_ins = nn.Linear(args.dec_embed_dim, args.ins_voc_size, bias=False)
+
+        self.apply(self._init_weights)
+        # set zero embedding for padding symbol
+        #TODO: check will the pad id be trained? (as TZ RZ YZ)
+        self.pad_idx = task.target_dictionary.pad()
+        self.wEvte.weight.data[self.pad_idx].zero_()
+        self.wDure.weight.data[self.pad_idx].zero_()
+        self.wTrke.weight.data[self.pad_idx].zero_()
+        if self.perm_inv > 1:
+            self.wRpe.weight.data[0].zero_()
+            self.wMpe.weight.data[0].zero_()
+        else:
+            self.wpe.weight.data[0].zero_()
+            
+    def _init_weights(self, module):
+        if isinstance(module, (nn.Linear, nn.Embedding)):
+            module.weight.data.normal_(mean=0.0, std=self.dec_embed_dim ** -0.5)
+            if isinstance(module, nn.Linear) and module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
+
+    def forward(
+        self,
+        encoder_out,
+        x,
+        src_lengths = None,
+        encoder_out_lengths = None,
+    ):
+        features = self.extract_features(
+            x = x, 
+            encoder_out = encoder_out,
+            src_lengths = src_lengths,
+            encoder_out_lengths = encoder_out_lengths
+            )
         
-        # Super module call
-        super().__init__(dictionary)
-        SymphonyNet.debug.ldf("super()")
+        evt_logits = self.proj_evt(features)
+        dur_logits = self.proj_dur(features)
+        trk_logits = self.proj_trk(features)
+        ins_logits = self.proj_ins(features)
+
+        return (evt_logits, dur_logits, trk_logits, ins_logits)
+
+    # TODO: Understand how SymphonyNet masks work, including LengthMask and TriangularMask
+    # TODO: Understand Permutiation Imvariant in code
+    def extract_features(
+        self,
+        x,
+        encoder_out = None,
+        src_lengths = None,
+        encoder_out_lengths = None
+    ):
+        bsz, seq_len, ratio = x.size()
+        enc_bsz, enc_len = encoder_out.size()
+
+        evt_emb = self.wEvte(x[..., 0])
+
+        # if not mapping to pad, padding idx will only occer at last
+        evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) 
+        tmp = self.wDure(x[..., 1])
+        dur_emb = tmp * evton_mask
+        # assert ((tmp==dur_emb).all())
+        tmp = self.wTrke(x[..., 2])
+        trk_emb = tmp * evton_mask
+        # assert ((tmp==trk_emb).all())
+
+        # Note: Calc LengthMask for src_lengths
+        pad_mask = x[..., 0].ne(self.pad_idx).long().to(x.device)
+        if src_lengths is not None:
+            len_mask = LengthMask(
+                src_lengths, 
+                max_len=seq_len, 
+                device=x.device
+                )
+        else:
+            len_mask = LengthMask(
+                torch.sum(pad_mask, axis=1), 
+                max_len=seq_len, 
+                device= x.device)
         
-        # Instance variables
-        self.device = torch.device("cuda")
-        self.args = args
-        SymphonyNet.debug.ldf("var dev")
+        # Note: Calc LengthMask for endoer_out_lengths
+        if encoder_out_lengths is not None:
+            enc_len_mask = LengthMask(
+                encoder_out_lengths, 
+                max_len = enc_len,
+                device= encoder_out.device)
+        else:
+            # WIP: Calc LengthMask when enc_out_len is none
+            enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
+            enc_len_mask = LengthMask(
+                torch.sum(enc_pad_mask, axis=1),
+                max_len=enc_len,
+                device= encoder_out.device)
+            
         
-        # Initialize model
-        self.model = BertForSequenceClassification.from_pretrained(
-            "bert-base-multilingual-cased"
+        # WIP: Implement FullMask for Cross Attention layer
+        full_mask = FullMask(
+            N = seq_len,
+            M = enc_len,
+            device = x.device
         )
-        SymphonyNet.debug.ldf("pretrained model")
         
-        # Run model of CUDA
-        self.model.cuda()
-        SymphonyNet.debug.ldf("model CUDA")
-        SymphonyNet.debug.ldf("<< END >>")
+        # Note: Perform Permutation Invariant
+        if self.perm_inv > 1:
+            rel_pos = pad_mask * x[..., 4]
+            rel_pos_mask = rel_pos.ne(0).float()[..., None].to(x.device) # ignore bom, chord, eos
+
+            measure_ids = pad_mask * x[..., 5]
+            mea_mask = measure_ids.ne(0).float()[..., None].to(x.device) # ignore eos
+            
+            pos_emb = rel_pos_mask * self.wRpe(rel_pos) + mea_mask * self.wMpe(measure_ids)
+
+        else:
+            # set position ids to exclude padding symbols
+            position_ids = pad_mask * (
+                torch.arange(1, 1 + seq_len)
+                .to(x.device)
+                .repeat(bsz, 1)
+            )
+            pos_emb = self.wpe(position_ids)
+        
+        x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
+
+        doutputs = self.decoder_model(
+            x = x,
+            memory = encoder_out,
+            x_mask = self.attn_mask,
+            x_length_mask = len_mask,
+            memory_mask = full_mask, #WIP
+            memory_length_mask = enc_len_mask #WIP
+        )
+        # print("Output: ",outputs)
+        doutputs = self.ln_f(doutputs)
+        
+        return doutputs
     
-    def forward(self, prev_output_tokens, encoder_out=None):
-        """Forward function to specify forward propogation"""
-        
-        SymphonyNet.debug.ldf("<< START >>")
-        
-        print(prev_output_tokens)
-        print(encoder_out)
-        
-        # Return information
-        SymphonyNet.debug.ldf("<< END >>")
-        return(prev_output_tokens)
-        
+    def get_normalized_probs(
+        self,
+        net_output: Tuple[Tensor, Optional[Dict[str, List[Optional[Tensor]]]]],
+        log_probs: bool,
+        sample: Optional[Dict[str, Tensor]] = None,
+    ):
+        """Get normalized probabilities (or log probs) from a net's output."""
+
+        if log_probs:
+            return tuple(utils.log_softmax(logits, dim=-1, onnx_trace=self.onnx_trace) for logits in net_output)
+        else:
+            return tuple(utils.softmax(logits, dim=-1, onnx_trace=self.onnx_trace) for logits in net_output)
+
+    def max_positions(self):
+        return None
+
 #
 #   FULL MODEL DEFINITION
 #
@@ -196,6 +355,8 @@ class VIVYNet(FairseqEncoderDecoderModel):
         parser.add_argument('--shorten_data_split_list', type=str, metavar='N')
         VIVYNet.debug.ldf("shorten_data_split_list")
         
+        # 
+
         # Token Per Sample
         parser.add_argument('--tokens_per_sample', type=int, metavar='N')
         VIVYNet.debug.ldf("tokens_per_sample")
@@ -223,6 +384,44 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Track Token Size
         parser.add_argument('--trk_voc_size', type=int, metavar='N')
         VIVYNet.debug.ldf("trk_voc_size")
+
+        # Duration Vocab Size
+        parser.add_argument('--dur_voc_size', type=int, metavar='N')
+        VIVYNet.debug.ldf("dur_voc_size")
+
+        # Instrument Vocab Size
+        parser.add_argument('--ins_voc_size', type=int, metavar='N')
+        VIVYNet.debug.ldf("ins_voc_size")
+
+        # Maximum Relative Position
+        parser.add_argument('--max_rel_pos', type=int, metavar='N')
+        VIVYNet.debug.ldf("max_rel_pos")
+
+        # Maximum Measure Count within a Sample
+        parser.add_argument('--max_mea_pos', type=int, metavar='N')
+        VIVYNet.debug.ldf("max_mea_pos")
+
+        # Decoder Embedding Dimension
+        parser.add_argument('--dec-embed-dim', type=int, metavar='N',
+                            help='embedding dimension')
+        VIVYNet.debug.ldf("dec-embed-dim")
+
+        # Decoder Attention Head Numbers
+        parser.add_argument('--dec-num-attention-heads', type=int, metavar='N',
+                            help='num attention heads')
+        VIVYNet.debug.ldf("dec-num-attention-heads")
+
+        # Number Decoder Layers
+        parser.add_argument('--dec-num-layers', type=int, metavar='N',
+                            help='num layers')
+        VIVYNet.debug.ldf("dec-num-layers")
+
+        # Decoder Dropout
+        parser.add_argument('--dec-dropout', type=float, metavar='D',
+                            help='dropout probability for all fully connected layers '
+                                 'in the embeddings, encoder, and pooler')
+        VIVYNet.debug.ldf("dec-dropout")
+
         VIVYNet.debug.ldf("<< END >>")
     
     @classmethod
@@ -236,7 +435,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("bert")
         
         # Create SymphonyNet model
-        symphony_net = SymphonyNet(args=args, dictionary=task.target_dictionary)
+        symphony_net = SymphonyNet(args=args, task=task) # Nick's note: SymphonyNet takes args and tasks instead of dict
         VIVYNet.debug.ldf("symphony_net")
         
         # Return
@@ -254,6 +453,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         
         # Create instance variables based on parameters given
         self.encoder = encoder
+        self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
         
@@ -264,7 +464,14 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.train")
         VIVYNet.debug.ldf("<< END >>")
     
-    def forward(self, src_tokens):
+    def forward(
+            self, 
+            src_tokens, 
+            prev_output_tokens,
+            src_lengths = None, 
+            prev_output_tokens_lengths = None, 
+            **kwargs
+            ):
         """Forward propagation method"""
         
         VIVYNet.debug.ldf("<< START >>")
@@ -274,14 +481,23 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.zero_grad()")
         
         # Get loss and the logits from the model
-        result = self.encoder(src_tokens.reshape(-1, 1))
+        enc_output = self.encoder(src_tokens.reshape(-1, 1))
         VIVYNet.debug.ldf("res 1")
-        bert_out = self.linear(result[0])
-        VIVYNet.debug.ldf(bert_out.shape)
-        symphonynet_out = self.decoder(bert_out)
+        
+        bert_out = self.linear(enc_output[0])
+        VIVYNet.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(len(src_tokens)))
+
+        # Get overall features from decoder
+        features = self.decoder(
+            encoder_out = bert_out,
+            x = prev_output_tokens,
+            src_lengths = prev_output_tokens_lengths,
+            encoder_out_lengths = None, #TODO: Pass in the Encoder Output length
+        )
+        
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
-        return result
+        return features
 
     @property
     def supported_targets(self):
@@ -297,8 +513,10 @@ def train(args):
     debug = Debug("train", 4)
     debug.ldf("<< train >>")
     
-    # Do nothing
-    pass
+    args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
+    args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
+    args.dec_num_layers = getattr(args, "dec_num_layers", 12)
+    args.dec_dropout = getattr(args, "dec_dropout", 0.1)
  
 #
 #   DATASET SPECIFICATIONS
@@ -484,20 +702,22 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         new_slice_indices = []
         new_block_to_dataset_index = []
         
-        # Add line information into slice and block indexes
-        for line, line_piece in zip(slice_indices, block_to_dataset_index):
-            l_piece_tot = line[1] - line[0]
-            assert l_piece_tot % self.ratio == 0, (line[0], line[1])
-            l_toks = l_piece_tot // self.ratio
-            chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
-            new_slice_indices.append(np.stack([line]*chosen_cnt))
-            new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
+        # Note: This parts adds more dimensions into block_to_dataset_index
 
-        # Concatentate new slice and block indexes together with their other counterparts
-        slice_indices = np.concatenate(new_slice_indices)
-        block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
+        # # Add line information into slice and block indexes
+        # for line, line_piece in zip(slice_indices, block_to_dataset_index):
+        #     l_piece_tot = line[1] - line[0]
+        #     assert l_piece_tot % self.ratio == 0, (line[0], line[1])
+        #     l_toks = l_piece_tot // self.ratio
+        #     chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
+        #     new_slice_indices.append(np.stack([line]*chosen_cnt))
+        #     new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
+
+        # # Concatentate new slice and block indexes together with their other counterparts
+        # slice_indices = np.concatenate(new_slice_indices)
+        # block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
         
-        # Transform the slices, sizes, and block information
+        # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
         self._sizes[:] = self.sample_len_max
         self._slice_indices = plasma_utils.PlasmaArray(slice_indices)
@@ -515,7 +735,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         buffer = []
         cur_len = 0
         
-        st = 0
+        st = start_ds_idx
         
         # Process information
         for idx in range(st, end_ds_idx+1):
@@ -624,28 +844,48 @@ class MultiheadDataset(MonolingualDataset):
         # Return the processed information
         return {"id": index, "source": source, "target": target, "on": on}
 
-class PairDataset(LanguagePairDataset):
-    """Pair dataset class"""
-    
-    def __init__(
-        self,
-        src,
-        src_sizes,
-        src_dict,
-        tgt=None,
-        tgt_sizes=None,
-        tgt_dict=None
-    ):
-        """Constructor for the dataset class"""
-        
-        # Super call
-        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict)
 
-        # Instance variables
+class PairDataset(LanguagePairDataset):
+    def __init__(
+        self, 
+        src, 
+        src_sizes, 
+        src_dict, 
+        tgt=None, 
+        tgt_sizes=None, 
+        tgt_dict=None, 
+        left_pad_source=True, 
+        left_pad_target=False, 
+        shuffle=True, 
+        input_feeding=True, 
+        remove_eos_from_source=False, 
+        append_eos_to_target=False, 
+        align_dataset=None, 
+        constraints=None, 
+        append_bos=False, 
+        eos=None, 
+        num_buckets=0, 
+        src_lang_id=None, 
+        tgt_lang_id=None, 
+        pad_to_multiple=1
+    ):
+        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, left_pad_source, left_pad_target, shuffle, input_feeding, remove_eos_from_source, append_eos_to_target, align_dataset, constraints, append_bos, eos, num_buckets, src_lang_id, tgt_lang_id, pad_to_multiple)
+        #TODO: Add padding and special tokens for each modality
         self.src = src
         self.src_dict = src_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
+        self.append_bos = append_bos
+        self.append_eos_to_target = append_eos_to_target
+
+    def __getitem__(self, index):
+        enc_input = self.src[index]
+        tgt_input = self.tgt[index]
+        dec_input = tgt_input["source"]
+        target = tgt_input["target"]
+
+        return {"id": index, "enc_input": enc_input, "dec_input": dec_input, "target": target}
+    
     
     def collater(self, samples):
         """Token collater method"""
@@ -653,11 +893,11 @@ class PairDataset(LanguagePairDataset):
         # Return the collated information of the given sample
         return samples[0]
     
-    def __getitem__(self, index):
-        """Get item function"""
+    # def __getitem__(self, index):
+    #     """Get item function"""
 
-        # return item
-        return {"id": index, "source": self.src[index], "target": self.tgt[index]}
+    #     # return item
+    #     return {"id": index, "source": self.src[index], "target": self.tgt[index]}
 
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
@@ -707,6 +947,190 @@ class VIVYData(LanguageModelingTask):
         VIVYData.debug.ldf("var dec")
         VIVYData.debug.ldf("<< END >>")
     
+    # def load_dataset(self, split, epoch=1, combine=False, **kwargs):
+    #     """Load a given dataset split.
+
+    #     Args:
+    #         split (str): name of the split (e.g., train, valid, test)
+    #     """
+        
+    #     """
+    #     TARGET DATA HANDLING
+    #     """
+        
+    #     VIVYData.debug.ldf(f"<< START (split: {split}) >>")
+        
+    #     # Split the paths to the data
+    #     paths = utils.split_paths(self.args.data  + "/labels/bin")
+    #     assert len(paths) > 0
+    #     VIVYData.debug.ldf("TGT - paths")
+        
+    #     # Get the path splits
+    #     data_path = paths[(epoch - 1) % len(paths)]
+    #     split_path = os.path.join(data_path, split)
+    #     VIVYData.debug.ldf("TGT - path split")
+        
+    #     # Read and get the information from the .bin and .idx files
+    #     tgt_datasets = data_utils.load_indexed_dataset(
+    #         split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
+    #     )
+    #     VIVYData.debug.ldf("TGT - tgt_datasets")
+        
+    #     # If no dataset instance is created, raise an error
+    #     if tgt_datasets is None:
+    #         raise FileNotFoundError(
+    #             "Dataset not found: {} ({})".format(split, split_path)
+    #         )
+
+    #     # Shorten dataset if need be
+    #     tgt_datasets = maybe_shorten_dataset(
+    #         tgt_datasets,
+    #         split,
+    #         self.args.shorten_data_split_list,
+    #         self.args.shorten_method,
+    #         self.args.tokens_per_sample,
+    #         self.args.seed,
+    #     )
+    #     VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
+        
+    #     #
+    #     # Split the combined measures into their corresponding sentences
+    #     #
+        
+    #     # Set arrays for splitting
+    #     temp_arr = []
+    #     temp_sizes_arr = []
+    #     tgt_sentences = []
+    #     tgt_sentence_sizes = []
+    #     VIVYData.debug.ldf("TGT - split setup")
+        
+    #     # Iterate through the parsed data and make the splits
+    #     for idx, item in enumerate(tgt_datasets):
+    #         # Save the parsed information into the temporary arrays
+    #         temp_arr.append(item)
+    #         temp_sizes_arr.append(tgt_datasets.sizes[idx])
+            
+    #         # Check if the iterated item is an EOS measure
+    #         if item.tolist() == [2]:
+    #             # If so, append the temporary information into the resulting arrays
+    #             tgt_sentences.append(temp_arr)
+    #             tgt_sentence_sizes.append(temp_sizes_arr)
+                
+    #             # Reset temporary arrays
+    #             temp_arr = []
+    #             temp_sizes_arr = []
+                
+    #             # Continue
+    #             continue
+    #     VIVYData.debug.ldf("TGT - split iteration")
+        
+    #     #
+    #     # Generate The Target Tokens for the Target Section of the Data
+    #     #
+        
+    #     # Specification for EOS 
+    #     add_eos_for_other_targets = (
+    #         self.args.sample_break_mode is not None
+    #         and self.args.sample_break_mode != "none"
+    #     )
+    #     VIVYData.debug.ldf("TGT - add_eos_for_other_targets")
+        
+    #     # Create a list to store the tupled result
+    #     tgt_tupled_sentences = []
+    #     tgt_tupled_sentences_sizes = []
+    #     VIVYData.debug.ldf("TGT - tupled setup")
+
+    #     # Iterate through the spliced sentences and get the token
+    #     # representation instances from each iterations
+    #     for idx, item in enumerate(tgt_sentences):
+    #         # Generate the TupleMultiHeadDataset of the dataset
+    #         tmhd = TupleMultiHeadDataset(
+    #             item,
+    #             tgt_sentence_sizes[idx],
+    #             self.args.tokens_per_sample,
+    #             pad=self.tgt_vocab.pad(),
+    #             eos=self.tgt_vocab.eos(),
+    #             break_mode=self.args.sample_break_mode,
+    #             include_targets=True,
+    #             ratio=self.args.ratio + 1,
+    #             sample_overlap_rate=self.args.sample_overlap_rate,
+    #             permutation_invariant=self.args.perm_inv,
+    #             evt_vocab_size=self.args.evt_voc_size,
+    #             trk_vocab_size=self.args.trk_voc_size,
+    #         )
+            
+    #         # Generate a MultiheadDataset
+    #         mhd = MultiheadDataset(
+    #             dataset=tmhd,
+    #             sizes=tmhd.sizes,
+    #             src_vocab=self.src_vocab,
+    #             tgt_vocab=self.tgt_vocab,
+    #             add_eos_for_other_targets=add_eos_for_other_targets,
+    #             shuffle=True,
+    #             targets=["future"],
+    #             add_bos_token=False,
+    #         )
+            
+    #         # Append the instance to tgt_tupled_sentences
+    #         tgt_tupled_sentences_sizes.append(mhd.sizes[0])
+    #         tgt_tupled_sentences.append(
+    #             (
+    #                 mhd[0]["source"],
+    #                 mhd[0]["target"]
+    #             )
+    #         )
+            
+    #     VIVYData.debug.ldf("TGT - print sample")
+    #     print(tgt_tupled_sentences[0])
+    #     input()
+
+    #     VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {tgt_tupled_sentences_sizes})")
+        
+    #     """
+    #     SOURCE DATA HANDLING
+    #     """
+        
+    #     # Split the paths to the data
+    #     paths = utils.split_paths(self.args.data  + "/features")
+    #     assert len(paths) > 0
+    #     VIVYData.debug.ldf("SRC - paths")
+        
+    #     # Get the path splits
+    #     data_path = paths[(epoch - 1) % len(paths)]
+    #     split_path = os.path.join(data_path, split)
+    #     VIVYData.debug.ldf("SRC - path split")
+        
+    #     # Create dataset instance
+    #     src_dataset = data_utils.load_indexed_dataset(
+    #         split_path, self.src_vocab, self.args.dataset_impl, combine=combine
+    #     )
+    #     VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {src_dataset.sizes})")       
+        
+
+    #     input()
+    #     """
+    #     DATASET COMPILATION
+    #     """
+        
+    #     # print(src_dataset[1106])
+    #     # print(src_dataset.sizes[1106])
+        
+    #     # Generate the dataset
+    #     self.datasets[split] = PairDataset(
+    #         src=src_dataset,    
+    #         src_sizes=src_dataset.sizes,
+    #         src_dict=self.src_vocab,
+    #         tgt=tgt_tupled_sentences,
+    #         tgt_sizes=tgt_tupled_sentences_sizes,
+    #         tgt_dict=self.tgt_vocab
+    #     )
+
+    #     print(self.datasets[split].__getitem__(0))
+
+    #     VIVYData.debug.ldf("COMPILATION")
+    #     VIVYData.debug.ldf(f"<< END (split: {split}) >>")
+    
+    
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         """Load a given dataset split.
 
@@ -753,110 +1177,43 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
         
-        #
-        # Split the combined measures into their corresponding sentences
-        #
-        
-        # Set arrays for splitting
-        temp_arr = []
-        temp_sizes_arr = []
-        tgt_sentences = []
-        tgt_sentence_sizes = []
-        VIVYData.debug.ldf("TGT - split setup")
-        
-        # <!><!><!> DEBUG: LIMITER SECTION A <!><!><!>
-        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-        #   to enable this limiter
-        VIVYData.debug.ldf("<!> DEBUG: LIMITER APPLIED <!>")
-        count = 0
-        
-        # Iterate through the parsed data and make the splits
-        for idx, item in enumerate(tgt_datasets):
-            
-            # <!><!><!> DEBUG: LIMITER SECTION B <!><!><!>
-            #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-            #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-            #   to enable this limiter
-            if count > 49:
-                break
-            
-            # Save the parsed information into the temporary arrays
-            temp_arr.append(item)
-            temp_sizes_arr.append(tgt_datasets.sizes[idx])
-            
-            # Check if the iterated item is an EOS measure
-            if item.tolist() == [2]:
-                # If so, append the temporary information into the resulting arrays
-                tgt_sentences.append(temp_arr)
-                tgt_sentence_sizes.append(temp_sizes_arr)
-                
-                # Reset temporary arrays
-                temp_arr = []
-                temp_sizes_arr = []
-                
-                # <!><!><!> DEBUG: LIMITER SECTION C <!><!><!>
-                #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-                #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-                #   to enable this limiter
-                count += 1
-                
-                # Continue
-                continue
-        VIVYData.debug.ldf("TGT - split iteration")
-        
-        #
-        # Generate The Target Tokens for the Target Section of the Data
-        #
-        
-        # Specification for EOS 
+        tgt_datasets = TupleMultiHeadDataset(
+            tgt_datasets,
+            tgt_datasets.sizes,
+            self.args.tokens_per_sample,
+            pad=self.dictionary.pad(),
+            eos=self.dictionary.eos(),
+            break_mode=self.args.sample_break_mode,
+            include_targets=True,
+            ratio=self.args.ratio + 1,
+            sample_overlap_rate=self.args.sample_overlap_rate,
+            permutation_invariant=self.args.perm_inv,
+            #trk_idx=self.args.trk_idx,
+            #spec_tok_cnt=self.args.spec_tok_cnt,
+            evt_vocab_size=self.args.evt_voc_size,
+            trk_vocab_size=self.args.trk_voc_size,
+        )
+        VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
+
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
         )
-        VIVYData.debug.ldf("TGT - add_eos_for_other_targets")
+        VIVYData.debug.ldf("TGT - Add EOS for other targets")
         
-        # Create a list to store the tupled result
-        tgt_tupled_sentences = []
-        tgt_tupled_sentences_sizes = []
-        VIVYData.debug.ldf("TGT - tupled setup")
+        final_target = MultiheadDataset(
+            dataset=tgt_datasets,
+            sizes=tgt_datasets.sizes,
+            src_vocab=self.dictionary,
+            tgt_vocab=self.output_dictionary,
+            add_eos_for_other_targets=add_eos_for_other_targets,
+            shuffle=True,
+            targets=self.targets,
+            add_bos_token=False #Note: it should be from args,
+        )
+        VIVYData.debug.ldf("TGT - MultiheadDataset Init")
+        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(self.datasets[split].sizes)})")
 
-        # Iterate through the spliced sentences and get the token
-        # representation instances from each iterations
-        for idx, item in enumerate(tgt_sentences):
-            # Generate the TupleMultiHeadDataset of the dataset
-            tmhd = TupleMultiHeadDataset(
-                item,
-                tgt_sentence_sizes[idx],
-                self.args.tokens_per_sample,
-                pad=self.tgt_vocab.pad(),
-                eos=self.tgt_vocab.eos(),
-                break_mode=self.args.sample_break_mode,
-                include_targets=True,
-                ratio=self.args.ratio + 1,
-                sample_overlap_rate=self.args.sample_overlap_rate,
-                permutation_invariant=self.args.perm_inv,
-                evt_vocab_size=self.args.evt_voc_size,
-                trk_vocab_size=self.args.trk_voc_size,
-            )
-            
-            # Generate a MultiheadDataset
-            mhd = MultiheadDataset(
-                dataset=tmhd,
-                sizes=tmhd.sizes,
-                src_vocab=self.src_vocab,
-                tgt_vocab=self.tgt_vocab,
-                add_eos_for_other_targets=add_eos_for_other_targets,
-                shuffle=True,
-                targets=["future"],
-                add_bos_token=False,
-            )
-            
-            # Append the instance to tgt_tupled_sentences
-            tgt_tupled_sentences_sizes.append(mhd.sizes[0])
-            tgt_tupled_sentences.append(mhd[0]["target"])
-        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(tgt_tupled_sentences)})")
-        
         """
         SOURCE DATA HANDLING
         """
@@ -875,50 +1232,21 @@ class VIVYData(LanguageModelingTask):
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset)})") 
-        
-        # <!><!><!> DEBUG: LIMITER SECTION D <!><!><!>
-        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-        #   to enable this limiter
-        debug_src = []
-        debug_src_lengths = []
-        for idx, i in enumerate(src_dataset):
-            if idx > 49:
-                break
-            debug_src.append(i)
-            debug_src_lengths.append(len(i))
+        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")       
         
         """
         DATASET COMPILATION
         """
         
-        # <!><!><!> DEBUG: LIMITER SECTION E <!><!><!>
-        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-        #   to enable this limiter
-        #
-        #   NOTE: COMMENT the below `self.datasets[split] = PairDataset(` if you
-        #   have this section uncommented.
-        # Generate the dataset
         self.datasets[split] = PairDataset(
-            src=debug_src,    
-            src_sizes=debug_src_lengths,
+            src=src_dataset,    
+            src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
-            tgt=tgt_tupled_sentences,
-            tgt_sizes=tgt_tupled_sentences_sizes,
+            tgt=final_target,
+            tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab
         )
-        
-        # # Generate the dataset
-        # self.datasets[split] = PairDataset(
-        #     src=src_dataset,    
-        #     src_sizes=src_dataset.sizes,
-        #     src_dict=self.src_vocab,
-        #     tgt=tgt_tupled_sentences,
-        #     tgt_sizes=tgt_tupled_sentences_sizes,
-        #     tgt_dict=self.tgt_vocab
-        # )
+        print(self.datasets[split].__getitem__(0))
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
@@ -934,6 +1262,9 @@ class VIVYData(LanguageModelingTask):
         VIVYData.debug.ldf("<< tgt_vocab >>")
         return self.tgt_vocab
 
+    def _initialize_pair_dataset(self, **kwargs):
+        """Method to Initialize the Pair Dataset (Text, Midi)"""
+        return PairDataset(**kwargs)
 #
 #   CRITERION SPECIFICATION
 #
@@ -943,8 +1274,12 @@ class ModelCriterion(CrossEntropyCriterion):
     
     def forward(self, model, sample, reduce=True):
         
+        VIVYNet.debug.ldf("<< Criterion >>")
+        print(sample)
+        input()
+        
         # Get output of the model
-        net_output = model(sample["source"])
+        net_output = model(sample["enc_input"], sample["dec_input"])
         
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
@@ -980,6 +1315,8 @@ class ModelCriterion(CrossEntropyCriterion):
             
             # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
+            print(target)
+            input()
 
             # Calculate loss
             loss = F.nll_loss(
