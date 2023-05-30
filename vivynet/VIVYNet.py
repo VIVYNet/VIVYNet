@@ -230,13 +230,14 @@ class SymphonyNet(FairseqDecoder):
         src_lengths = None,
         encoder_out_lengths = None
     ):
-        # print(x)
-        print(x.size())
         x = torch.unsqueeze(x, 0)
-        print(x.size())
-        input()
         bsz ,seq_len, ratio = x.size()
         enc_len, enc_bsz, enc_voc_size = encoder_out.size()
+        
+        print("DEBUGGING INPUT MISMATCH")
+        print("X: ", x[..., 0])
+        print("Size: ",x[..., 0].size())
+        input()
 
         evt_emb = self.wEvte(x[..., 0])
 
@@ -1280,8 +1281,6 @@ class ModelCriterion(CrossEntropyCriterion):
     def forward(self, model, sample, reduce=True):
         
         VIVYNet.debug.ldf("<< Criterion >>")
-        print("Sample: ", sample)
-        input()
         
         # Get output of the model
         net_output = model(sample["enc_input"], sample["dec_input"])
@@ -1320,8 +1319,6 @@ class ModelCriterion(CrossEntropyCriterion):
             
             # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
-            print(target)
-            input()
 
             # Calculate loss
             loss = F.nll_loss(
