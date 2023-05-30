@@ -5,6 +5,7 @@ from fairseq.tasks.language_modeling import LanguageModelingTask
 from fairseq.tasks import FairseqTask, register_task
 from fairseq.data.shorten_dataset import maybe_shorten_dataset
 from fairseq.data import (
+    FairseqDataset,
     LanguagePairDataset,
     MonolingualDataset,
     TokenBlockDataset,
@@ -64,7 +65,6 @@ class Debug():
         
         # Get the class name
         self.name = name
-        
 
     def ldf(self, iter):
         """Litmus Debug Method"""
@@ -118,13 +118,13 @@ class BERT(FairseqEncoder):
         # Send data to device
         src_token = src_token.to(self.device).long()
         BERT.debug.ldf("src_token")
-        
-        BERT.debug.ldf(src_token.shape)
+        # BERT.debug.ldf(src_token.shape)
         
         # Return logits from BERT << BROKEN >>
         output = self.model(src_token)
         BERT.debug.ldf("output")
-        BERT.debug.ldf(output['last_hidden_state'].shape)
+        # BERT.debug.ldf(output['last_hidden_state'].shape)
+        
         # Return result
         BERT.debug.ldf("<< END >>")
         return output
@@ -160,17 +160,14 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("model CUDA")
         SymphonyNet.debug.ldf("<< END >>")
     
-    def forward(self, prev_output_tokens, encoder_out=None):
+    def forward(self, input_tokens, previous_tokens, encoder_out=None):
         """Forward function to specify forward propogation"""
         
         SymphonyNet.debug.ldf("<< START >>")
         
-        print(prev_output_tokens)
-        print(encoder_out)
-        
         # Return information
         SymphonyNet.debug.ldf("<< END >>")
-        return(prev_output_tokens)
+        return(previous_tokens)
         
 #
 #   FULL MODEL DEFINITION
@@ -264,7 +261,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.train")
         VIVYNet.debug.ldf("<< END >>")
     
-    def forward(self, src_tokens):
+    def forward(self, src_tokens, prev_token):
         """Forward propagation method"""
         
         VIVYNet.debug.ldf("<< START >>")
@@ -276,9 +273,15 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Get loss and the logits from the model
         result = self.encoder(src_tokens.reshape(-1, 1))
         VIVYNet.debug.ldf("res 1")
+        
+        # Pass BERT output to a result layer
         bert_out = self.linear(result[0])
-        VIVYNet.debug.ldf(bert_out.shape)
-        symphonynet_out = self.decoder(bert_out)
+        VIVYNet.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(len(src_tokens)))
+        
+        # Get output from the decoder side of the model
+        symphonynet_out = self.decoder(bert_out, prev_token)
+        VIVYNet.debug.ldf("res 3")
+        
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
         return result
@@ -477,25 +480,25 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             slice_indices[i, :] = (sizes_cs[s] if s >= 0 else 0, sizes_cs[e-1])
             block_to_dataset_index[i, :] = (s+1, 0, e-1)
         
-        # Calculate the sample step
-        sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
+        # # Calculate the sample step
+        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
         
-        # Variable declaration for slices and blocks
-        new_slice_indices = []
-        new_block_to_dataset_index = []
+        # # Variable declaration for slices and blocks
+        # new_slice_indices = []
+        # new_block_to_dataset_index = []
         
-        # Add line information into slice and block indexes
-        for line, line_piece in zip(slice_indices, block_to_dataset_index):
-            l_piece_tot = line[1] - line[0]
-            assert l_piece_tot % self.ratio == 0, (line[0], line[1])
-            l_toks = l_piece_tot // self.ratio
-            chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
-            new_slice_indices.append(np.stack([line]*chosen_cnt))
-            new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
+        # # Add line information into slice and block indexes
+        # for line, line_piece in zip(slice_indices, block_to_dataset_index):
+        #     l_piece_tot = line[1] - line[0]
+        #     assert l_piece_tot % self.ratio == 0, (line[0], line[1])
+        #     l_toks = l_piece_tot // self.ratio
+        #     chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
+        #     new_slice_indices.append(np.stack([line]*chosen_cnt))
+        #     new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
 
-        # Concatentate new slice and block indexes together with their other counterparts
-        slice_indices = np.concatenate(new_slice_indices)
-        block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
+        # # Concatentate new slice and block indexes together with their other counterparts
+        # slice_indices = np.concatenate(new_slice_indices)
+        # block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
         
         # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
@@ -515,7 +518,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         buffer = []
         cur_len = 0
         
-        st = 0
+        st = start_ds_idx
         
         # Process information
         for idx in range(st, end_ds_idx+1):
@@ -624,7 +627,7 @@ class MultiheadDataset(MonolingualDataset):
         # Return the processed information
         return {"id": index, "source": source, "target": target, "on": on}
 
-class PairDataset(LanguagePairDataset):
+class Text2MusicDataset(LanguagePairDataset):
     """Pair dataset class"""
     
     def __init__(
@@ -646,7 +649,7 @@ class PairDataset(LanguagePairDataset):
         self.src_dict = src_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
-    
+        
     def collater(self, samples):
         """Token collater method"""
         
@@ -657,7 +660,7 @@ class PairDataset(LanguagePairDataset):
         """Get item function"""
 
         # return item
-        return {"id": index, "source": self.src[index], "target": self.tgt[index]}
+        return {"id": index, "source": self.src[index], "previous": self.tgt[index]['source'], "target": self.tgt[index]['target']}
 
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
@@ -754,108 +757,45 @@ class VIVYData(LanguageModelingTask):
         VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
         
         #
-        # Split the combined measures into their corresponding sentences
+        # Get MIDI Representations
         #
         
-        # Set arrays for splitting
-        temp_arr = []
-        temp_sizes_arr = []
-        tgt_sentences = []
-        tgt_sentence_sizes = []
-        VIVYData.debug.ldf("TGT - split setup")
+        # Get TupleMultiHeadDataset Representation
+        tgt_datasets = TupleMultiHeadDataset(
+            tgt_datasets,
+            tgt_datasets.sizes,
+            self.args.tokens_per_sample,
+            pad=self.dictionary.pad(),
+            eos=self.dictionary.eos(),
+            break_mode=self.args.sample_break_mode,
+            include_targets=True,
+            ratio=self.args.ratio + 1,
+            sample_overlap_rate=self.args.sample_overlap_rate,
+            permutation_invariant=self.args.perm_inv,
+            evt_vocab_size=self.args.evt_voc_size,
+            trk_vocab_size=self.args.trk_voc_size,
+        )
+        VIVYData.debug.ldf(f"TGT - TupleMultiHeadDataset")
         
-        # <!><!><!> DEBUG: LIMITER SECTION A <!><!><!>
-        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-        #   to enable this limiter
-        VIVYData.debug.ldf("<!> DEBUG: LIMITER APPLIED <!>")
-        count = 0
-        
-        # Iterate through the parsed data and make the splits
-        for idx, item in enumerate(tgt_datasets):
-            
-            # <!><!><!> DEBUG: LIMITER SECTION B <!><!><!>
-            #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-            #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-            #   to enable this limiter
-            if count > 49:
-                break
-            
-            # Save the parsed information into the temporary arrays
-            temp_arr.append(item)
-            temp_sizes_arr.append(tgt_datasets.sizes[idx])
-            
-            # Check if the iterated item is an EOS measure
-            if item.tolist() == [2]:
-                # If so, append the temporary information into the resulting arrays
-                tgt_sentences.append(temp_arr)
-                tgt_sentence_sizes.append(temp_sizes_arr)
-                
-                # Reset temporary arrays
-                temp_arr = []
-                temp_sizes_arr = []
-                
-                # <!><!><!> DEBUG: LIMITER SECTION C <!><!><!>
-                #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-                #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-                #   to enable this limiter
-                count += 1
-                
-                # Continue
-                continue
-        VIVYData.debug.ldf("TGT - split iteration")
-        
-        #
-        # Generate The Target Tokens for the Target Section of the Data
-        #
-        
-        # Specification for EOS 
+        # Get EOS information
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
         )
-        VIVYData.debug.ldf("TGT - add_eos_for_other_targets")
+        VIVYData.debug.ldf(f"TGT - EOS information")
         
-        # Create a list to store the tupled result
-        tgt_tupled_sentences = []
-        tgt_tupled_sentences_sizes = []
-        VIVYData.debug.ldf("TGT - tupled setup")
-
-        # Iterate through the spliced sentences and get the token
-        # representation instances from each iterations
-        for idx, item in enumerate(tgt_sentences):
-            # Generate the TupleMultiHeadDataset of the dataset
-            tmhd = TupleMultiHeadDataset(
-                item,
-                tgt_sentence_sizes[idx],
-                self.args.tokens_per_sample,
-                pad=self.tgt_vocab.pad(),
-                eos=self.tgt_vocab.eos(),
-                break_mode=self.args.sample_break_mode,
-                include_targets=True,
-                ratio=self.args.ratio + 1,
-                sample_overlap_rate=self.args.sample_overlap_rate,
-                permutation_invariant=self.args.perm_inv,
-                evt_vocab_size=self.args.evt_voc_size,
-                trk_vocab_size=self.args.trk_voc_size,
-            )
-            
-            # Generate a MultiheadDataset
-            mhd = MultiheadDataset(
-                dataset=tmhd,
-                sizes=tmhd.sizes,
-                src_vocab=self.src_vocab,
-                tgt_vocab=self.tgt_vocab,
-                add_eos_for_other_targets=add_eos_for_other_targets,
-                shuffle=True,
-                targets=["future"],
-                add_bos_token=False,
-            )
-            
-            # Append the instance to tgt_tupled_sentences
-            tgt_tupled_sentences_sizes.append(mhd.sizes[0])
-            tgt_tupled_sentences.append(mhd[0]["target"])
-        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(tgt_tupled_sentences)})")
+        # Get PairDataset Representation
+        pair_dataset = MultiheadDataset(
+            dataset=tgt_datasets,
+            sizes=tgt_datasets.sizes,
+            src_vocab=self.dictionary,
+            tgt_vocab=self.output_dictionary,
+            add_eos_for_other_targets=add_eos_for_other_targets,
+            shuffle=True,
+            targets=self.targets,
+            add_bos_token=False,
+        )
+        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(pair_dataset)})")
         
         """
         SOURCE DATA HANDLING
@@ -877,48 +817,19 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset)})") 
         
-        # <!><!><!> DEBUG: LIMITER SECTION D <!><!><!>
-        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-        #   to enable this limiter
-        debug_src = []
-        debug_src_lengths = []
-        for idx, i in enumerate(src_dataset):
-            if idx > 49:
-                break
-            debug_src.append(i)
-            debug_src_lengths.append(len(i))
-        
         """
         DATASET COMPILATION
         """
         
-        # <!><!><!> DEBUG: LIMITER SECTION E <!><!><!>
-        #   Comment out this section, `LIMITER SECTION B`, `LIMITER SECTION C`,
-        #   `LIMITER SECTION D`, `LIMITER SECTION E`, `LIMITER SECTION F`
-        #   to enable this limiter
-        #
-        #   NOTE: COMMENT the below `self.datasets[split] = PairDataset(` if you
-        #   have this section uncommented.
         # Generate the dataset
-        self.datasets[split] = PairDataset(
-            src=debug_src,    
-            src_sizes=debug_src_lengths,
+        self.datasets[split] = Text2MusicDataset(
+            src=src_dataset,    
+            src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
-            tgt=tgt_tupled_sentences,
-            tgt_sizes=tgt_tupled_sentences_sizes,
+            tgt=pair_dataset,
+            tgt_sizes=pair_dataset.sizes,
             tgt_dict=self.tgt_vocab
         )
-        
-        # # Generate the dataset
-        # self.datasets[split] = PairDataset(
-        #     src=src_dataset,    
-        #     src_sizes=src_dataset.sizes,
-        #     src_dict=self.src_vocab,
-        #     tgt=tgt_tupled_sentences,
-        #     tgt_sizes=tgt_tupled_sentences_sizes,
-        #     tgt_dict=self.tgt_vocab
-        # )
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
@@ -944,7 +855,7 @@ class ModelCriterion(CrossEntropyCriterion):
     def forward(self, model, sample, reduce=True):
         
         # Get output of the model
-        net_output = model(sample["source"])
+        net_output = model(sample["source"], sample["previous"])
         
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
