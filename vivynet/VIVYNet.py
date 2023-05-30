@@ -251,10 +251,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
         
         # Create instance variables based on parameters given
         self.encoder = encoder
+        self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
-        
-        self.linear = torch.nn.Linear(768, 512)
 
         # Put models into train mode
         self.encoder.train()
