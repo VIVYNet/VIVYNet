@@ -138,12 +138,19 @@ class BERT(FairseqEncoder):
     
 class SymphonyNet(FairseqDecoder):
     """SymphonyNet Model Specification"""
+
+    debug = Debug("SymphonyNet", 6)
+
     def __init__(self, args, task):
         #TODO: Add dictionary for encoder
         super().__init__(task.target_dictionary)
+        SymphonyNet.debug.ldf("<< START >>")
+
         #print(task.target_dictionary)
         # for i in range(len(task.target_dictionary)):
         #     print(i, task.target_dictionary[i])
+        SymphonyNet.debug.ldf("Embedding Init")
+
         self.dec_embed_dim = args.dec_embed_dim
         self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
         self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
@@ -156,9 +163,12 @@ class SymphonyNet(FairseqDecoder):
             self.wMpe = nn.Embedding(args.max_mea_pos+1, args.dec_embed_dim)
         else:
             self.wpe = nn.Embedding(self.max_pos+1, args.dec_embed_dim) # max_pos_len = 4096
+            
+        SymphonyNet.debug.ldf("Dropout & Layer Norm Init")
         self.drop = nn.Dropout(args.dec_dropout)
         self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
         
+        SymphonyNet.debug.ldf("Decoder Model Setup")
         self.decoder_model = TransformerDecoderBuilder.from_kwargs(
                 n_layers = args.dec_num_layers,
                 n_heads=args.dec_num_attention_heads,
@@ -172,12 +182,16 @@ class SymphonyNet(FairseqDecoder):
                 cross_attention_type="full", # Fully masked so that each domain can be merged
             ).get()
 
+        SymphonyNet.debug.ldf("Causal Mask Init")
         self.attn_mask = TriangularCausalMask(self.max_pos)
+
+        SymphonyNet.debug.ldf("Linear Layer for each Element")
         self.proj_evt = nn.Linear(args.dec_embed_dim, args.evt_voc_size, bias=False)
         self.proj_dur = nn.Linear(args.dec_embed_dim, args.dur_voc_size, bias=False)
         self.proj_trk = nn.Linear(args.dec_embed_dim, args.trk_voc_size, bias=False)
         self.proj_ins = nn.Linear(args.dec_embed_dim, args.ins_voc_size, bias=False)
 
+        SymphonyNet.debug.ldf("Weight init")
         self.apply(self._init_weights)
         # set zero embedding for padding symbol
         #TODO: check will the pad id be trained? (as TZ RZ YZ)
@@ -190,6 +204,8 @@ class SymphonyNet(FairseqDecoder):
             self.wMpe.weight.data[0].zero_()
         else:
             self.wpe.weight.data[0].zero_()
+        
+        SymphonyNet.debug.ldf("<< END >>")
             
     def _init_weights(self, module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
@@ -207,6 +223,9 @@ class SymphonyNet(FairseqDecoder):
         src_lengths = None,
         encoder_out_lengths = None,
     ):
+        SymphonyNet.debug.ldf("<< START >>")
+
+        SymphonyNet.debug.ldf("Extract Features")
         features = self.extract_features(
             x = x, 
             encoder_out = encoder_out,
@@ -214,10 +233,13 @@ class SymphonyNet(FairseqDecoder):
             encoder_out_lengths = encoder_out_lengths
             )
         
+        SymphonyNet.debug.ldf("Apply Linear Layers on Features")
         evt_logits = self.proj_evt(features)
         dur_logits = self.proj_dur(features)
         trk_logits = self.proj_trk(features)
         ins_logits = self.proj_ins(features)
+
+        SymphonyNet.debug.ldf("<< END >>")
 
         return (evt_logits, dur_logits, trk_logits, ins_logits)
 
@@ -230,26 +252,34 @@ class SymphonyNet(FairseqDecoder):
         src_lengths = None,
         encoder_out_lengths = None
     ):
+        SymphonyNet.debug.ldf("<< START >>")
         x = torch.unsqueeze(x, 0)
         bsz ,seq_len, ratio = x.size()
         enc_len, enc_bsz, enc_voc_size = encoder_out.size()
         
-        print("DEBUGGING INPUT MISMATCH")
+        SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
         print("X: ", x[..., 0])
         print("Size: ",x[..., 0].size())
         input()
 
+        SymphonyNet.debug.ldf("event embedding")
         evt_emb = self.wEvte(x[..., 0])
 
+        SymphonyNet.debug.ldf("event mask")
         # if not mapping to pad, padding idx will only occer at last
         evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) 
+
+        SymphonyNet.debug.ldf("duration embedding")
         tmp = self.wDure(x[..., 1])
         dur_emb = tmp * evton_mask
         # assert ((tmp==dur_emb).all())
+
+        SymphonyNet.debug.ldf("track embedding")
         tmp = self.wTrke(x[..., 2])
         trk_emb = tmp * evton_mask
         # assert ((tmp==trk_emb).all())
 
+        SymphonyNet.debug.ldf("Calculating LengthMask for tgt")
         # Note: Calc LengthMask for src_lengths
         pad_mask = x[..., 0].ne(self.pad_idx).long().to(x.device)
         if src_lengths is not None:
@@ -264,6 +294,7 @@ class SymphonyNet(FairseqDecoder):
                 max_len=seq_len, 
                 device= x.device)
         
+        SymphonyNet.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for endoer_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
@@ -279,7 +310,7 @@ class SymphonyNet(FairseqDecoder):
             #     device= encoder_out.device)
             pass
             
-        
+        SymphonyNet.debug.ldf("full mask for cross attention layer")
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(
             N = seq_len,
@@ -287,6 +318,7 @@ class SymphonyNet(FairseqDecoder):
             device = x.device
         )
         
+        SymphonyNet.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
             rel_pos = pad_mask * x[..., 4]
@@ -306,8 +338,10 @@ class SymphonyNet(FairseqDecoder):
             )
             pos_emb = self.wpe(position_ids)
         
+        SymphonyNet.debug.ldf("apply dropout")
         x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
 
+        SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
             x = x,
             memory = encoder_out,
@@ -317,9 +351,12 @@ class SymphonyNet(FairseqDecoder):
             memory_length_mask = enc_len_mask #WIP
         )
         # print("Output: ",outputs)
+        SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
         print("OUT: ", doutputs)
         input()
+        
+        SymphonyNet.debug.ldf("<< END >>")
 
         return doutputs
     
