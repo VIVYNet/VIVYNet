@@ -128,7 +128,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("src_token")
         
         # Return logits from BERT << BROKEN >>
-        output, _ = self.model(src_token)
+        output = self.model(src_token)
         BERT.debug.ldf("output")
         
         # Return result
@@ -451,6 +451,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         
         # Create instance variables based on parameters given
         self.encoder = encoder
+        self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
         
@@ -476,12 +477,15 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.zero_grad()")
         
         # Get loss and the logits from the model
-        enc_output = self.encoder(src_tokens)
+        enc_output = self.encoder(src_tokens.reshape(-1, 1))
         VIVYNet.debug.ldf("res 1")
         
+        bert_out = self.linear(enc_output[0])
+        VIVYNet.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(len(src_tokens)))
+
         # Get overall features from decoder
         features = self.decoder(
-            encoder_out = enc_output,
+            encoder_out = bert_out,
             x = prev_output_tokens,
             src_lengths = prev_output_tokens_lengths,
             encoder_out_lengths = None, #TODO: Pass in the Encoder Output length
