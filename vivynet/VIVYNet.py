@@ -24,7 +24,7 @@ from fairseq.models import (
 from fairseq import utils
 
 # HuggingFace Imports
-from transformers import BertForSequenceClassification
+from transformers import BertForSequenceClassification, BertModel
 
 # Torch Imports
 import torch
@@ -108,7 +108,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("var dev")
         
         # Initialize model
-        self.model = BertForSequenceClassification.from_pretrained(
+        self.model = BertModel.from_pretrained(
             "bert-base-multilingual-cased"
         )
         BERT.debug.ldf("pretrained model")
@@ -122,15 +122,17 @@ class BERT(FairseqEncoder):
         """Forward function to specify forward propogation"""
         
         BERT.debug.ldf("<< START >>")
-        
+
         # Send data to device
         src_token = src_token.to(self.device).long()
         BERT.debug.ldf("src_token")
         
+        BERT.debug.ldf(src_token.shape)
+        
         # Return logits from BERT << BROKEN >>
         output = self.model(src_token)
         BERT.debug.ldf("output")
-        
+        BERT.debug.ldf(output['last_hidden_state'].shape)
         # Return result
         BERT.debug.ldf("<< END >>")
         return output
@@ -455,6 +457,8 @@ class VIVYNet(FairseqEncoderDecoderModel):
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
         
+        self.linear = torch.nn.Linear(768, 512)
+
         # Put models into train mode
         self.encoder.train()
         VIVYNet.debug.ldf("encoder.train")
@@ -490,7 +494,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
             src_lengths = prev_output_tokens_lengths,
             encoder_out_lengths = None, #TODO: Pass in the Encoder Output length
         )
-
+        
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
         return features
@@ -1197,7 +1201,7 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - Add EOS for other targets")
         
-        self.datasets[split] = MultiheadDataset(
+        final_target = MultiheadDataset(
             dataset=tgt_datasets,
             sizes=tgt_datasets.sizes,
             src_vocab=self.dictionary,
@@ -1207,10 +1211,7 @@ class VIVYData(LanguageModelingTask):
             targets=self.targets,
             add_bos_token=False #Note: it should be from args,
         )
-
         VIVYData.debug.ldf("TGT - MultiheadDataset Init")
-        
-        # print(self.datasets[split][0])
         VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(self.datasets[split].sizes)})")
 
         """
@@ -1237,21 +1238,15 @@ class VIVYData(LanguageModelingTask):
         DATASET COMPILATION
         """
         
-        # print(src_dataset[1106])
-        # print(src_dataset.sizes[1106])
-        
-        # Generate the dataset
         self.datasets[split] = PairDataset(
             src=src_dataset,    
             src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
-            tgt=self.datasets[split],
-            tgt_sizes=self.datasets[split].sizes,
+            tgt=final_target,
+            tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab
         )
-
         print(self.datasets[split].__getitem__(0))
-
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
