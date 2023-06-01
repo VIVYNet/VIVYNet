@@ -293,7 +293,11 @@ class SymphonyNet(FairseqDecoder):
         src_lengths=None,
         encoder_out_lengths=None
     ):
+        """Extract feature method"""
+        
         SymphonyNet.debug.ldf("<< START >>")
+        
+        #
         x = torch.unsqueeze(decoder_in, 0)
         bsz,seq_len, ratio = x.size()
         enc_len, enc_bsz, enc_voc_size = encoder_out.size()
