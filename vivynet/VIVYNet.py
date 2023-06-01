@@ -294,8 +294,8 @@ class SymphonyNet(FairseqDecoder):
         encoder_out_lengths=None
     ):
         SymphonyNet.debug.ldf("<< START >>")
-        x = torch.unsqueeze(x, 0)
-        bsz ,seq_len, ratio = x.size()
+        x = torch.unsqueeze(decoder_in, 0)
+        bsz,seq_len, ratio = x.size()
         enc_len, enc_bsz, enc_voc_size = encoder_out.size()
         
         SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
