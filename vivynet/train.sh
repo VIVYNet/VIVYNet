@@ -1,4 +1,5 @@
 fairseq-train ../data/final \
+  --cpu \
   --user-dir ./ \
   --task text2music \
   --criterion nll_loss \

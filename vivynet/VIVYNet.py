@@ -103,7 +103,6 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("super()")
         
         # Instance variables
-        self.device = torch.device("cuda")
         self.args = args
         BERT.debug.ldf("var dev")
         
@@ -124,7 +123,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("<< START >>")
 
         # Send data to device
-        src_token = src_token.to(self.device).long()
+        src_token = src_token.to(src_token.device).long()
         BERT.debug.ldf("src_token")
         
         # Return logits from BERT << BROKEN >>
@@ -294,20 +293,34 @@ class SymphonyNet(FairseqDecoder):
         src_lengths=None,
         encoder_out_lengths=None
     ):
-        bsz, seq_len, ratio = decoder_in.size()
-        enc_bsz, enc_len = encoder_out.size()
+        SymphonyNet.debug.ldf("<< START >>")
+        x = torch.unsqueeze(x, 0)
+        bsz ,seq_len, ratio = x.size()
+        enc_len, enc_bsz, enc_voc_size = encoder_out.size()
+        
+        SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
+        print("X: ", x[..., 0])
+        print("Size: ",x[..., 0].size())
+        input()
 
-        evt_emb = self.wEvte(decoder_in[..., 0])
+        SymphonyNet.debug.ldf("event embedding")
+        evt_emb = self.wEvte(x[..., 0])
 
+        SymphonyNet.debug.ldf("event mask")
         # if not mapping to pad, padding idx will only occer at last
-        evton_mask = decoder_in[..., 1].ne(self.pad_idx).float()[..., None].to(decoder_in.device) 
-        tmp = self.wDure(decoder_in[..., 1])
+        evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) 
+
+        SymphonyNet.debug.ldf("duration embedding")
+        tmp = self.wDure(x[..., 1])
         dur_emb = tmp * evton_mask
         # assert ((tmp==dur_emb).all())
-        tmp = self.wTrke(decoder_in[..., 2])
+
+        SymphonyNet.debug.ldf("track embedding")
+        tmp = self.wTrke(x[..., 2])
         trk_emb = tmp * evton_mask
         # assert ((tmp==trk_emb).all())
 
+        SymphonyNet.debug.ldf("Calculating LengthMask for tgt")
         # Note: Calc LengthMask for src_lengths
         pad_mask = decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
         if src_lengths is not None:
@@ -322,6 +335,7 @@ class SymphonyNet(FairseqDecoder):
                 max_len=seq_len, 
                 device= decoder_in.device)
         
+        SymphonyNet.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for endoer_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
@@ -330,13 +344,14 @@ class SymphonyNet(FairseqDecoder):
                 device= encoder_out.device)
         else:
             # WIP: Calc LengthMask when enc_out_len is none
-            enc_pad_mask = decoder_in[1].ne(self.enc_pad_idx).long().to(decoder_in.device)
-            enc_len_mask = LengthMask(
-                torch.sum(enc_pad_mask, axis=1),
-                max_len=enc_len,
-                device= encoder_out.device)
+            # enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
+            # enc_len_mask = LengthMask(
+            #     torch.sum(enc_pad_mask, axis=1),
+            #     max_len=enc_len,
+            #     device= encoder_out.device)
+            pass
             
-        
+        SymphonyNet.debug.ldf("full mask for cross attention layer")
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(
             N = seq_len,
@@ -344,6 +359,7 @@ class SymphonyNet(FairseqDecoder):
             device = decoder_in.device
         )
         
+        SymphonyNet.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
             rel_pos = pad_mask * decoder_in[..., 4]
@@ -363,8 +379,10 @@ class SymphonyNet(FairseqDecoder):
             )
             pos_emb = self.wpe(position_ids)
         
-        decoder_in = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
+        SymphonyNet.debug.ldf("apply dropout")
+        x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
 
+        SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
             x=decoder_in,
             memory=encoder_out,
@@ -373,8 +391,14 @@ class SymphonyNet(FairseqDecoder):
             memory_mask=full_mask, #WIP
             memory_length_mask=enc_len_mask #WIP
         )
+        # print("Output: ",outputs)
+        SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
+        print("OUT: ", doutputs)
+        input()
         
+        SymphonyNet.debug.ldf("<< END >>")
+
         return doutputs
     
     def get_normalized_probs(
@@ -521,8 +545,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
         
-        self.linear = torch.nn.Linear(768, 512)
-
         # Put models into train mode
         self.encoder.train()
         VIVYNet.debug.ldf("encoder.train")
