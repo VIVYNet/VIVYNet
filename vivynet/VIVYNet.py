@@ -598,14 +598,16 @@ class VIVYNet(FairseqEncoderDecoderModel):
 def train(args):
     """Train function"""
     
-    # DEBUG
+    # Debug
     debug = Debug("train", 4)
-    debug.ldf("<< train >>")
+    debug.ldf("<< START >>")
     
     args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
     args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
     args.dec_num_layers = getattr(args, "dec_num_layers", 12)
     args.dec_dropout = getattr(args, "dec_dropout", 0.1)
+    debug.ldf("Applied setting changes")
+    debug.ldf("<< END >>")
  
 #
 #   DATASET SPECIFICATIONS
@@ -869,6 +871,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
 
 class MultiheadDataset(MonolingualDataset):
     """Final Preprocessing of the Multiheaded Datapoints"""
+    
     def __init__(
         self,
         dataset,
@@ -934,6 +937,7 @@ class MultiheadDataset(MonolingualDataset):
         return {"id": index, "source": source, "target": target, "on": on}
 
 class PairDataset(LanguagePairDataset):
+    """Text2Music Dataset classification"""
     
     def __init__(
         self, 
@@ -944,7 +948,7 @@ class PairDataset(LanguagePairDataset):
         tgt_sizes=None, 
         tgt_dict=None
     ):
-        """Text2Music Dataset classification"""
+        """Class constructor"""
         
         # Super call
         super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, )
