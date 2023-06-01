@@ -1,4 +1,5 @@
 fairseq-train ../data/final \
+  --cpu \
   --user-dir ./ \
   --task text2music \
   --criterion nll_loss \
@@ -16,3 +17,7 @@ fairseq-train ../data/final \
   --perm_inv 2 \
   --evt_voc_size 237 \
   --trk_voc_size 36 \
+  --dur_voc_size 36 \
+  --ins_voc_size 16 \
+  --max_rel_pos  86 \
+  --max_mea_pos  311 \

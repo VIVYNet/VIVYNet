@@ -36,6 +36,6 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" PYTHONWARNINGS="ignore" fairseq-train 	${
 	--max-update ${TOTAL_UPDATES} --log-format simple --log-interval 100 \
 	--checkpoint-suffix _${CHECKPOINT_SUFFIX} \
 	--tensorboard-logdir logs/${CHECKPOINT_SUFFIX} \
-	--ratio ${RATIO} --evt-voc-size ${SIZE_0} --dur-voc-size ${SIZE_1} --trk-voc-size ${SIZE_2} --ins-voc-size ${SIZE_3} \
+	--ratio ${RATIO} --evt-voc-size ${SIZE_0} 3 ${SIZE_1} --trk-voc-size ${SIZE_2} --ins-voc-size ${SIZE_3} \
 	--max-rel-pos ${MAX_REL_POS} --max-mea-pos ${MAX_MEA_POS}  --perm-inv ${PI_LEVEL} \
 	2>&1 | tee ${CHECKPOINT_SUFFIX}_part${RECOVER}.log
