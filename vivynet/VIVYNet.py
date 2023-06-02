@@ -298,34 +298,34 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("<< START >>")
 
         SymphonyNet.debug.ldf("process decoder_in")
-        x = torch.unsqueeze(x, 0)
-        bsz ,seq_len, ratio = x.size()
+        decoder_in = torch.unsqueeze(decoder_in, 0)
+        bsz ,seq_len, ratio = decoder_in.size()
 
         SymphonyNet.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
         encoder_out = encoder_out.reshape([enc_bsz, enc_len, embed_dim])
 
         SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
-        print("X: ", x[..., 0])
-        print("Size: ",x.size())
+        print("X: ", decoder_in[..., 0])
+        print("Size: ",decoder_in.size())
 
         print(encoder_out.size())
         input()
 
         SymphonyNet.debug.ldf("event embedding")
-        evt_emb = self.wEvte(x[..., 0])
+        evt_emb = self.wEvte(decoder_in[..., 0])
 
         SymphonyNet.debug.ldf("event mask")
         # if not mapping to pad, padding idx will only occer at last
-        evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) # TODO: elaborate, why the mask is on the 2nd
+        evton_mask = decoder_in[..., 1].ne(self.pad_idx).float()[..., None].to(decoder_in.device) # TODO: elaborate, why the mask is on the 2nd
 
         SymphonyNet.debug.ldf("duration embedding")
-        tmp = self.wDure(x[..., 1])
+        tmp = self.wDure(decoder_in[..., 1])
         dur_emb = tmp * evton_mask
         # assert ((tmp==dur_emb).all())
 
         SymphonyNet.debug.ldf("track embedding")
-        tmp = self.wTrke(x[..., 2])
+        tmp = self.wTrke(decoder_in[..., 2])
         trk_emb = tmp * evton_mask
         # assert ((tmp==trk_emb).all())
 
@@ -342,7 +342,7 @@ class SymphonyNet(FairseqDecoder):
             len_mask = LengthMask(
                 torch.sum(pad_mask, axis=1), 
                 max_len=seq_len, 
-                device= x.device)
+                device= decoder_in.device)
         print(torch.sum(pad_mask, axis=1))
         print(encoder_out_lengths)
         SymphonyNet.debug.ldf("Calculating LengthMask for src")
@@ -367,7 +367,7 @@ class SymphonyNet(FairseqDecoder):
             M = enc_len,
             device = decoder_in.device
         )
-        
+        input()
         SymphonyNet.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
@@ -412,6 +412,7 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
         print("OUT: ", doutputs)
+        print("OUT: ", doutputs.size())
         input()
         
         SymphonyNet.debug.ldf("<< END >>")
@@ -597,7 +598,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Get overall features from decoder
         features = self.decoder(
             encoder_out = bert_out,
-            x = prev_output_tokens,
+            decoder_in = prev_output_tokens,
             src_lengths = prev_output_tokens_lengths,
             encoder_out_lengths = src_lengths, #TODO: Pass in the Encoder Output length
         )
@@ -660,8 +661,8 @@ def collate_tokens(
     # Return the result 
     return res
 
-def collate(samples, pad_idx, eos_idx):
-    """Collater Function"""
+def midi_collate(samples, pad_idx, eos_idx):
+    """Midi MultiHeadDataset Collater Function"""
     
     def merge(key, is_list=False):
         """Merge inner function"""
@@ -721,6 +722,73 @@ def collate(samples, pad_idx, eos_idx):
         "target": target,
         "ontokens": sum(s["on"] for s in samples)
     }
+
+
+def t2m_collate(samples, pad_idx, eos_idx):
+    """Text2Music PairDataset Collate Function"""
+    
+    #TODO: add a merge func for text encoder_in
+    def merge(key, is_list=False):
+        """Merge inner function"""
+        
+        # Check if the the provided key's value is a list datatype
+        if is_list:
+            # If so, append each iterated collated item to a resulting list
+            res = []
+            for i in range(len(samples[0][key])):
+                # Apped the collated tokens to the resulting list
+                res.append(
+                    collate_tokens(
+                        [s[key][i] for s in samples],
+                        pad_idx,
+                        eos_idx,
+                        left_pad=False,
+                    )
+                )
+            
+            # Retun the result of the appending 
+            return res
+        
+        # If the given key is not a list, move here 
+        else:
+            # Just return the collated tokens normally
+            return collate_tokens(
+                [s[key] for s in samples],
+                pad_idx,
+                eos_idx,
+                left_pad=False,
+            )
+            
+    # Return nothing if samples provided is nothing
+    if len(samples) == 0:
+        return {}
+    
+    # Merge the source tokens
+    dec_in_tokens = merge("dec_input")
+    
+    # If the sample's target is empty, merge the target tokens
+    if samples[0]["target"] is not None:
+        is_target_list = isinstance(samples[0]["target"], list)
+        target = merge("target", is_target_list)
+    # If not, set the target equal to the source dataset 
+    else:
+        target = dec_in_tokens
+
+    # Return the resulting information 
+    # TODO: add info for text data
+    return {
+        "id": torch.LongTensor([s["id"] for s in samples]),
+        "nsentences": len(samples),
+        "ntokens": sum(s["dec_input"].size(0)  for s in samples),
+        "net_input": {
+            "enc_input": samples["enc_input"], 
+            "dec_in_tokens": dec_in_tokens,
+            "dec_in_lengths": torch.LongTensor([s["dec_input"].size(0) for s in samples]),
+        },
+        "target": target,
+        "ontokens": sum(s["on"] for s in samples)
+    }
+
 
 class TupleMultiHeadDataset(TokenBlockDataset):
     """Class Specification for Multiheaded Information"""
@@ -930,7 +998,7 @@ class MultiheadDataset(MonolingualDataset):
         """Token collater method"""
         
         # Return the collated information of the given sample
-        return collate(samples, self.vocab.pad(), self.vocab.eos())
+        return midi_collate(samples, self.vocab.pad(), self.vocab.eos())
         
     def __getitem__(self, index):
         """Get item of an iterable based on its index"""
@@ -959,6 +1027,7 @@ class PairDataset(LanguagePairDataset):
         src, 
         src_sizes, 
         src_dict, 
+        midi_dict,
         tgt=None, 
         tgt_sizes=None, 
         tgt_dict=None
@@ -971,6 +1040,7 @@ class PairDataset(LanguagePairDataset):
         # Variable definitions and initialization
         self.src = src
         self.src_dict = src_dict
+        self.midi_dict = midi_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
 
@@ -982,15 +1052,15 @@ class PairDataset(LanguagePairDataset):
         tgt_input = self.tgt[index]
         dec_input = tgt_input["source"]
         target = tgt_input["target"]
+        on = tgt_input["on"]
 
         # Return the information
-        return {"id": index, "enc_input": enc_input, "dec_input": dec_input, "target": target}
+        return {"id": index, "enc_input": enc_input, "dec_input": dec_input, "target": target, "on": on}
     
     def collater(self, samples):
         """Token collater method"""
-        
         # Return the collated information of the given sample
-        return samples[0]
+        return t2m_collate(samples, self.midi_dict.pad(), self.midi_dict.eos())
     
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
@@ -1147,6 +1217,7 @@ class VIVYData(LanguageModelingTask):
             src=src_dataset,    
             src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
+            midi_dict = self.dictionary, 
             tgt=final_target,
             tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab
@@ -1180,7 +1251,9 @@ class ModelCriterion(CrossEntropyCriterion):
     def forward(self, model, sample, reduce=True):
         
         VIVYNet.debug.ldf("<< Criterion >>")
-        
+        print("DEBUGGING COLLATER")
+        print(sample)
+        input()
         # Get output of the model
         net_output = model(sample["enc_input"], sample["dec_input"])
         
@@ -1190,6 +1263,10 @@ class ModelCriterion(CrossEntropyCriterion):
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
         
+        VIVYNet.debug.ldf("After computation")
+        print(sample)
+        input()
+
         # Create logging output
         logging_output = {
             "loss": loss.data,
