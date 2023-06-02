@@ -24,7 +24,11 @@ from fairseq.models import (
 from fairseq import utils
 
 # HuggingFace Imports
-from transformers import BertForSequenceClassification, BertModel
+from transformers import BertModel
+
+# FastTransformer Imports
+from fast_transformers.builders import TransformerEncoderBuilder, TransformerDecoderBuilder
+from fast_transformers.masking import TriangularCausalMask, LengthMask, FullMask
 
 # Torch Imports
 import torch
@@ -32,12 +36,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-# FastTransformer Imports
-from fast_transformers.builders import TransformerEncoderBuilder, TransformerDecoderBuilder
-from fast_transformers.masking import TriangularCausalMask, LengthMask, FullMask
-
 # Miscellaneous Import
-from colorama import Fore, Style, init
+from colorama import Fore, Style
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
@@ -126,132 +126,175 @@ class BERT(FairseqEncoder):
         src_token = src_token.to(src_token.device).long()
         BERT.debug.ldf("src_token")
         
-        BERT.debug.ldf(src_token.shape)
-        
         # Return logits from BERT << BROKEN >>
         output = self.model(src_token)
         BERT.debug.ldf("output")
-        BERT.debug.ldf(output['last_hidden_state'].shape)
+        
         # Return result
         BERT.debug.ldf("<< END >>")
         return output
     
 class SymphonyNet(FairseqDecoder):
     """SymphonyNet Model Specification"""
-
-    debug = Debug("SymphonyNet", 6)
-
+    
+    debug = Debug("SymphonyNet", 2)
+    
     def __init__(self, args, task):
-        #TODO: Add dictionary for encoder
-        super().__init__(task.target_dictionary)
+        """SymphonyNet Structure Definition"""
         SymphonyNet.debug.ldf("<< START >>")
-
-        #print(task.target_dictionary)
-        # for i in range(len(task.target_dictionary)):
-        #     print(i, task.target_dictionary[i])
-        SymphonyNet.debug.ldf("Embedding Init")
-
+        
+        # Super call for a FairseqDecoder
+        # TODO: Add dictionary for encoder
+        super().__init__(task.target_dictionary)
+        SymphonyNet.debug.ldf("super()")
+        
+        # Get the embedding dimensions for the SymphonyNet model
         self.dec_embed_dim = args.dec_embed_dim
+        SymphonyNet.debug.ldf("Decoder Dimension")
+        
+        # Set the EVENT, TRACK, and DURATION embedding layers
         self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
         self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
         self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
+        SymphonyNet.debug.ldf("Embedding Layers")
+        
+        # Get the maximum number of tokens per sample
         self.max_pos = args.tokens_per_sample
+        SymphonyNet.debug.ldf("Maximum Tokens Per Sample")
 
+        # Set permutation invariance configurations
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
             self.wRpe = nn.Embedding(args.max_rel_pos+1, args.dec_embed_dim) 
             self.wMpe = nn.Embedding(args.max_mea_pos+1, args.dec_embed_dim)
+            SymphonyNet.debug.ldf("perm_inv > 1")
         else:
-            self.wpe = nn.Embedding(self.max_pos+1, args.dec_embed_dim) # max_pos_len = 4096
-            
-        SymphonyNet.debug.ldf("Dropout & Layer Norm Init")
+            self.wpe = nn.Embedding(self.max_pos+1, args.dec_embed_dim)
+            SymphonyNet.debug.ldf("perm_inv == 0")
+        
+        # Setup dropout and layer normalization layers for reuse
         self.drop = nn.Dropout(args.dec_dropout)
         self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
+        SymphonyNet.debug.ldf("Dropout & LayerNorm")
         
-        SymphonyNet.debug.ldf("Decoder Model Setup")
+        # Build the decoder model
         self.decoder_model = TransformerDecoderBuilder.from_kwargs(
-                n_layers = args.dec_num_layers,
-                n_heads=args.dec_num_attention_heads,
-                query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
-                value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
-                feed_forward_dimensions=4 * args.dec_embed_dim,
-                activation='gelu',
-                #final_normalization=True,
-                dropout=args.dec_dropout,
-                self_attention_type="causal-linear", 
-                cross_attention_type="full", # Fully masked so that each domain can be merged
-            ).get()
+            n_layers = args.dec_num_layers,
+            n_heads=args.dec_num_attention_heads,
+            query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+            value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+            feed_forward_dimensions=4 * args.dec_embed_dim,
+            activation='gelu',
+            #final_normalization=True,
+            dropout=args.dec_dropout,
+            self_attention_type="causal-linear", 
+            cross_attention_type="full", # Fully masked so that each domain can be merged
+        ).get()
+        SymphonyNet.debug.ldf("Decoder Model")
 
-        SymphonyNet.debug.ldf("Causal Mask Init")
+        # Generate attention mask
         self.attn_mask = TriangularCausalMask(self.max_pos)
-
-        SymphonyNet.debug.ldf("Linear Layer for each Element")
+        SymphonyNet.debug.ldf("Attention Mask")
+        
+        # Define output layers for EVENT, DURATION, TRACK, and INSTRUMENT
         self.proj_evt = nn.Linear(args.dec_embed_dim, args.evt_voc_size, bias=False)
         self.proj_dur = nn.Linear(args.dec_embed_dim, args.dur_voc_size, bias=False)
         self.proj_trk = nn.Linear(args.dec_embed_dim, args.trk_voc_size, bias=False)
         self.proj_ins = nn.Linear(args.dec_embed_dim, args.ins_voc_size, bias=False)
+        SymphonyNet.debug.ldf("Output Layers")
 
-        SymphonyNet.debug.ldf("Weight init")
+        # Initialize the weights for the model
         self.apply(self._init_weights)
-        # set zero embedding for padding symbol
-        #TODO: check will the pad id be trained? (as TZ RZ YZ)
+        SymphonyNet.debug.ldf("Init Weights")
+        
+        # Set zero embeddings for EVENT, DURATION, and TRACK for padding symbol
+        # TODO: check will the pad id be trained? (as TZ RZ YZ)
         self.pad_idx = task.target_dictionary.pad()
         self.wEvte.weight.data[self.pad_idx].zero_()
         self.wDure.weight.data[self.pad_idx].zero_()
         self.wTrke.weight.data[self.pad_idx].zero_()
+        SymphonyNet.debug.ldf("Zero Input Embedding Layers")
+        
+        # Set Zero embeddings for permuation invariance
         if self.perm_inv > 1:
             self.wRpe.weight.data[0].zero_()
             self.wMpe.weight.data[0].zero_()
+            SymphonyNet.debug.ldf("perm_inv (zero) > 1")
         else:
             self.wpe.weight.data[0].zero_()
+            SymphonyNet.debug.ldf("perm_inv (zero) == 1")
         
         SymphonyNet.debug.ldf("<< END >>")
             
     def _init_weights(self, module):
+        """Initialization Step"""
+        
+        SymphonyNet.debug.ldf(f"{type(module)} | << START >>")
+        
+        # If the the given model is a linear or an embedding layer,
+        # initialize weights with a mean of zero and a set std dev
         if isinstance(module, (nn.Linear, nn.Embedding)):
             module.weight.data.normal_(mean=0.0, std=self.dec_embed_dim ** -0.5)
+            SymphonyNet.debug.ldf("  0 Mean and Std Dev WEIGHT Init")
+            
+            # If the module is a linear layer with bias, set bias to zero
             if isinstance(module, nn.Linear) and module.bias is not None:
                 module.bias.data.zero_()
+                SymphonyNet.debug.ldf("  0 BIAS")
+        
+        # If the module is a LayerNorm, set bias to zero 
+        # and weight initialized to 1
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
+            SymphonyNet.debug.ldf("  0 BIAS and 1 WEIGHT Fill")
+        
+        SymphonyNet.debug.ldf("  << END >>")
 
     def forward(
         self,
         encoder_out,
-        x,
-        src_lengths = None,
-        encoder_out_lengths = None,
+        decoder_in,
+        src_lengths=None,
+        encoder_out_lengths=None,
     ):
-        SymphonyNet.debug.ldf("<< START >>")
-
-        SymphonyNet.debug.ldf("Extract Features")
-        features = self.extract_features(
-            x = x, 
-            encoder_out = encoder_out,
-            src_lengths = src_lengths,
-            encoder_out_lengths = encoder_out_lengths
-            )
+        """SymphonyNet's Forward Function"""
         
-        SymphonyNet.debug.ldf("Apply Linear Layers on Features")
+        SymphonyNet.debug.ldf("<< START >>")
+        
+        # Extract features from the given encoder's output, and decoder_input
+        features = self.extract_features(
+            decoder_in=decoder_in, 
+            encoder_out=encoder_out,
+            src_lengths=src_lengths,
+            encoder_out_lengths=encoder_out_lengths
+        )
+        SymphonyNet.debug.ldf("Feature Extract")
+        
+        # Project the given features into the output layers 
+        # to get the logit projections of EVENT, DURATION
+        # TRACK, and PREDICTION
         evt_logits = self.proj_evt(features)
         dur_logits = self.proj_dur(features)
         trk_logits = self.proj_trk(features)
         ins_logits = self.proj_ins(features)
-
+        SymphonyNet.debug.ldf("Final Projection")
         SymphonyNet.debug.ldf("<< END >>")
-
+        
+        # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
         return (evt_logits, dur_logits, trk_logits, ins_logits)
 
     # TODO: Understand how SymphonyNet masks work, including LengthMask and TriangularMask
     # TODO: Understand Permutiation Imvariant in code
     def extract_features(
         self,
-        x,
-        encoder_out = None,
-        src_lengths = None,
-        encoder_out_lengths = None
+        decoder_in,
+        encoder_out=None,
+        src_lengths=None,
+        encoder_out_lengths=None
     ):
+        """Extract feature method"""
+        
         SymphonyNet.debug.ldf("<< START >>")
 
         SymphonyNet.debug.ldf("process decoder_in")
@@ -288,12 +331,12 @@ class SymphonyNet(FairseqDecoder):
 
         SymphonyNet.debug.ldf("Calculating LengthMask for tgt")
         # Note: Calc LengthMask for src_lengths
-        pad_mask = x[..., 0].ne(self.pad_idx).long().to(x.device)
+        pad_mask = decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
         if src_lengths is not None:
             len_mask = LengthMask(
                 src_lengths, 
                 max_len=seq_len, 
-                device=x.device
+                device=decoder_in.device
                 )
         else:
             len_mask = LengthMask(
@@ -322,17 +365,17 @@ class SymphonyNet(FairseqDecoder):
         full_mask = FullMask(
             N = seq_len,
             M = enc_len,
-            device = x.device
+            device = decoder_in.device
         )
         
         SymphonyNet.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
-            rel_pos = pad_mask * x[..., 4]
-            rel_pos_mask = rel_pos.ne(0).float()[..., None].to(x.device) # ignore bom, chord, eos
+            rel_pos = pad_mask * decoder_in[..., 4]
+            rel_pos_mask = rel_pos.ne(0).float()[..., None].to(decoder_in.device) # ignore bom, chord, eos
 
-            measure_ids = pad_mask * x[..., 5]
-            mea_mask = measure_ids.ne(0).float()[..., None].to(x.device) # ignore eos
+            measure_ids = pad_mask * decoder_in[..., 5]
+            mea_mask = measure_ids.ne(0).float()[..., None].to(decoder_in.device) # ignore eos
             
             pos_emb = rel_pos_mask * self.wRpe(rel_pos) + mea_mask * self.wMpe(measure_ids)
 
@@ -340,7 +383,7 @@ class SymphonyNet(FairseqDecoder):
             # set position ids to exclude padding symbols
             position_ids = pad_mask * (
                 torch.arange(1, 1 + seq_len)
-                .to(x.device)
+                .to(decoder_in.device)
                 .repeat(bsz, 1)
             )
             pos_emb = self.wpe(position_ids)
@@ -389,6 +432,8 @@ class SymphonyNet(FairseqDecoder):
             return tuple(utils.softmax(logits, dim=-1, onnx_trace=self.onnx_trace) for logits in net_output)
 
     def max_positions(self):
+        """Return nothing for max positions"""
+        SymphonyNet.debug.ldf("<< max_positions >>")
         return None
 
 #
@@ -524,13 +569,11 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("<< END >>")
     
     def forward(
-            self, 
-            src_tokens, 
-            prev_output_tokens,
-            src_lengths = None, 
-            prev_output_tokens_lengths = None, 
-            **kwargs
-            ):
+        self, 
+        src_tokens, 
+        prev_output_tokens,
+        prev_output_tokens_lengths = None, 
+    ):
         """Forward propagation method"""
         
         VIVYNet.debug.ldf("<< START >>")
@@ -558,6 +601,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
             src_lengths = prev_output_tokens_lengths,
             encoder_out_lengths = src_lengths, #TODO: Pass in the Encoder Output length
         )
+        VIVYNet.debug.ldf("res 3")
         
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
@@ -908,8 +952,8 @@ class MultiheadDataset(MonolingualDataset):
         # Return the processed information
         return {"id": index, "source": source, "target": target, "on": on}
 
-
 class PairDataset(LanguagePairDataset):
+    
     def __init__(
         self, 
         src, 
@@ -917,39 +961,30 @@ class PairDataset(LanguagePairDataset):
         src_dict, 
         tgt=None, 
         tgt_sizes=None, 
-        tgt_dict=None, 
-        left_pad_source=True, 
-        left_pad_target=False, 
-        shuffle=True, 
-        input_feeding=True, 
-        remove_eos_from_source=False, 
-        append_eos_to_target=False, 
-        align_dataset=None, 
-        constraints=None, 
-        append_bos=False, 
-        eos=None, 
-        num_buckets=0, 
-        src_lang_id=None, 
-        tgt_lang_id=None, 
-        pad_to_multiple=1
+        tgt_dict=None
     ):
-        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, left_pad_source, left_pad_target, shuffle, input_feeding, remove_eos_from_source, append_eos_to_target, align_dataset, constraints, append_bos, eos, num_buckets, src_lang_id, tgt_lang_id, pad_to_multiple)
-        #TODO: Add padding and special tokens for each modality
+        """Text2Music Dataset classification"""
+        
+        # Super call
+        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, )
+        
+        # Variable definitions and initialization
         self.src = src
         self.src_dict = src_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
-        self.append_bos = append_bos
-        self.append_eos_to_target = append_eos_to_target
 
     def __getitem__(self, index):
+        """Get item method"""
+        
+        # Extract information at given index
         enc_input = self.src[index]
         tgt_input = self.tgt[index]
         dec_input = tgt_input["source"]
         target = tgt_input["target"]
 
+        # Return the information
         return {"id": index, "enc_input": enc_input, "dec_input": dec_input, "target": target}
-    
     
     def collater(self, samples):
         """Token collater method"""
@@ -957,12 +992,6 @@ class PairDataset(LanguagePairDataset):
         # Return the collated information of the given sample
         return samples[0]
     
-    # def __getitem__(self, index):
-    #     """Get item function"""
-
-    #     # return item
-    #     return {"id": index, "source": self.src[index], "target": self.tgt[index]}
-
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
     """Dataset Class Specification"""
@@ -1009,198 +1038,10 @@ class VIVYData(LanguageModelingTask):
         self.src_vocab = input_vocab
         self.tgt_vocab = label_vocab
         VIVYData.debug.ldf("var dec")
-        VIVYData.debug.ldf("<< END >>")
-    
-    # def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-    #     """Load a given dataset split.
-
-    #     Args:
-    #         split (str): name of the split (e.g., train, valid, test)
-    #     """
-        
-    #     """
-    #     TARGET DATA HANDLING
-    #     """
-        
-    #     VIVYData.debug.ldf(f"<< START (split: {split}) >>")
-        
-    #     # Split the paths to the data
-    #     paths = utils.split_paths(self.args.data  + "/labels/bin")
-    #     assert len(paths) > 0
-    #     VIVYData.debug.ldf("TGT - paths")
-        
-    #     # Get the path splits
-    #     data_path = paths[(epoch - 1) % len(paths)]
-    #     split_path = os.path.join(data_path, split)
-    #     VIVYData.debug.ldf("TGT - path split")
-        
-    #     # Read and get the information from the .bin and .idx files
-    #     tgt_datasets = data_utils.load_indexed_dataset(
-    #         split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
-    #     )
-    #     VIVYData.debug.ldf("TGT - tgt_datasets")
-        
-    #     # If no dataset instance is created, raise an error
-    #     if tgt_datasets is None:
-    #         raise FileNotFoundError(
-    #             "Dataset not found: {} ({})".format(split, split_path)
-    #         )
-
-    #     # Shorten dataset if need be
-    #     tgt_datasets = maybe_shorten_dataset(
-    #         tgt_datasets,
-    #         split,
-    #         self.args.shorten_data_split_list,
-    #         self.args.shorten_method,
-    #         self.args.tokens_per_sample,
-    #         self.args.seed,
-    #     )
-    #     VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
-        
-    #     #
-    #     # Split the combined measures into their corresponding sentences
-    #     #
-        
-    #     # Set arrays for splitting
-    #     temp_arr = []
-    #     temp_sizes_arr = []
-    #     tgt_sentences = []
-    #     tgt_sentence_sizes = []
-    #     VIVYData.debug.ldf("TGT - split setup")
-        
-    #     # Iterate through the parsed data and make the splits
-    #     for idx, item in enumerate(tgt_datasets):
-    #         # Save the parsed information into the temporary arrays
-    #         temp_arr.append(item)
-    #         temp_sizes_arr.append(tgt_datasets.sizes[idx])
-            
-    #         # Check if the iterated item is an EOS measure
-    #         if item.tolist() == [2]:
-    #             # If so, append the temporary information into the resulting arrays
-    #             tgt_sentences.append(temp_arr)
-    #             tgt_sentence_sizes.append(temp_sizes_arr)
-                
-    #             # Reset temporary arrays
-    #             temp_arr = []
-    #             temp_sizes_arr = []
-                
-    #             # Continue
-    #             continue
-    #     VIVYData.debug.ldf("TGT - split iteration")
-        
-    #     #
-    #     # Generate The Target Tokens for the Target Section of the Data
-    #     #
-        
-    #     # Specification for EOS 
-    #     add_eos_for_other_targets = (
-    #         self.args.sample_break_mode is not None
-    #         and self.args.sample_break_mode != "none"
-    #     )
-    #     VIVYData.debug.ldf("TGT - add_eos_for_other_targets")
-        
-    #     # Create a list to store the tupled result
-    #     tgt_tupled_sentences = []
-    #     tgt_tupled_sentences_sizes = []
-    #     VIVYData.debug.ldf("TGT - tupled setup")
-
-    #     # Iterate through the spliced sentences and get the token
-    #     # representation instances from each iterations
-    #     for idx, item in enumerate(tgt_sentences):
-    #         # Generate the TupleMultiHeadDataset of the dataset
-    #         tmhd = TupleMultiHeadDataset(
-    #             item,
-    #             tgt_sentence_sizes[idx],
-    #             self.args.tokens_per_sample,
-    #             pad=self.tgt_vocab.pad(),
-    #             eos=self.tgt_vocab.eos(),
-    #             break_mode=self.args.sample_break_mode,
-    #             include_targets=True,
-    #             ratio=self.args.ratio + 1,
-    #             sample_overlap_rate=self.args.sample_overlap_rate,
-    #             permutation_invariant=self.args.perm_inv,
-    #             evt_vocab_size=self.args.evt_voc_size,
-    #             trk_vocab_size=self.args.trk_voc_size,
-    #         )
-            
-    #         # Generate a MultiheadDataset
-    #         mhd = MultiheadDataset(
-    #             dataset=tmhd,
-    #             sizes=tmhd.sizes,
-    #             src_vocab=self.src_vocab,
-    #             tgt_vocab=self.tgt_vocab,
-    #             add_eos_for_other_targets=add_eos_for_other_targets,
-    #             shuffle=True,
-    #             targets=["future"],
-    #             add_bos_token=False,
-    #         )
-            
-    #         # Append the instance to tgt_tupled_sentences
-    #         tgt_tupled_sentences_sizes.append(mhd.sizes[0])
-    #         tgt_tupled_sentences.append(
-    #             (
-    #                 mhd[0]["source"],
-    #                 mhd[0]["target"]
-    #             )
-    #         )
-            
-    #     VIVYData.debug.ldf("TGT - print sample")
-    #     print(tgt_tupled_sentences[0])
-    #     input()
-
-    #     VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {tgt_tupled_sentences_sizes})")
-        
-    #     """
-    #     SOURCE DATA HANDLING
-    #     """
-        
-    #     # Split the paths to the data
-    #     paths = utils.split_paths(self.args.data  + "/features")
-    #     assert len(paths) > 0
-    #     VIVYData.debug.ldf("SRC - paths")
-        
-    #     # Get the path splits
-    #     data_path = paths[(epoch - 1) % len(paths)]
-    #     split_path = os.path.join(data_path, split)
-    #     VIVYData.debug.ldf("SRC - path split")
-        
-    #     # Create dataset instance
-    #     src_dataset = data_utils.load_indexed_dataset(
-    #         split_path, self.src_vocab, self.args.dataset_impl, combine=combine
-    #     )
-    #     VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {src_dataset.sizes})")       
-        
-
-    #     input()
-    #     """
-    #     DATASET COMPILATION
-    #     """
-        
-    #     # print(src_dataset[1106])
-    #     # print(src_dataset.sizes[1106])
-        
-    #     # Generate the dataset
-    #     self.datasets[split] = PairDataset(
-    #         src=src_dataset,    
-    #         src_sizes=src_dataset.sizes,
-    #         src_dict=self.src_vocab,
-    #         tgt=tgt_tupled_sentences,
-    #         tgt_sizes=tgt_tupled_sentences_sizes,
-    #         tgt_dict=self.tgt_vocab
-    #     )
-
-    #     print(self.datasets[split].__getitem__(0))
-
-    #     VIVYData.debug.ldf("COMPILATION")
-    #     VIVYData.debug.ldf(f"<< END (split: {split}) >>")
-    
+        VIVYData.debug.ldf("<< END >>")    
     
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
-        """Load a given dataset split.
-
-        Args:
-            split (str): name of the split (e.g., train, valid, test)
-        """
+        """Load a given dataset split"""
         
         """
         TARGET DATA HANDLING
@@ -1310,7 +1151,6 @@ class VIVYData(LanguageModelingTask):
             tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab
         )
-        print(self.datasets[split].__getitem__(0))
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
         
@@ -1329,6 +1169,7 @@ class VIVYData(LanguageModelingTask):
     def _initialize_pair_dataset(self, **kwargs):
         """Method to Initialize the Pair Dataset (Text, Midi)"""
         return PairDataset(**kwargs)
+
 #
 #   CRITERION SPECIFICATION
 #
