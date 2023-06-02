@@ -298,8 +298,8 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("<< START >>")
 
         SymphonyNet.debug.ldf("process decoder_in")
-        decoder_in = torch.unsqueeze(decoder_in, 0)
-        bsz ,seq_len, ratio = decoder_in.size()
+        # decoder_in = torch.unsqueeze(decoder_in, 0) <--- Unecessary because it creates a extra dimension
+        bsz, seq_len, ratio = decoder_in.size()
 
         SymphonyNet.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
@@ -723,7 +723,6 @@ def midi_collate(samples, pad_idx, eos_idx):
         "ontokens": sum(s["on"] for s in samples)
     }
 
-
 def t2m_collate(samples, pad_idx, eos_idx):
     """Text2Music PairDataset Collate Function"""
     
@@ -773,7 +772,7 @@ def t2m_collate(samples, pad_idx, eos_idx):
     # If not, set the target equal to the source dataset 
     else:
         target = dec_in_tokens
-
+        
     # Return the resulting information 
     # TODO: add info for text data
     return {
@@ -781,14 +780,13 @@ def t2m_collate(samples, pad_idx, eos_idx):
         "nsentences": len(samples),
         "ntokens": sum(s["dec_input"].size(0)  for s in samples),
         "net_input": {
-            "enc_input": samples["enc_input"], 
+            "enc_input": samples[0]["enc_input"], 
             "dec_in_tokens": dec_in_tokens,
             "dec_in_lengths": torch.LongTensor([s["dec_input"].size(0) for s in samples]),
         },
         "target": target,
         "ontokens": sum(s["on"] for s in samples)
     }
-
 
 class TupleMultiHeadDataset(TokenBlockDataset):
     """Class Specification for Multiheaded Information"""
@@ -1248,14 +1246,17 @@ class VIVYData(LanguageModelingTask):
 @register_criterion("nll_loss")
 class ModelCriterion(CrossEntropyCriterion):
     
+    debug = Debug("ModelCriterion", 5)
+    
     def forward(self, model, sample, reduce=True):
         
-        VIVYNet.debug.ldf("<< Criterion >>")
-        print("DEBUGGING COLLATER")
-        print(sample)
-        input()
+        ModelCriterion.debug.ldf("<< START >>")
+        # print("DEBUGGING COLLATER")
+        # print(sample["net_input"])
+        # input()
+        
         # Get output of the model
-        net_output = model(sample["enc_input"], sample["dec_input"])
+        net_output = model(sample["net_input"]["enc_input"], sample["net_input"]["dec_in_tokens"])
         
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
@@ -1263,8 +1264,8 @@ class ModelCriterion(CrossEntropyCriterion):
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
         
-        VIVYNet.debug.ldf("After computation")
-        print(sample)
+        ModelCriterion.debug.ldf("After computation")
+        print(sample["net_input"])
         input()
 
         # Create logging output
