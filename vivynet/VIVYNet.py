@@ -253,13 +253,20 @@ class SymphonyNet(FairseqDecoder):
         encoder_out_lengths = None
     ):
         SymphonyNet.debug.ldf("<< START >>")
+
+        SymphonyNet.debug.ldf("process decoder_in")
         x = torch.unsqueeze(x, 0)
         bsz ,seq_len, ratio = x.size()
-        enc_len, enc_bsz, enc_voc_size = encoder_out.size()
-        
+
+        SymphonyNet.debug.ldf("process encoder_out")
+        enc_len, enc_bsz, embed_dim = encoder_out.size()
+        encoder_out = encoder_out.reshape([enc_bsz, enc_len, embed_dim])
+
         SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
         print("X: ", x[..., 0])
-        print("Size: ",x[..., 0].size())
+        print("Size: ",x.size())
+
+        print(encoder_out.size())
         input()
 
         SymphonyNet.debug.ldf("event embedding")
@@ -267,7 +274,7 @@ class SymphonyNet(FairseqDecoder):
 
         SymphonyNet.debug.ldf("event mask")
         # if not mapping to pad, padding idx will only occer at last
-        evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) 
+        evton_mask = x[..., 1].ne(self.pad_idx).float()[..., None].to(x.device) # TODO: elaborate, why the mask is on the 2nd
 
         SymphonyNet.debug.ldf("duration embedding")
         tmp = self.wDure(x[..., 1])
@@ -293,23 +300,23 @@ class SymphonyNet(FairseqDecoder):
                 torch.sum(pad_mask, axis=1), 
                 max_len=seq_len, 
                 device= x.device)
-        
+        print(torch.sum(pad_mask, axis=1))
+        print(encoder_out_lengths)
         SymphonyNet.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for endoer_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
-                encoder_out_lengths, 
+                torch.tensor(encoder_out_lengths, dtype=torch.int), 
                 max_len = enc_len,
                 device= encoder_out.device)
         else:
             # WIP: Calc LengthMask when enc_out_len is none
             # enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
-            # enc_len_mask = LengthMask(
-            #     torch.sum(enc_pad_mask, axis=1),
-            #     max_len=enc_len,
-            #     device= encoder_out.device)
-            pass
-            
+            enc_len_mask = LengthMask(
+                torch.tensor(enc_len, dtype=torch.int),
+                max_len=enc_len,
+                device= encoder_out.device)
+
         SymphonyNet.debug.ldf("full mask for cross attention layer")
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(
@@ -338,13 +345,21 @@ class SymphonyNet(FairseqDecoder):
             )
             pos_emb = self.wpe(position_ids)
         
+        SymphonyNet.debug.ldf("combine all midi features")
+        x = evt_emb+dur_emb+trk_emb+pos_emb # [bsz, seq_len, embedding_dim]
+
         SymphonyNet.debug.ldf("apply dropout")
-        x = self.drop(evt_emb+dur_emb+trk_emb+pos_emb)
+        x = self.drop(x)
+
+
+        print(x.size())
+        print(encoder_out.size())
+        input()
 
         SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
-            x = x,
-            memory = encoder_out,
+            x = x,                                  # decoder_in shape: [batch_size, dec_length, embed_dim]
+            memory = encoder_out,                   # encoder_out shape: [batch_size, enc_length, embed_dim]
             x_mask = self.attn_mask,
             x_length_mask = len_mask,
             memory_mask = full_mask, #WIP
@@ -481,6 +496,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         
         # Create SymphonyNet model
         symphony_net = SymphonyNet(args=args, task=task) # Nick's note: SymphonyNet takes args and tasks instead of dict
+        
         VIVYNet.debug.ldf("symphony_net")
         
         # Return
@@ -519,6 +535,10 @@ class VIVYNet(FairseqEncoderDecoderModel):
         
         VIVYNet.debug.ldf("<< START >>")
         
+        VIVYNet.debug.ldf("encoder.zero_grad()")
+
+        VIVYNet.debug.ldf("logging input")
+
         # Clear previously caluclated gradients
         self.encoder.zero_grad()
         VIVYNet.debug.ldf("encoder.zero_grad()")
@@ -528,14 +548,15 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("res 1")
         
         bert_out = self.linear(enc_output[0])
-        VIVYNet.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(len(src_tokens)))
+        src_lengths = len(src_tokens)
+        VIVYNet.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(src_lengths))
 
         # Get overall features from decoder
         features = self.decoder(
             encoder_out = bert_out,
             x = prev_output_tokens,
             src_lengths = prev_output_tokens_lengths,
-            encoder_out_lengths = None, #TODO: Pass in the Encoder Output length
+            encoder_out_lengths = src_lengths, #TODO: Pass in the Encoder Output length
         )
         
         # Return the logits
