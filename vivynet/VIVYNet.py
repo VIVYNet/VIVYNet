@@ -464,8 +464,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         parser.add_argument('--shorten_data_split_list', type=str, metavar='N')
         VIVYNet.debug.ldf("shorten_data_split_list")
         
-        # 
-
         # Token Per Sample
         parser.add_argument('--tokens_per_sample', type=int, metavar='N')
         VIVYNet.debug.ldf("tokens_per_sample")
@@ -545,7 +543,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         
         # Create SymphonyNet model
         symphony_net = SymphonyNet(args=args, task=task) # Nick's note: SymphonyNet takes args and tasks instead of dict
-        
         VIVYNet.debug.ldf("symphony_net")
         
         # Return
@@ -581,10 +578,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         """Forward propagation method"""
         
         VIVYNet.debug.ldf("<< START >>")
-        
-        VIVYNet.debug.ldf("encoder.zero_grad()")
-
-        VIVYNet.debug.ldf("logging input")
 
         # Clear previously caluclated gradients
         self.encoder.zero_grad()
@@ -872,12 +865,12 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             slice_indices[i, :] = (sizes_cs[s] if s >= 0 else 0, sizes_cs[e-1])
             block_to_dataset_index[i, :] = (s+1, 0, e-1)
         
-        # Calculate the sample step
-        sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
+        # # Calculate the sample step
+        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
         
-        # Variable declaration for slices and blocks
-        new_slice_indices = []
-        new_block_to_dataset_index = []
+        # # Variable declaration for slices and blocks
+        # new_slice_indices = []
+        # new_block_to_dataset_index = []
         
         # Note: This parts adds more dimensions into block_to_dataset_index
 
@@ -1036,7 +1029,7 @@ class PairDataset(LanguagePairDataset):
         """Text2Music Dataset classification"""
         
         # Super call
-        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict, )
+        super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict)
         
         # Variable definitions and initialization
         self.src = src

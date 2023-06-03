@@ -21,3 +21,4 @@ fairseq-train ../data/final \
   --ins_voc_size 84 \
   --max_rel_pos  134 \
   --max_mea_pos  2810 \
+  --batch-size 2
