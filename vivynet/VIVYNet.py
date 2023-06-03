@@ -305,12 +305,11 @@ class SymphonyNet(FairseqDecoder):
         enc_len, enc_bsz, embed_dim = encoder_out.size()
         encoder_out = encoder_out.reshape([enc_bsz, enc_len, embed_dim])
 
-        SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
-        print("X: ", decoder_in[..., 0])
-        print("Size: ",decoder_in.size())
-
-        print(encoder_out.size())
-        input()
+        # SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
+        # print("X: ", decoder_in[..., 0])
+        # print("Size: ",decoder_in.size())
+        # print(encoder_out.size())
+        # input()
 
         SymphonyNet.debug.ldf("event embedding")
         evt_emb = self.wEvte(decoder_in[..., 0])
@@ -343,8 +342,10 @@ class SymphonyNet(FairseqDecoder):
                 torch.sum(pad_mask, axis=1), 
                 max_len=seq_len, 
                 device= decoder_in.device)
-        print(torch.sum(pad_mask, axis=1))
-        print(encoder_out_lengths)
+            
+        # print(torch.sum(pad_mask, axis=1))
+        # print(encoder_out_lengths)
+        
         SymphonyNet.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for endoer_out_lengths
         if encoder_out_lengths is not None:
@@ -367,7 +368,9 @@ class SymphonyNet(FairseqDecoder):
             M = enc_len,
             device = decoder_in.device
         )
-        input()
+        
+        # input()
+        
         SymphonyNet.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
@@ -394,10 +397,9 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("apply dropout")
         x = self.drop(x)
 
-
-        print(x.size())
-        print(encoder_out.size())
-        input()
+        # print(x.size())
+        # print(encoder_out.size())
+        # input()
 
         SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
@@ -411,9 +413,10 @@ class SymphonyNet(FairseqDecoder):
         # print("Output: ",outputs)
         SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
-        print("OUT: ", doutputs)
-        print("OUT: ", doutputs.size())
-        input()
+        
+        # print("OUT: ", doutputs)
+        # print("OUT: ", doutputs.size())
+        # input()
         
         SymphonyNet.debug.ldf("<< END >>")
 
@@ -1264,9 +1267,9 @@ class ModelCriterion(CrossEntropyCriterion):
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
         
-        ModelCriterion.debug.ldf("After computation")
-        print(sample["net_input"])
-        input()
+        # ModelCriterion.debug.ldf("After computation")
+        # print(sample["net_input"])
+        # input()
 
         # Create logging output
         logging_output = {
