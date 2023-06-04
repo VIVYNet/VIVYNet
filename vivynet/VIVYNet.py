@@ -464,8 +464,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         parser.add_argument('--shorten_data_split_list', type=str, metavar='N')
         VIVYNet.debug.ldf("shorten_data_split_list")
         
-        # 
-
         # Token Per Sample
         parser.add_argument('--tokens_per_sample', type=int, metavar='N')
         VIVYNet.debug.ldf("tokens_per_sample")
@@ -543,14 +541,77 @@ class VIVYNet(FairseqEncoderDecoderModel):
         bert = BERT(args=args, dictionary=task.source_dictionary)
         VIVYNet.debug.ldf("bert")
         
+        # print(bert)
+        # input()
+
+        # Freezing the Encoder layers and load pretrained weights
+        pretrained_enc = True
+        if (pretrained_enc):
+            pass
+
         # Create SymphonyNet model
-        symphony_net = SymphonyNet(args=args, task=task) # Nick's note: SymphonyNet takes args and tasks instead of dict
+        symphony_net = SymphonyNet(args=args, task=task)
+        # print(symphony_net)
+        # input()
+
+        print("Default Sym State:")
+        checkpoint = torch.load("/home/tnguy231/VIVYNET/VIVYNet/symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt")
+
+        # LOGGING MODEL'S STATE
+
+        # for param in checkpoint:
+        #     print(param)
+        # print(checkpoint["model"])
+        # for param in checkpoint["model"]:
+        #     print(param ,": ", checkpoint["model"][param])
+        # for param in checkpoint["model"]:
+        #     print(param.split("."))
+        # input()
+
+        # for param in symphony_net.state_dict():
+        #     print(param,": ", symphony_net.state_dict()[param])
+        # input()
+
+        # Zipping two models param dicts
+        pretrained_params = []
+        for param in symphony_net.state_dict():
+            if ( not ("cross_attention" in param or "norm3" in param ) ):
+                pretrained_params.append(param)
+        # for param1, param2 in zip(pretrained_params, checkpoint["model"]):
+        #     print(param1, "|", param2)\
         
+        # WIP: Currently unable to transfer weights since the original checkpoint has different dimension due to
+        #      being trained on a different dataset.
+ 
+        # Freezing the Decoder layers and load pretrained weights
+        pretrained_dec = True
+        if (pretrained_dec):
+            VIVYNet.debug.ldf("Proceed loading Decoder pretrained weights")
+            with torch.no_grad():
+                for param1, param2 in zip(pretrained_params, checkpoint["model"]):
+                    VIVYNet.debug.ldf(f"Loading {param1} \n")
+                    
+                    print(symphony_net.state_dict()[param1])
+                    print(symphony_net.state_dict()[param1].size())
+                    print(checkpoint["model"][param2])
+                    print(checkpoint["model"][param2].size())
+
+                    input()
+                    symphony_net.state_dict()[param1].copy_(checkpoint["model"][param2])
+                    print(symphony_net.state_dict()[param1])
+                    input()
+        
+
         VIVYNet.debug.ldf("symphony_net")
         
-        # Return
+        vivynet = VIVYNet(bert, symphony_net)
+        VIVYNet.debug.ldf("vivy_net")
+        # print(vivynet)
+        # input()
+
         VIVYNet.debug.ldf("<< END >>") 
-        return VIVYNet(bert, symphony_net)
+        # Return
+        return vivynet
 
     def __init__(self, encoder, decoder):
         """Constructor for the VIVYNet model"""
