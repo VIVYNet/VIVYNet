@@ -199,6 +199,7 @@ def text_binarize(train_ratio: float) -> None:
     # Get the train size for the dataset
     train_size = int(totalpiece * train_ratio)
 
+
     # Binarize for training data
     train_ds = MMapIndexedDatasetBuilder(f"{FINAL_LOC}/train.bin", dtype=np.uint16)
     for item in tqdm(data[:train_size], desc='writing bin file (training)'):
