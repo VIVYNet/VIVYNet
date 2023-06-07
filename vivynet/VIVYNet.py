@@ -547,7 +547,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Freezing the Encoder layers and load pretrained weights
         pretrained_enc = True
         if (pretrained_enc):
-            pass
+            # Freezing BERT
+            for name, param in bert.named_parameters():
+                param.requires_grad = False
 
         # Create SymphonyNet model
         symphony_net = SymphonyNet(args=args, task=task)
@@ -557,35 +559,27 @@ class VIVYNet(FairseqEncoderDecoderModel):
         print("Default Sym State:")
         checkpoint = torch.load("/home/tnguy231/VIVYNET/VIVYNet/symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt")
 
-        # LOGGING MODEL'S STATE
 
-        # for param in checkpoint:
-        #     print(param)
-        # print(checkpoint["model"])
-        # for param in checkpoint["model"]:
-        #     print(param ,": ", checkpoint["model"][param])
-        # for param in checkpoint["model"]:
-        #     print(param.split("."))
-        # input()
-
-        # for param in symphony_net.state_dict():
-        #     print(param,": ", symphony_net.state_dict()[param])
-        # input()
-
-        # Zipping two models param dicts
-        pretrained_params = []
-        for param in symphony_net.state_dict():
-            if ( not ("cross_attention" in param or "norm3" in param ) ):
-                pretrained_params.append(param)
-        # for param1, param2 in zip(pretrained_params, checkpoint["model"]):
-        #     print(param1, "|", param2)\
-        
         # WIP: Currently unable to transfer weights since the original checkpoint has different dimension due to
         #      being trained on a different dataset.
- 
+
         # Freezing the Decoder layers and load pretrained weights
         pretrained_dec = True
         if (pretrained_dec):
+            # Freezing self-attentions
+            for name, param in symphony_net.named_parameters():
+                if "self_attention" in name:
+                    param.requires_grad = False
+
+            # for name, param in symphony_net.named_parameters():
+            #     print(name, " ", param)
+
+            # Zipping two models param dicts
+            pretrained_params = []
+            for param in symphony_net.state_dict():
+                if ( not ("cross_attention" in param or "norm3" in param ) ):
+                    pretrained_params.append(param)
+
             VIVYNet.debug.ldf("Proceed loading Decoder pretrained weights")
             with torch.no_grad():
                 for param1, param2 in zip(pretrained_params, checkpoint["model"]):
