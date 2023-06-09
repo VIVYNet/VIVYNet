@@ -591,7 +591,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
                     # print(checkpoint["model"][param2].size())
 
                     # input()
-                    # symphony_net.state_dict()[param1].copy_(checkpoint["model"][param2])
+                    symphony_net.state_dict()[param1].copy_(checkpoint["model"][param2])
                     # print(symphony_net.state_dict()[param1])
                     # input()
             VIVYNet.debug.ldf("Loading Finished!")
