@@ -14,10 +14,16 @@ fairseq-train ../data/final \
   --ratio 4 \
   --sample_overlap_rate 4 \
   --perm_inv 2 \
-  --evt_voc_size 436 \
+  --evt_voc_size 1125 \
   --trk_voc_size 44 \
   --dur_voc_size 36 \
-  --ins_voc_size 84 \
-  --max_rel_pos  134 \
-  --max_mea_pos  2810 \
+  --ins_voc_size 133 \
+  --max_rel_pos  198 \
+  --max_mea_pos  5360 \
   --batch-size 2
+  # --evt_voc_size 436 \
+  # --trk_voc_size 44 \
+  # --dur_voc_size 36 \
+  # --ins_voc_size 84 \
+  # --max_rel_pos  134 \
+  # --max_mea_pos  2810 \

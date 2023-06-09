@@ -585,17 +585,17 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 for param1, param2 in zip(pretrained_params, checkpoint["model"]):
                     VIVYNet.debug.ldf(f"Loading {param1} \n")
                     
-                    print(symphony_net.state_dict()[param1])
-                    print(symphony_net.state_dict()[param1].size())
-                    print(checkpoint["model"][param2])
-                    print(checkpoint["model"][param2].size())
+                    # print(symphony_net.state_dict()[param1])
+                    # print(symphony_net.state_dict()[param1].size())
+                    # print(checkpoint["model"][param2])
+                    # print(checkpoint["model"][param2].size())
 
-                    input()
-                    symphony_net.state_dict()[param1].copy_(checkpoint["model"][param2])
-                    print(symphony_net.state_dict()[param1])
-                    input()
-        
-
+                    # input()
+                    # symphony_net.state_dict()[param1].copy_(checkpoint["model"][param2])
+                    # print(symphony_net.state_dict()[param1])
+                    # input()
+            VIVYNet.debug.ldf("Loading Finished!")
+        input()
         VIVYNet.debug.ldf("symphony_net")
         
         vivynet = VIVYNet(bert, symphony_net)
