@@ -529,6 +529,12 @@ class VIVYNet(FairseqEncoderDecoderModel):
                                  'in the embeddings, encoder, and pooler')
         VIVYNet.debug.ldf("dec-dropout")
 
+        parser.add_argument('--freeze_enc', type=int, metavar='N',
+                            help='Freeze pretrained Encoder layers')
+        
+        parser.add_argument('--freeze_dec', type=int, metavar='N',
+                            help='Freeze pretrained Decoder layers')
+
         VIVYNet.debug.ldf("<< END >>")
     
     @classmethod
@@ -545,9 +551,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # input()
 
         # Freezing the Encoder layers and load pretrained weights
-        pretrained_enc = True
-        if (pretrained_enc):
+        if (args.freeze_enc == 1):
             # Freezing BERT
+            VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
             for name, param in bert.named_parameters():
                 param.requires_grad = False
 
@@ -564,9 +570,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #      being trained on a different dataset.
 
         # Freezing the Decoder layers and load pretrained weights
-        pretrained_dec = True
-        if (pretrained_dec):
+        if (args.freeze_dec == 1):
             # Freezing self-attentions
+            VIVYNet.debug.ldf("Freezing pretrained Decoder layers")
             for name, param in symphony_net.named_parameters():
                 if "self_attention" in name:
                     param.requires_grad = False
