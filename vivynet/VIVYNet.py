@@ -1344,7 +1344,8 @@ class ModelCriterion(CrossEntropyCriterion):
         
         # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
-        
+        print("lprobs_tuple: ", lprobs_tuple)
+        input()
         # Declare a list to store losess
         losses = []
         
@@ -1353,10 +1354,15 @@ class ModelCriterion(CrossEntropyCriterion):
             
             # Change the probability dimension
             lprobs = lprobs.view(-1, lprobs.size(-1))
-            
+            print("lprobs: ", lprobs)
+            input()
             # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
-
+            
+            print("sample: ", sample)
+            print("net output: ", net_output)
+            print("target: ", target)
+            input()
             # Calculate loss
             loss = F.nll_loss(
                 lprobs,
