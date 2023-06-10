@@ -2,3 +2,4 @@ decoder/checkpoints
 testing/fsq/*
 data/*
 *.pyc
+.vscode/

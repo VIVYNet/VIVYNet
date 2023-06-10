@@ -1,5 +1,4 @@
 # flake8: noqa
-# pep8: ignore=EXXX
 
 # Fairseq Imports
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
