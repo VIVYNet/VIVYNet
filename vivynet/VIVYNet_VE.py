@@ -594,7 +594,7 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
         VIVYNet_VE.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
         # Return compiled vivynet
-        VIVYNet.debug.ldf("<< END >>")
+        VIVYNet_VE.debug.ldf("<< END >>")
         return vivynet
 
     def __init__(self, encoder, decoder):
