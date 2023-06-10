@@ -547,26 +547,22 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
 
         # Create BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
-        VIVYNet_VE.debug.ldf("bert")
-
-        # print(bert)
-        # input()
+        VIVYNet_VE.debug.ldf("Model Creation: BERT")
 
         # Freezing the Encoder layers and load pretrained weights
         if (args.freeze_enc == 1):
             # Freezing BERT
-            VIVYNet_VE.debug.ldf("Freezing pretrained Encoder layers")
             for name, param in bert.named_parameters():
                 param.requires_grad = False
+        VIVYNet_VE.debug.ldf("Freezing pretrained Encoder layers")
 
         # Create SymphonyNet model
         symphony_net = SymphonyNet(args=args, task=task)
-        # print(symphony_net)
-        # input()
+        VIVYNet_VE.debug.ldf("Model Creation: SymphonyNet")
 
-        print("Default Sym State:")
-        checkpoint = torch.load("/home/tnguy231/VIVYNET/VIVYNet/symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt")
-
+        # Get the checkpoint
+        checkpoint = torch.load("../symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt")
+        VIVYNet_VE.debug.ldf("Checkpoint loading")
 
         # WIP: Currently unable to transfer weights since the original checkpoint has different dimension due to
         #      being trained on a different dataset.
@@ -574,45 +570,31 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
         # Freezing the Decoder layers and load pretrained weights
         if (args.freeze_dec == 1):
             # Freezing self-attentions
-            VIVYNet_VE.debug.ldf("Freezing pretrained Decoder layers")
             for name, param in symphony_net.named_parameters():
                 if "self_attention" in name:
                     param.requires_grad = False
-
-            # for name, param in symphony_net.named_parameters():
-            #     print(name, " ", param)
+            VIVYNet_VE.debug.ldf("Freezing pretrained Decoder layers")
 
             # Zipping two models param dicts
             pretrained_params = []
             for param in symphony_net.state_dict():
-                if ( not ("cross_attention" in param or "norm3" in param ) ):
+                if not ("cross_attention" in param or "norm3" in param):
                     pretrained_params.append(param)
+            VIVYNet_VE.debug.ldf("Weight targeting copy")
 
+            # Weight copying
             VIVYNet_VE.debug.ldf("Proceed loading Decoder pretrained weights")
             with torch.no_grad():
                 for param1, param2 in zip(pretrained_params, checkpoint["model"]):
-                    VIVYNet_VE.debug.ldf(f"Loading {param1} \n")
-
-                    # print(symphony_net.state_dict()[param1])
-                    # print(symphony_net.state_dict()[param1].size())
-                    # print(checkpoint["model"][param2])
-                    # print(checkpoint["model"][param2].size())
-
-                    # input()
                     symphony_net.state_dict()[param1].copy_(checkpoint["model"][param2])
-                    # print(symphony_net.state_dict()[param1])
-                    # input()
+                    VIVYNet_VE.debug.ldf(f"Loading {param1}")
             VIVYNet_VE.debug.ldf("Loading Finished!")
-        input()
-        VIVYNet_VE.debug.ldf("symphony_net")
 
         vivynet = VIVYNet_VE(bert, symphony_net)
-        VIVYNet_VE.debug.ldf("vivy_net")
-        # print(vivynet)
-        # input()
+        VIVYNet_VE.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
-        VIVYNet_VE.debug.ldf("<< END >>")
-        # Return
+        # Return compiled vivynet
+        VIVYNet.debug.ldf("<< END >>")
         return vivynet
 
     def __init__(self, encoder, decoder):
@@ -1016,6 +998,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
 
 class MultiheadDataset(MonolingualDataset):
     """Final Preprocessing of the Multiheaded Datapoints"""
+
     def __init__(
         self,
         dataset,
@@ -1313,9 +1296,6 @@ class ModelCriterion_VE(CrossEntropyCriterion):
     def forward(self, model, sample, reduce=True):
 
         ModelCriterion_VE.debug.ldf("<< START >>")
-        # print("DEBUGGING COLLATER")
-        # print(sample["net_input"])
-        # input()
 
         # Get output of the model
         net_output = model(sample["net_input"]["enc_input"], sample["net_input"]["dec_in_tokens"])
@@ -1325,10 +1305,6 @@ class ModelCriterion_VE(CrossEntropyCriterion):
 
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
-
-        # ModelCriterion.debug.ldf("After computation")
-        # print(sample["net_input"])
-        # input()
 
         # Create logging output
         logging_output = {
