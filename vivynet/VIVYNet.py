@@ -49,7 +49,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = True
+DISABLE_DEBUG = False
 
 #
 #   DEBUGGING
