@@ -120,7 +120,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("<< END >>")
 
     def forward(self, src_token):
-        """Forward function to specify forward propogation"""
+        """Forward function to specify forward propagation"""
 
         BERT.debug.ldf("<< START >>")
 
@@ -1347,7 +1347,7 @@ class ModelCriterion(CrossEntropyCriterion):
         # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
 
-        # Declare a list to store losess
+        # Declare a list to store losses
         losses = []
 
         # Iterate through all normalized probability
