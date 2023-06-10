@@ -49,6 +49,12 @@ import math
 import os
 
 #
+#   CONSTANT DEFINITIONS
+#
+
+DISABLE_DEBUG = True
+
+#
 #   DEBUGGING
 #
 
@@ -79,12 +85,15 @@ class Debug():
     def ldf(self, iter):
         """Litmus Debug Method"""
 
-        # Get function name
-        frame = inspect.currentframe().f_back
-        func_name = inspect.getframeinfo(frame).function
+        # Control debugging
+        if not DISABLE_DEBUG:
 
-        # Litmus print
-        print(f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}")
+            # Get function name
+            frame = inspect.currentframe().f_back
+            func_name = inspect.getframeinfo(frame).function
+
+            # Litmus print
+            print(f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}")
 
 #
 #   MODEL SPECIFICATION
@@ -661,11 +670,11 @@ class VIVYNet(FairseqEncoderDecoderModel):
 @register_model_architecture('vivy', 'vivy_train')
 def train(args):
     """Train function"""
-    
+
     # Debug
     debug = Debug("train", 4)
     debug.ldf("<< START >>")
-    
+
     args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
     args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
     args.dec_num_layers = getattr(args, "dec_num_layers", 12)
@@ -924,8 +933,8 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         # new_block_to_dataset_index = []
 
         # # Calculate the sample step
-        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
-        
+        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
+
         # # Variable declaration for slices and blocks
         # new_slice_indices = []
         # new_block_to_dataset_index = []
@@ -1075,7 +1084,7 @@ class MultiheadDataset(MonolingualDataset):
 
 class PairDataset(LanguagePairDataset):
     """Text2Music Dataset classification"""
-    
+
     def __init__(
         self,
         src,
