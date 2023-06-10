@@ -446,8 +446,8 @@ class SymphonyNet(FairseqDecoder):
 #   FULL MODEL DEFINITION
 #
 
-@register_model('vivy')
-class VIVYNet(FairseqEncoderDecoderModel):
+@register_model('vivy_ve')
+class VIVYNet_VE(FairseqEncoderDecoderModel):
     """Encoder and Decoder Specification for Full Training"""
 
     # DEBUG
@@ -456,80 +456,80 @@ class VIVYNet(FairseqEncoderDecoderModel):
     @staticmethod
     def add_args(parser):
         """Argument Definition class"""
-        VIVYNet.debug.ldf("<< START >>")
+        VIVYNet_VE.debug.ldf("<< START >>")
 
         # Shorten Method
         parser.add_argument('--shorten_method', type=str, metavar='N')
-        VIVYNet.debug.ldf("shorten_method")
+        VIVYNet_VE.debug.ldf("shorten_method")
 
         # Shorten Data Split List
         parser.add_argument('--shorten_data_split_list', type=str, metavar='N')
-        VIVYNet.debug.ldf("shorten_data_split_list")
+        VIVYNet_VE.debug.ldf("shorten_data_split_list")
 
         # Token Per Sample
         parser.add_argument('--tokens_per_sample', type=int, metavar='N')
-        VIVYNet.debug.ldf("tokens_per_sample")
+        VIVYNet_VE.debug.ldf("tokens_per_sample")
 
         # Sample Break Mode
         parser.add_argument('--sample_break_mode', type=str, metavar='N')
-        VIVYNet.debug.ldf("sample_break_mode")
+        VIVYNet_VE.debug.ldf("sample_break_mode")
 
         # Ratio
         parser.add_argument('--ratio', type=int, metavar='N')
-        VIVYNet.debug.ldf("ratio")
+        VIVYNet_VE.debug.ldf("ratio")
 
         # Sample Overlap Rate
         parser.add_argument('--sample_overlap_rate', type=int, metavar='N')
-        VIVYNet.debug.ldf("sample_overlap_rate")
+        VIVYNet_VE.debug.ldf("sample_overlap_rate")
 
         # Permutation invariance
         parser.add_argument('--perm_inv', type=int, metavar='N')
-        VIVYNet.debug.ldf("perm_inv")
+        VIVYNet_VE.debug.ldf("perm_inv")
 
         # Event Token Size
         parser.add_argument('--evt_voc_size', type=int, metavar='N')
-        VIVYNet.debug.ldf("evt_voc_size")
+        VIVYNet_VE.debug.ldf("evt_voc_size")
 
         # Track Token Size
         parser.add_argument('--trk_voc_size', type=int, metavar='N')
-        VIVYNet.debug.ldf("trk_voc_size")
+        VIVYNet_VE.debug.ldf("trk_voc_size")
 
         # Duration Vocab Size
         parser.add_argument('--dur_voc_size', type=int, metavar='N')
-        VIVYNet.debug.ldf("dur_voc_size")
+        VIVYNet_VE.debug.ldf("dur_voc_size")
 
         # Instrument Vocab Size
         parser.add_argument('--ins_voc_size', type=int, metavar='N')
-        VIVYNet.debug.ldf("ins_voc_size")
+        VIVYNet_VE.debug.ldf("ins_voc_size")
 
         # Maximum Relative Position
         parser.add_argument('--max_rel_pos', type=int, metavar='N')
-        VIVYNet.debug.ldf("max_rel_pos")
+        VIVYNet_VE.debug.ldf("max_rel_pos")
 
         # Maximum Measure Count within a Sample
         parser.add_argument('--max_mea_pos', type=int, metavar='N')
-        VIVYNet.debug.ldf("max_mea_pos")
+        VIVYNet_VE.debug.ldf("max_mea_pos")
 
         # Decoder Embedding Dimension
         parser.add_argument('--dec-embed-dim', type=int, metavar='N',
                             help='embedding dimension')
-        VIVYNet.debug.ldf("dec-embed-dim")
+        VIVYNet_VE.debug.ldf("dec-embed-dim")
 
         # Decoder Attention Head Numbers
         parser.add_argument('--dec-num-attention-heads', type=int, metavar='N',
                             help='num attention heads')
-        VIVYNet.debug.ldf("dec-num-attention-heads")
+        VIVYNet_VE.debug.ldf("dec-num-attention-heads")
 
         # Number Decoder Layers
         parser.add_argument('--dec-num-layers', type=int, metavar='N',
                             help='num layers')
-        VIVYNet.debug.ldf("dec-num-layers")
+        VIVYNet_VE.debug.ldf("dec-num-layers")
 
         # Decoder Dropout
         parser.add_argument('--dec-dropout', type=float, metavar='D',
                             help='dropout probability for all fully connected layers '
                                  'in the embeddings, encoder, and pooler')
-        VIVYNet.debug.ldf("dec-dropout")
+        VIVYNet_VE.debug.ldf("dec-dropout")
 
         parser.add_argument('--freeze_enc', type=int, metavar='N',
                             help='Freeze pretrained Encoder layers')
@@ -537,32 +537,32 @@ class VIVYNet(FairseqEncoderDecoderModel):
         parser.add_argument('--freeze_dec', type=int, metavar='N',
                             help='Freeze pretrained Decoder layers')
 
-        VIVYNet.debug.ldf("<< END >>")
+        VIVYNet_VE.debug.ldf("<< END >>")
 
     @classmethod
     def build_model(cls, args, task):
         """Build model function"""
 
-        VIVYNet.debug.ldf("<< START >>")
+        VIVYNet_VE.debug.ldf("<< START >>")
 
         # Create BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
-        VIVYNet.debug.ldf("Model Creation: BERT")
+        VIVYNet_VE.debug.ldf("Model Creation: BERT")
 
         # Freezing the Encoder layers and load pretrained weights
         if (args.freeze_enc == 1):
             # Freezing BERT
             for name, param in bert.named_parameters():
                 param.requires_grad = False
-        VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
+        VIVYNet_VE.debug.ldf("Freezing pretrained Encoder layers")
 
         # Create SymphonyNet model
         symphony_net = SymphonyNet(args=args, task=task)
-        VIVYNet.debug.ldf("Model Creation: SymphonyNet")
+        VIVYNet_VE.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint
         checkpoint = torch.load("../symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt")
-        VIVYNet.debug.ldf("Checkpoint loading")
+        VIVYNet_VE.debug.ldf("Checkpoint loading")
 
         # WIP: Currently unable to transfer weights since the original checkpoint has different dimension due to
         #      being trained on a different dataset.
@@ -573,25 +573,25 @@ class VIVYNet(FairseqEncoderDecoderModel):
             for name, param in symphony_net.named_parameters():
                 if "self_attention" in name:
                     param.requires_grad = False
-            VIVYNet.debug.ldf("Freezing pretrained Decoder layers")
+            VIVYNet_VE.debug.ldf("Freezing pretrained Decoder layers")
 
             # Zipping two models param dicts
             pretrained_params = []
             for param in symphony_net.state_dict():
                 if not ("cross_attention" in param or "norm3" in param):
                     pretrained_params.append(param)
-            VIVYNet.debug.ldf("Weight targeting copy")
+            VIVYNet_VE.debug.ldf("Weight targeting copy")
 
             # Weight copying
-            VIVYNet.debug.ldf("Proceed loading Decoder pretrained weights")
+            VIVYNet_VE.debug.ldf("Proceed loading Decoder pretrained weights")
             with torch.no_grad():
                 for param1, param2 in zip(pretrained_params, checkpoint["model"]):
                     symphony_net.state_dict()[param1].copy_(checkpoint["model"][param2])
-                    VIVYNet.debug.ldf(f"Loading {param1}")
-            VIVYNet.debug.ldf("Loading Finished!")
+                    VIVYNet_VE.debug.ldf(f"Loading {param1}")
+            VIVYNet_VE.debug.ldf("Loading Finished!")
 
-        vivynet = VIVYNet(bert, symphony_net)
-        VIVYNet.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
+        vivynet = VIVYNet_VE(bert, symphony_net)
+        VIVYNet_VE.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
         # Return compiled vivynet
         VIVYNet.debug.ldf("<< END >>")
@@ -600,22 +600,22 @@ class VIVYNet(FairseqEncoderDecoderModel):
     def __init__(self, encoder, decoder):
         """Constructor for the VIVYNet model"""
 
-        VIVYNet.debug.ldf("<< START >>")
+        VIVYNet_VE.debug.ldf("<< START >>")
 
         # Retrieves attributes
         super().__init__(encoder, decoder)
-        VIVYNet.debug.ldf("super()")
+        VIVYNet_VE.debug.ldf("super()")
 
         # Create instance variables based on parameters given
         self.encoder = encoder
         self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
-        VIVYNet.debug.ldf("var dec")
+        VIVYNet_VE.debug.ldf("var dec")
 
         # Put models into train mode
         self.encoder.train()
-        VIVYNet.debug.ldf("encoder.train")
-        VIVYNet.debug.ldf("<< END >>")
+        VIVYNet_VE.debug.ldf("encoder.train")
+        VIVYNet_VE.debug.ldf("<< END >>")
 
     def forward(
         self,
@@ -625,19 +625,19 @@ class VIVYNet(FairseqEncoderDecoderModel):
     ):
         """Forward propagation method"""
 
-        VIVYNet.debug.ldf("<< START >>")
+        VIVYNet_VE.debug.ldf("<< START >>")
 
         # Clear previously caluclated gradients
         self.encoder.zero_grad()
-        VIVYNet.debug.ldf("encoder.zero_grad()")
+        VIVYNet_VE.debug.ldf("encoder.zero_grad()")
 
         # Get loss and the logits from the model
         enc_output = self.encoder(src_tokens.reshape(-1, 1))
-        VIVYNet.debug.ldf("res 1")
+        VIVYNet_VE.debug.ldf("res 1")
 
         bert_out = self.linear(enc_output[0])
         src_lengths = len(src_tokens)
-        VIVYNet.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(src_lengths))
+        VIVYNet_VE.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(src_lengths))
 
         # Get overall features from decoder
         features = self.decoder(
@@ -646,20 +646,20 @@ class VIVYNet(FairseqEncoderDecoderModel):
             src_lengths = prev_output_tokens_lengths,
             encoder_out_lengths = src_lengths, #TODO: Pass in the Encoder Output length
         )
-        VIVYNet.debug.ldf("res 3")
+        VIVYNet_VE.debug.ldf("res 3")
 
         # Return the logits
-        VIVYNet.debug.ldf("<< END >>")
+        VIVYNet_VE.debug.ldf("<< END >>")
         return features
 
     @property
     def supported_targets(self):
         """Supported Targets Property"""
-        VIVYNet.debug.ldf("<< supported_targets >>")
+        VIVYNet_VE.debug.ldf("<< supported_targets >>")
         return {"future"}
 
-@register_model_architecture('vivy', 'vivy_train')
-def train(args):
+@register_model_architecture('vivy_ve', 'vivy_train_ve')
+def train_VE(args):
     """Train function"""
 
     # DEBUG
@@ -1105,8 +1105,8 @@ class PairDataset(LanguagePairDataset):
         # Return the collated information of the given sample
         return t2m_collate(samples, self.midi_dict.pad(), self.midi_dict.eos())
 
-@register_task('text2music')
-class VIVYData(LanguageModelingTask):
+@register_task('text2music_ve')
+class VIVYData_VE(LanguageModelingTask):
     """Dataset Class Specification"""
 
     debug = Debug("VIVYData", 7)
@@ -1115,43 +1115,43 @@ class VIVYData(LanguageModelingTask):
     def add_args(parser):
         """Argument parsing"""
 
-        VIVYData.debug.ldf("<< START >>")
+        VIVYData_VE.debug.ldf("<< START >>")
 
         # Get the data
         parser.add_argument('data', metavar='FILE', help='data')
-        VIVYData.debug.ldf("data")
-        VIVYData.debug.ldf("<< END >>")
+        VIVYData_VE.debug.ldf("data")
+        VIVYData_VE.debug.ldf("<< END >>")
 
     @classmethod
     def setup_task(cls, args, **kwargs):
         """Task setup method"""
 
-        VIVYData.debug.ldf("<< START >>")
+        VIVYData_VE.debug.ldf("<< START >>")
 
         # Load dictionaries from the data
         src_vocab = Dictionary.load(os.path.join(args.data + "/features", 'dict.txt'))
-        VIVYData.debug.ldf("src_vocab")
+        VIVYData_VE.debug.ldf("src_vocab")
         tgt_vocab = Dictionary.load(os.path.join(args.data + "/labels/bin", 'dict.txt'))
-        VIVYData.debug.ldf("tgt_vocab")
+        VIVYData_VE.debug.ldf("tgt_vocab")
         print('| [input] dictionary: {} types'.format(len(src_vocab)))
         print('| [label] dictionary: {} types'.format(len(tgt_vocab)))
 
         # Return the instance of the training class
-        VIVYData.debug.ldf("<< END >>")
-        return VIVYData(args, tgt_vocab, src_vocab)
+        VIVYData_VE.debug.ldf("<< END >>")
+        return VIVYData_VE(args, tgt_vocab, src_vocab)
 
     def __init__(self, args, label_vocab, input_vocab):
         """Constructor for VIVYTrain class"""
 
-        VIVYData.debug.ldf("<< START >>")
+        VIVYData_VE.debug.ldf("<< START >>")
 
         # Set instance variables
         super().__init__(args, input_vocab, output_dictionary=label_vocab)
         # self.args = args
         self.src_vocab = input_vocab
         self.tgt_vocab = label_vocab
-        VIVYData.debug.ldf("var dec")
-        VIVYData.debug.ldf("<< END >>")
+        VIVYData_VE.debug.ldf("var dec")
+        VIVYData_VE.debug.ldf("<< END >>")
 
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         """Load a given dataset split"""
@@ -1160,23 +1160,23 @@ class VIVYData(LanguageModelingTask):
         TARGET DATA HANDLING
         """
 
-        VIVYData.debug.ldf(f"<< START (split: {split}) >>")
+        VIVYData_VE.debug.ldf(f"<< START (split: {split}) >>")
 
         # Split the paths to the data
         paths = utils.split_paths(self.args.data  + "/labels/bin")
         assert len(paths) > 0
-        VIVYData.debug.ldf("TGT - paths")
+        VIVYData_VE.debug.ldf("TGT - paths")
 
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
-        VIVYData.debug.ldf("TGT - path split")
+        VIVYData_VE.debug.ldf("TGT - path split")
 
         # Read and get the information from the .bin and .idx files
         tgt_datasets = data_utils.load_indexed_dataset(
             split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf("TGT - tgt_datasets")
+        VIVYData_VE.debug.ldf("TGT - tgt_datasets")
 
         # If no dataset instance is created, raise an error
         if tgt_datasets is None:
@@ -1193,7 +1193,7 @@ class VIVYData(LanguageModelingTask):
             self.args.tokens_per_sample,
             self.args.seed,
         )
-        VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
+        VIVYData_VE.debug.ldf("TGT - maybe_shorten_dataset")
 
         tgt_datasets = TupleMultiHeadDataset(
             tgt_datasets,
@@ -1211,13 +1211,13 @@ class VIVYData(LanguageModelingTask):
             evt_vocab_size=self.args.evt_voc_size,
             trk_vocab_size=self.args.trk_voc_size,
         )
-        VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
+        VIVYData_VE.debug.ldf("TGT - TupleMultiHeadDataset Init")
 
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
         )
-        VIVYData.debug.ldf("TGT - Add EOS for other targets")
+        VIVYData_VE.debug.ldf("TGT - Add EOS for other targets")
 
         final_target = MultiheadDataset(
             dataset=tgt_datasets,
@@ -1229,8 +1229,8 @@ class VIVYData(LanguageModelingTask):
             targets=self.targets,
             add_bos_token=False #Note: it should be from args,
         )
-        VIVYData.debug.ldf("TGT - MultiheadDataset Init")
-        VIVYData.debug.ldf(f"TGT - *FINALIZED* (size: {len(final_target.sizes)})")
+        VIVYData_VE.debug.ldf("TGT - MultiheadDataset Init")
+        VIVYData_VE.debug.ldf(f"TGT - *FINALIZED* (size: {len(final_target.sizes)})")
 
         """
         SOURCE DATA HANDLING
@@ -1239,18 +1239,18 @@ class VIVYData(LanguageModelingTask):
         # Split the paths to the data
         paths = utils.split_paths(self.args.data  + "/features")
         assert len(paths) > 0
-        VIVYData.debug.ldf("SRC - paths")
+        VIVYData_VE.debug.ldf("SRC - paths")
 
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
-        VIVYData.debug.ldf("SRC - path split")
+        VIVYData_VE.debug.ldf("SRC - path split")
 
         # Create dataset instance
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")
+        VIVYData_VE.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")
 
         """
         DATASET COMPILATION
@@ -1265,19 +1265,19 @@ class VIVYData(LanguageModelingTask):
             tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab
         )
-        VIVYData.debug.ldf("COMPILATION")
-        VIVYData.debug.ldf(f"<< END (split: {split}) >>")
+        VIVYData_VE.debug.ldf("COMPILATION")
+        VIVYData_VE.debug.ldf(f"<< END (split: {split}) >>")
 
     @property
     def source_dictionary(self):
         """Return the source :class:`~fairseq.data.Dictionary`."""
-        VIVYData.debug.ldf("<< src_vocab >>")
+        VIVYData_VE.debug.ldf("<< src_vocab >>")
         return self.src_vocab
 
     @property
     def target_dictionary(self):
         """Return the target :class:`~fairseq.data.Dictionary`."""
-        VIVYData.debug.ldf("<< tgt_vocab >>")
+        VIVYData_VE.debug.ldf("<< tgt_vocab >>")
         return self.tgt_vocab
 
     def _initialize_pair_dataset(self, **kwargs):
@@ -1288,14 +1288,14 @@ class VIVYData(LanguageModelingTask):
 #   CRITERION SPECIFICATION
 #
 
-@register_criterion("nll_loss")
-class ModelCriterion(CrossEntropyCriterion):
+@register_criterion("nll_loss_ve")
+class ModelCriterion_VE(CrossEntropyCriterion):
 
     debug = Debug("ModelCriterion", 5)
 
     def forward(self, model, sample, reduce=True):
 
-        ModelCriterion.debug.ldf("<< START >>")
+        ModelCriterion_VE.debug.ldf("<< START >>")
 
         # Get output of the model
         net_output = model(sample["net_input"]["enc_input"], sample["net_input"]["dec_in_tokens"])
