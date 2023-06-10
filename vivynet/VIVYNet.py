@@ -7,6 +7,7 @@ from fairseq.tasks.language_modeling import LanguageModelingTask
 from fairseq.tasks import FairseqTask, register_task
 from fairseq.data.shorten_dataset import maybe_shorten_dataset
 from fairseq.data import (
+    FairseqDataset,
     LanguagePairDataset,
     MonolingualDataset,
     TokenBlockDataset,
@@ -74,7 +75,6 @@ class Debug():
 
         # Get the class name
         self.name = name
-
 
     def ldf(self, iter):
         """Litmus Debug Method"""
@@ -661,15 +661,18 @@ class VIVYNet(FairseqEncoderDecoderModel):
 @register_model_architecture('vivy', 'vivy_train')
 def train(args):
     """Train function"""
-
-    # DEBUG
+    
+    # Debug
     debug = Debug("train", 4)
-    debug.ldf("<< train >>")
-
+    debug.ldf("<< START >>")
+    
     args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
     args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
     args.dec_num_layers = getattr(args, "dec_num_layers", 12)
     args.dec_dropout = getattr(args, "dec_dropout", 0.1)
+
+    debug.ldf("Applied setting changes")
+    debug.ldf("<< END >>")
 
 #
 #   DATASET SPECIFICATIONS
@@ -920,6 +923,13 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         # new_slice_indices = []
         # new_block_to_dataset_index = []
 
+        # # Calculate the sample step
+        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
+        
+        # # Variable declaration for slices and blocks
+        # new_slice_indices = []
+        # new_block_to_dataset_index = []
+
         # Note: This parts adds more dimensions into block_to_dataset_index
 
         # # Add line information into slice and block indexes
@@ -1064,7 +1074,8 @@ class MultiheadDataset(MonolingualDataset):
         return {"id": index, "source": source, "target": target, "on": on}
 
 class PairDataset(LanguagePairDataset):
-
+    """Text2Music Dataset classification"""
+    
     def __init__(
         self,
         src,
@@ -1075,7 +1086,7 @@ class PairDataset(LanguagePairDataset):
         tgt_sizes=None,
         tgt_dict=None
     ):
-        """Text2Music Dataset classification"""
+        """Class constructor"""
 
         # Super call
         super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict)
