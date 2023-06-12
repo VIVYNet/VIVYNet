@@ -21,7 +21,7 @@ from fairseq.models import (
     register_model_architecture, 
     register_model,
 )
-from fairseq import utils
+from fairseq import utils 
 
 # HuggingFace Imports
 from transformers import BertModel
@@ -748,7 +748,7 @@ def midi_collate(samples, pad_idx, eos_idx):
                 eos_idx,
                 left_pad=False,
             )
-            
+
     # Return nothing if samples provided is nothing
     if len(samples) == 0:
         return {}
@@ -777,11 +777,11 @@ def midi_collate(samples, pad_idx, eos_idx):
         "ontokens": sum(s["on"] for s in samples)
     }
 
-def t2m_collate(samples, pad_idx, eos_idx):
+def t2m_collate(samples, src_vocab, tgt_vocab):
     """Text2Music PairDataset Collate Function"""
-    
+
     #TODO: add a merge func for text encoder_in
-    def merge(key, is_list=False):
+    def merge_midi(key, is_list=False):
         """Merge inner function"""
         
         # Check if the the provided key's value is a list datatype
@@ -793,8 +793,8 @@ def t2m_collate(samples, pad_idx, eos_idx):
                 res.append(
                     collate_tokens(
                         [s[key][i] for s in samples],
-                        pad_idx,
-                        eos_idx,
+                        tgt_vocab.pad(),
+                        tgt_vocab.eos(),
                         left_pad=False,
                     )
                 )
@@ -807,22 +807,55 @@ def t2m_collate(samples, pad_idx, eos_idx):
             # Just return the collated tokens normally
             return collate_tokens(
                 [s[key] for s in samples],
-                pad_idx,
-                eos_idx,
+                tgt_vocab.pad(),
+                tgt_vocab.eos(),
                 left_pad=False,
             )
+        
+    def merge_text(key, is_list=False):
+        # Check if the the provided key's value is a list datatype
+        if is_list:
+            # If so, append each iterated collated item to a resulting list
+            res = []
+            for i in range(len(samples[0][key])):
+                # Apped the collated tokens to the resulting list
+                res.append(
+                    data_utils.collate_tokens(
+                        [s[key][i] for s in samples],
+                        src_vocab.pad(),
+                        src_vocab.eos(),
+                        left_pad=False,
+                    )
+                )
+            
+            # Retun the result of the appending 
+            return res
+        
+        # If the given key is not a list, move here 
+        else:
+            # Just return the collated tokens normally
+            return data_utils.collate_tokens(
+                [s[key] for s in samples],
+                src_vocab.pad(),
+                src_vocab.eos(),
+                left_pad=False,
+            )
+    
             
     # Return nothing if samples provided is nothing
     if len(samples) == 0:
         return {}
     
-    # Merge the source tokens
-    dec_in_tokens = merge("dec_input")
-    
+    # Merge the source midi tokens
+    dec_in_tokens = merge_midi("dec_input")
+
+    # Merge the source text tokens
+    enc_input = merge_text("enc_input")
+
     # If the sample's target is empty, merge the target tokens
     if samples[0]["target"] is not None:
         is_target_list = isinstance(samples[0]["target"], list)
-        target = merge("target", is_target_list)
+        target = merge_midi("target", is_target_list)
     # If not, set the target equal to the source dataset 
     else:
         target = dec_in_tokens
@@ -834,7 +867,7 @@ def t2m_collate(samples, pad_idx, eos_idx):
         "nsentences": len(samples),
         "ntokens": sum(s["dec_input"].size(0)  for s in samples),
         "net_input": {
-            "enc_input": samples[0]["enc_input"], 
+            "enc_input": enc_input, 
             "dec_in_tokens": dec_in_tokens,
             "dec_in_lengths": torch.LongTensor([s["dec_input"].size(0) for s in samples]),
         },
@@ -1099,7 +1132,6 @@ class PairDataset(LanguagePairDataset):
         # Variable definitions and initialization
         self.src = src
         self.src_dict = src_dict
-        self.midi_dict = midi_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
 
@@ -1118,8 +1150,9 @@ class PairDataset(LanguagePairDataset):
     
     def collater(self, samples):
         """Token collater method"""
+    
         # Return the collated information of the given sample
-        return t2m_collate(samples, self.midi_dict.pad(), self.midi_dict.eos())
+        return t2m_collate(samples, self.src_dict, self.tgt_dict)
     
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
@@ -1176,6 +1209,7 @@ class VIVYData(LanguageModelingTask):
         TARGET DATA HANDLING
         """
         
+
         VIVYData.debug.ldf(f"<< START (split: {split}) >>")
         
         # Split the paths to the data
@@ -1215,8 +1249,8 @@ class VIVYData(LanguageModelingTask):
             tgt_datasets,
             tgt_datasets.sizes,
             self.args.tokens_per_sample,
-            pad=self.dictionary.pad(),
-            eos=self.dictionary.eos(),
+            pad=self.tgt_vocab.pad(),
+            eos=self.tgt_vocab.eos(),
             break_mode=self.args.sample_break_mode,
             include_targets=True,
             ratio=self.args.ratio + 1,
@@ -1238,8 +1272,8 @@ class VIVYData(LanguageModelingTask):
         final_target = MultiheadDataset(
             dataset=tgt_datasets,
             sizes=tgt_datasets.sizes,
-            src_vocab=self.dictionary,
-            tgt_vocab=self.output_dictionary,
+            src_vocab=self.tgt_vocab,
+            tgt_vocab=self.tgt_vocab,
             add_eos_for_other_targets=add_eos_for_other_targets,
             shuffle=True,
             targets=self.targets,
@@ -1276,7 +1310,7 @@ class VIVYData(LanguageModelingTask):
             src=src_dataset,    
             src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
-            midi_dict = self.dictionary, 
+            midi_dict = self.tgt_vocab, 
             tgt=final_target,
             tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab
@@ -1316,6 +1350,9 @@ class ModelCriterion(CrossEntropyCriterion):
         # print(sample["net_input"])
         # input()
         
+        print("sample: ", sample)
+        input()
+
         # Get output of the model
         net_output = model(sample["net_input"]["enc_input"], sample["net_input"]["dec_in_tokens"])
         
