@@ -6,7 +6,7 @@ fairseq-train ../data/final \
   --optimizer adam \
   --batch-size 2 \
   --lr 0.001 \
-  --max-tokens 4096 \
+  --max-tokens 8192 \
   --shorten_method none \
   --shorten_data_split_list '' \
   --tokens_per_sample 4096 \

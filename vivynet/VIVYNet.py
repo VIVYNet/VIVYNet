@@ -314,8 +314,11 @@ class SymphonyNet(FairseqDecoder):
 
         SymphonyNet.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
-        encoder_out = encoder_out.reshape([enc_bsz, enc_len, embed_dim])
+        # encoder_out = torch.permute(encoder_out, (1, 0, 2))
 
+        print(encoder_out.size())
+
+        input()
         # SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
         # print("X: ", decoder_in[..., 0])
         # print("Size: ",decoder_in.size())
@@ -408,9 +411,6 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("apply dropout")
         x = self.drop(x)
 
-        # print(x.size())
-        # print(encoder_out.size())
-        # input()
 
         SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
@@ -644,7 +644,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("encoder.zero_grad()")
         
         # Get loss and the logits from the model
-        enc_output = self.encoder(src_tokens.reshape(-1, 1))
+        enc_output = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
         
         bert_out = self.linear(enc_output[0])
@@ -1145,9 +1145,6 @@ class PairDataset(LanguagePairDataset):
     
     def collater(self, samples):
         """Token collater method"""
-        print(len(samples))
-        print(samples)
-        input()
         # Return the collated information of the given sample
         return t2m_collate(samples, self.src_dict, self.tgt_dict)
     
