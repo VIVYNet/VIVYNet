@@ -270,7 +270,9 @@ class SymphonyNet(FairseqDecoder):
         """SymphonyNet's Forward Function"""
         
         SymphonyNet.debug.ldf("<< START >>")
-        
+        print(decoder_in.size())
+        input()
+
         # Extract features from the given encoder's output, and decoder_input
         features = self.extract_features(
             decoder_in=decoder_in, 
@@ -846,6 +848,7 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
     if len(samples) == 0:
         return {}
     
+
     # Merge the source midi tokens
     dec_in_tokens = merge_midi("dec_input")
 
@@ -955,13 +958,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             e = piece_sep_ids[i]
             slice_indices[i, :] = (sizes_cs[s] if s >= 0 else 0, sizes_cs[e-1])
             block_to_dataset_index[i, :] = (s+1, 0, e-1)
-        
-        # # Calculate the sample step
-        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
-        
-        # # Variable declaration for slices and blocks
-        # new_slice_indices = []
-        # new_block_to_dataset_index = []
 
         # # Calculate the sample step
         # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
@@ -1086,11 +1082,11 @@ class MultiheadDataset(MonolingualDataset):
         # Set target data
         self.targets = targets
         
-    def collater(self, samples):
-        """Token collater method"""
+    # def collater(self, samples):
+    #     """Token collater method"""
         
-        # Return the collated information of the given sample
-        return midi_collate(samples, self.vocab.pad(), self.vocab.eos())
+    #     # Return the collated information of the given sample
+    #     return midi_collate(samples, self.vocab.pad(), self.vocab.eos())
         
     def __getitem__(self, index):
         """Get item of an iterable based on its index"""
@@ -1119,7 +1115,6 @@ class PairDataset(LanguagePairDataset):
         src, 
         src_sizes, 
         src_dict, 
-        midi_dict,
         tgt=None, 
         tgt_sizes=None, 
         tgt_dict=None
@@ -1150,7 +1145,9 @@ class PairDataset(LanguagePairDataset):
     
     def collater(self, samples):
         """Token collater method"""
-    
+        print(len(samples))
+        print(samples)
+        input()
         # Return the collated information of the given sample
         return t2m_collate(samples, self.src_dict, self.tgt_dict)
     
@@ -1306,11 +1303,10 @@ class VIVYData(LanguageModelingTask):
         DATASET COMPILATION
         """
         
-        self.datasets[split] = PairDataset(
+        self.datasets[split] = self._initialize_dataset(
             src=src_dataset,    
             src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
-            midi_dict = self.tgt_vocab, 
             tgt=final_target,
             tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab
@@ -1330,7 +1326,7 @@ class VIVYData(LanguageModelingTask):
         VIVYData.debug.ldf("<< tgt_vocab >>")
         return self.tgt_vocab
 
-    def _initialize_pair_dataset(self, **kwargs):
+    def _initialize_dataset(self, **kwargs):
         """Method to Initialize the Pair Dataset (Text, Midi)"""
         return PairDataset(**kwargs)
 
@@ -1349,12 +1345,11 @@ class ModelCriterion(CrossEntropyCriterion):
         # print("DEBUGGING COLLATER")
         # print(sample["net_input"])
         # input()
-        
-        print("sample: ", sample)
-        input()
+    
 
         # Get output of the model
         net_output = model(sample["net_input"]["enc_input"], sample["net_input"]["dec_in_tokens"])
+        # net_output = model(**sample["net_input"])
         
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)

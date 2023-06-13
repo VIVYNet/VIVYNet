@@ -4,6 +4,7 @@ fairseq-train ../data/final \
   --criterion nll_loss \
   --arch vivy_train \
   --optimizer adam \
+  --batch-size 2 \
   --lr 0.001 \
   --max-tokens 4096 \
   --shorten_method none \
@@ -20,7 +21,6 @@ fairseq-train ../data/final \
   --ins_voc_size 133 \
   --max_rel_pos  198 \
   --max_mea_pos  5360 \
-  --batch-size 2 \
   --freeze_enc 1 \
   --freeze_dec 1
   # --evt_voc_size 436 \
