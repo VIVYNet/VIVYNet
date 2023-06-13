@@ -1,3 +1,5 @@
+# flake8: noqa
+
 # Fairseq Imports
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
 from fairseq.criterions import register_criterion
@@ -8,20 +10,20 @@ from fairseq.data import (
     LanguagePairDataset,
     MonolingualDataset,
     TokenBlockDataset,
-    Dictionary, 
+    Dictionary,
     plasma_utils,
-    data_utils, 
+    data_utils,
 )
-from fairseq.models import ( 
+from fairseq.models import (
     FairseqEncoderDecoderModel,
     FairseqLanguageModel,
-    BaseFairseqModel, 
+    BaseFairseqModel,
     FairseqEncoder,
     FairseqDecoder,
-    register_model_architecture, 
+    register_model_architecture,
     register_model,
 )
-from fairseq import utils 
+from fairseq import utils
 
 # HuggingFace Imports
 from transformers import BertModel
@@ -57,7 +59,7 @@ DISABLE_DEBUG = False
 
 class Debug():
     """Debug Class"""
-    
+
     # Color dictionary
     colors = {
         0: Fore.WHITE,
@@ -69,16 +71,16 @@ class Debug():
         6: Fore.MAGENTA,
         7: Fore.CYAN
     }
-    
+
     def __init__(self, name, color):
         """Constructor Method"""
-        
+
         # Get the color
         self.color = Debug.colors[color]
-        
+
         # Get the class name
         self.name = name
-        
+
 
     def ldf(self, iter):
         """Litmus Debug Method"""
@@ -98,75 +100,75 @@ class Debug():
 #
 
 class BERT(FairseqEncoder):
-    """BERT Model Declaration"""    
-    
+    """BERT Model Declaration"""
+
     debug = Debug("BERT", 6)
-    
+
     def __init__(self, args, dictionary):
         """Constructor for BERT specifications"""
-        
+
         BERT.debug.ldf("<< START >>")
-        
+
         # Super module call
         super().__init__(dictionary)
         BERT.debug.ldf("super()")
-        
+
         # Instance variables
         self.args = args
         BERT.debug.ldf("var dev")
-        
+
         # Initialize model
         self.model = BertModel.from_pretrained(
             "bert-base-multilingual-cased"
         )
         BERT.debug.ldf("pretrained model")
-        
+
         # Run model of CUDA
         self.model.cuda()
         BERT.debug.ldf("model CUDA")
         BERT.debug.ldf("<< END >>")
-        
+
     def forward(self, src_token):
         """Forward function to specify forward propogation"""
-        
+
         BERT.debug.ldf("<< START >>")
 
         # Send data to device
         src_token = src_token.to(src_token.device).long()
         BERT.debug.ldf("src_token")
-        
+
         # Return logits from BERT << BROKEN >>
         output = self.model(src_token)
         BERT.debug.ldf("output")
-        
+
         # Return result
         BERT.debug.ldf("<< END >>")
         return output
-    
+
 class SymphonyNet(FairseqDecoder):
     """SymphonyNet Model Specification"""
-    
+
     debug = Debug("SymphonyNet", 2)
-    
+
     def __init__(self, args, task):
         """SymphonyNet Structure Definition"""
         SymphonyNet.debug.ldf("<< START >>")
-        
+
         # Super call for a FairseqDecoder
         # TODO: Add dictionary for encoder
         super().__init__(task.target_dictionary)
         SymphonyNet.debug.ldf("super()")
-        
+
         # Get the embedding dimensions for the SymphonyNet model
         self.dec_embed_dim = args.dec_embed_dim
         SymphonyNet.debug.ldf("Decoder Dimension")
-        
+
         # Set the EVENT, TRACK, and DURATION embedding layers
         self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
         self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
         self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
         SymphonyNet.debug.ldf("Embedding Layers")
-        
+
         # Get the maximum number of tokens per sample
         self.max_pos = args.tokens_per_sample
         SymphonyNet.debug.ldf("Maximum Tokens Per Sample")
@@ -174,18 +176,18 @@ class SymphonyNet(FairseqDecoder):
         # Set permutation invariance configurations
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
-            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.dec_embed_dim) 
+            self.wRpe = nn.Embedding(args.max_rel_pos+1, args.dec_embed_dim)
             self.wMpe = nn.Embedding(args.max_mea_pos+1, args.dec_embed_dim)
             SymphonyNet.debug.ldf("perm_inv > 1")
         else:
             self.wpe = nn.Embedding(self.max_pos+1, args.dec_embed_dim)
             SymphonyNet.debug.ldf("perm_inv == 0")
-        
+
         # Setup dropout and layer normalization layers for reuse
         self.drop = nn.Dropout(args.dec_dropout)
         self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
         SymphonyNet.debug.ldf("Dropout & LayerNorm")
-        
+
         # Build the decoder model
         self.decoder_model = TransformerDecoderBuilder.from_kwargs(
             n_layers = args.dec_num_layers,
@@ -196,7 +198,7 @@ class SymphonyNet(FairseqDecoder):
             activation='gelu',
             #final_normalization=True,
             dropout=args.dec_dropout,
-            self_attention_type="causal-linear", 
+            self_attention_type="causal-linear",
             cross_attention_type="full", # Fully masked so that each domain can be merged
         ).get()
         SymphonyNet.debug.ldf("Decoder Model")
@@ -204,7 +206,7 @@ class SymphonyNet(FairseqDecoder):
         # Generate attention mask
         self.attn_mask = TriangularCausalMask(self.max_pos)
         SymphonyNet.debug.ldf("Attention Mask")
-        
+
         # Define output layers for EVENT, DURATION, TRACK, and INSTRUMENT
         self.proj_evt = nn.Linear(args.dec_embed_dim, args.evt_voc_size, bias=False)
         self.proj_dur = nn.Linear(args.dec_embed_dim, args.dur_voc_size, bias=False)
@@ -215,7 +217,7 @@ class SymphonyNet(FairseqDecoder):
         # Initialize the weights for the model
         self.apply(self._init_weights)
         SymphonyNet.debug.ldf("Init Weights")
-        
+
         # Set zero embeddings for EVENT, DURATION, and TRACK for padding symbol
         # TODO: check will the pad id be trained? (as TZ RZ YZ)
         self.pad_idx = task.target_dictionary.pad()
@@ -223,7 +225,7 @@ class SymphonyNet(FairseqDecoder):
         self.wDure.weight.data[self.pad_idx].zero_()
         self.wTrke.weight.data[self.pad_idx].zero_()
         SymphonyNet.debug.ldf("Zero Input Embedding Layers")
-        
+
         # Set Zero embeddings for permuation invariance
         if self.perm_inv > 1:
             self.wRpe.weight.data[0].zero_()
@@ -232,32 +234,32 @@ class SymphonyNet(FairseqDecoder):
         else:
             self.wpe.weight.data[0].zero_()
             SymphonyNet.debug.ldf("perm_inv (zero) == 1")
-        
+
         SymphonyNet.debug.ldf("<< END >>")
-            
+
     def _init_weights(self, module):
         """Initialization Step"""
-        
+
         SymphonyNet.debug.ldf(f"{type(module)} | << START >>")
-        
+
         # If the the given model is a linear or an embedding layer,
         # initialize weights with a mean of zero and a set std dev
         if isinstance(module, (nn.Linear, nn.Embedding)):
             module.weight.data.normal_(mean=0.0, std=self.dec_embed_dim ** -0.5)
             SymphonyNet.debug.ldf("  0 Mean and Std Dev WEIGHT Init")
-            
+
             # If the module is a linear layer with bias, set bias to zero
             if isinstance(module, nn.Linear) and module.bias is not None:
                 module.bias.data.zero_()
                 SymphonyNet.debug.ldf("  0 BIAS")
-        
-        # If the module is a LayerNorm, set bias to zero 
+
+        # If the module is a LayerNorm, set bias to zero
         # and weight initialized to 1
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
             SymphonyNet.debug.ldf("  0 BIAS and 1 WEIGHT Fill")
-        
+
         SymphonyNet.debug.ldf("  << END >>")
 
     def forward(
@@ -268,21 +270,19 @@ class SymphonyNet(FairseqDecoder):
         encoder_out_lengths=None,
     ):
         """SymphonyNet's Forward Function"""
-        
+
         SymphonyNet.debug.ldf("<< START >>")
-        print(decoder_in.size())
-        input()
 
         # Extract features from the given encoder's output, and decoder_input
         features = self.extract_features(
-            decoder_in=decoder_in, 
+            decoder_in=decoder_in,
             encoder_out=encoder_out,
             src_lengths=src_lengths,
             encoder_out_lengths=encoder_out_lengths
         )
         SymphonyNet.debug.ldf("Feature Extract")
-        
-        # Project the given features into the output layers 
+
+        # Project the given features into the output layers
         # to get the logit projections of EVENT, DURATION
         # TRACK, and PREDICTION
         evt_logits = self.proj_evt(features)
@@ -291,7 +291,7 @@ class SymphonyNet(FairseqDecoder):
         ins_logits = self.proj_ins(features)
         SymphonyNet.debug.ldf("Final Projection")
         SymphonyNet.debug.ldf("<< END >>")
-        
+
         # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
         return (evt_logits, dur_logits, trk_logits, ins_logits)
 
@@ -305,7 +305,7 @@ class SymphonyNet(FairseqDecoder):
         encoder_out_lengths=None
     ):
         """Extract feature method"""
-        
+
         SymphonyNet.debug.ldf("<< START >>")
 
         SymphonyNet.debug.ldf("process decoder_in")
@@ -314,7 +314,6 @@ class SymphonyNet(FairseqDecoder):
 
         SymphonyNet.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
-        # encoder_out = torch.permute(encoder_out, (1, 0, 2))
 
         print(encoder_out.size())
 
@@ -347,24 +346,24 @@ class SymphonyNet(FairseqDecoder):
         pad_mask = decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
         if src_lengths is not None:
             len_mask = LengthMask(
-                src_lengths, 
-                max_len=seq_len, 
+                src_lengths,
+                max_len=seq_len,
                 device=decoder_in.device
                 )
         else:
             len_mask = LengthMask(
-                torch.sum(pad_mask, axis=1), 
-                max_len=seq_len, 
+                torch.sum(pad_mask, axis=1),
+                max_len=seq_len,
                 device= decoder_in.device)
-            
+
         # print(torch.sum(pad_mask, axis=1))
         # print(encoder_out_lengths)
-        
+
         SymphonyNet.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for endoer_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
-                torch.tensor(encoder_out_lengths, dtype=torch.int), 
+                torch.tensor(encoder_out_lengths, dtype=torch.int),
                 max_len = enc_len,
                 device= encoder_out.device)
         else:
@@ -382,9 +381,9 @@ class SymphonyNet(FairseqDecoder):
             M = enc_len,
             device = decoder_in.device
         )
-        
+
         # input()
-        
+
         SymphonyNet.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
@@ -393,7 +392,7 @@ class SymphonyNet(FairseqDecoder):
 
             measure_ids = pad_mask * decoder_in[..., 5]
             mea_mask = measure_ids.ne(0).float()[..., None].to(decoder_in.device) # ignore eos
-            
+
             pos_emb = rel_pos_mask * self.wRpe(rel_pos) + mea_mask * self.wMpe(measure_ids)
 
         else:
@@ -404,13 +403,18 @@ class SymphonyNet(FairseqDecoder):
                 .repeat(bsz, 1)
             )
             pos_emb = self.wpe(position_ids)
-        
+
         SymphonyNet.debug.ldf("combine all midi features")
         x = evt_emb+dur_emb+trk_emb+pos_emb # [bsz, seq_len, embedding_dim]
 
         SymphonyNet.debug.ldf("apply dropout")
         x = self.drop(x)
 
+
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>")
+        print(x.shape)
+        print(encoder_out.shape)
+        input()
 
         SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
@@ -424,15 +428,15 @@ class SymphonyNet(FairseqDecoder):
         # print("Output: ",outputs)
         SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
-        
+
         # print("OUT: ", doutputs)
         # print("OUT: ", doutputs.size())
         # input()
-        
+
         SymphonyNet.debug.ldf("<< END >>")
 
         return doutputs
-    
+
     def get_normalized_probs(
         self,
         net_output: Tuple[Tensor, Optional[Dict[str, List[Optional[Tensor]]]]],
@@ -458,47 +462,47 @@ class SymphonyNet(FairseqDecoder):
 @register_model('vivy')
 class VIVYNet(FairseqEncoderDecoderModel):
     """Encoder and Decoder Specification for Full Training"""
-    
+
     # DEBUG
     debug = Debug("VIVYNet", 3)
-    
+
     @staticmethod
     def add_args(parser):
         """Argument Definition class"""
         VIVYNet.debug.ldf("<< START >>")
-        
+
         # Shorten Method
         parser.add_argument('--shorten_method', type=str, metavar='N')
         VIVYNet.debug.ldf("shorten_method")
-        
+
         # Shorten Data Split List
         parser.add_argument('--shorten_data_split_list', type=str, metavar='N')
         VIVYNet.debug.ldf("shorten_data_split_list")
-        
+
         # Token Per Sample
         parser.add_argument('--tokens_per_sample', type=int, metavar='N')
         VIVYNet.debug.ldf("tokens_per_sample")
-        
+
         # Sample Break Mode
         parser.add_argument('--sample_break_mode', type=str, metavar='N')
         VIVYNet.debug.ldf("sample_break_mode")
-        
+
         # Ratio
         parser.add_argument('--ratio', type=int, metavar='N')
         VIVYNet.debug.ldf("ratio")
-        
+
         # Sample Overlap Rate
         parser.add_argument('--sample_overlap_rate', type=int, metavar='N')
         VIVYNet.debug.ldf("sample_overlap_rate")
-        
+
         # Permutation invariance
         parser.add_argument('--perm_inv', type=int, metavar='N')
         VIVYNet.debug.ldf("perm_inv")
-        
+
         # Event Token Size
         parser.add_argument('--evt_voc_size', type=int, metavar='N')
         VIVYNet.debug.ldf("evt_voc_size")
-        
+
         # Track Token Size
         parser.add_argument('--trk_voc_size', type=int, metavar='N')
         VIVYNet.debug.ldf("trk_voc_size")
@@ -542,18 +546,18 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         parser.add_argument('--freeze_enc', type=int, metavar='N',
                             help='Freeze pretrained Encoder layers')
-        
+
         parser.add_argument('--freeze_dec', type=int, metavar='N',
                             help='Freeze pretrained Decoder layers')
 
         VIVYNet.debug.ldf("<< END >>")
-    
+
     @classmethod
     def build_model(cls, args, task):
         """Build model function"""
-        
+
         VIVYNet.debug.ldf("<< START >>")
-        
+
         # Create BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
         VIVYNet.debug.ldf("Model Creation: BERT")
@@ -605,48 +609,48 @@ class VIVYNet(FairseqEncoderDecoderModel):
         vivynet = VIVYNet(bert, symphony_net)
         VIVYNet.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
-        VIVYNet.debug.ldf("<< END >>") 
+        VIVYNet.debug.ldf("<< END >>")
         # Return
         return vivynet
 
     def __init__(self, encoder, decoder):
         """Constructor for the VIVYNet model"""
-        
+
         VIVYNet.debug.ldf("<< START >>")
-        
+
         # Retrieves attributes
         super().__init__(encoder, decoder)
         VIVYNet.debug.ldf("super()")
-        
+
         # Create instance variables based on parameters given
         self.encoder = encoder
         self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
-        
+
         # Put models into train mode
         self.encoder.train()
         VIVYNet.debug.ldf("encoder.train")
         VIVYNet.debug.ldf("<< END >>")
-    
+
     def forward(
-        self, 
-        src_tokens, 
+        self,
+        src_tokens,
         prev_output_tokens,
-        prev_output_tokens_lengths = None, 
+        prev_output_tokens_lengths = None,
     ):
         """Forward propagation method"""
-        
+
         VIVYNet.debug.ldf("<< START >>")
 
         # Clear previously caluclated gradients
         self.encoder.zero_grad()
         VIVYNet.debug.ldf("encoder.zero_grad()")
-        
+
         # Get loss and the logits from the model
         enc_output = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
-        
+
         bert_out = self.linear(enc_output[0])
         src_lengths = len(src_tokens)
         VIVYNet.debug.ldf("res 2 : " + str(bert_out.shape) + " : " + str(src_lengths))
@@ -659,7 +663,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
             encoder_out_lengths = src_lengths, #TODO: Pass in the Encoder Output length
         )
         VIVYNet.debug.ldf("res 3")
-        
+
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
         return features
@@ -673,26 +677,26 @@ class VIVYNet(FairseqEncoderDecoderModel):
 @register_model_architecture('vivy', 'vivy_train')
 def train(args):
     """Train function"""
-    
+
     # DEBUG
     debug = Debug("train", 4)
     debug.ldf("<< train >>")
-    
+
     args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
     args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
     args.dec_num_layers = getattr(args, "dec_num_layers", 12)
     args.dec_dropout = getattr(args, "dec_dropout", 0.1)
- 
+
 #
 #   DATASET SPECIFICATIONS
 #
 
 def copy_tensor(src, dst):
     """Tensor Copying Function"""
-    
+
     # Check if the source and target tensors are equal in length
     assert dst.numel() == src.numel()
-    
+
     # Copy the target tokens to the source information
     dst.copy_(src)
 
@@ -705,24 +709,24 @@ def collate_tokens(
     """2D to 3D Tensor Function"""
     # Max batch size
     size = max(v.size(0) for v in values)
-    
+
     # Generate the resulting values from the merge
     res = values[0].new(len(values), size, values[0].size(-1)).fill_(pad_idx)
-        
-    # Iterate through the provided values for collation and copy the 
-    # tensor values to the resulting list 
+
+    # Iterate through the provided values for collation and copy the
+    # tensor values to the resulting list
     for i, v in enumerate(values):
         copy_tensor(v, res[i][size - len(v) :] if left_pad else res[i][: len(v)])
 
-    # Return the result 
+    # Return the result
     return res
 
 def midi_collate(samples, pad_idx, eos_idx):
     """Midi MultiHeadDataset Collater Function"""
-    
+
     def merge(key, is_list=False):
         """Merge inner function"""
-        
+
         # Check if the the provided key's value is a list datatype
         if is_list:
             # If so, append each iterated collated item to a resulting list
@@ -737,11 +741,11 @@ def midi_collate(samples, pad_idx, eos_idx):
                         left_pad=False,
                     )
                 )
-            
-            # Retun the result of the appending 
+
+            # Retun the result of the appending
             return res
-        
-        # If the given key is not a list, move here 
+
+        # If the given key is not a list, move here
         else:
             # Just return the collated tokens normally
             return collate_tokens(
@@ -754,15 +758,15 @@ def midi_collate(samples, pad_idx, eos_idx):
     # Return nothing if samples provided is nothing
     if len(samples) == 0:
         return {}
-    
+
     # Merge the source tokens
     src_tokens = merge("source")
-    
+
     # If the sample's target is empty, merge the target tokens
     if samples[0]["target"] is not None:
         is_target_list = isinstance(samples[0]["target"], list)
         target = merge("target", is_target_list)
-    # If not, set the target equal to the source dataset 
+    # If not, set the target equal to the source dataset
     else:
         target = src_tokens
 
@@ -785,7 +789,7 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
     #TODO: add a merge func for text encoder_in
     def merge_midi(key, is_list=False):
         """Merge inner function"""
-        
+
         # Check if the the provided key's value is a list datatype
         if is_list:
             # If so, append each iterated collated item to a resulting list
@@ -800,11 +804,11 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
                         left_pad=False,
                     )
                 )
-            
-            # Retun the result of the appending 
+
+            # Retun the result of the appending
             return res
-        
-        # If the given key is not a list, move here 
+
+        # If the given key is not a list, move here
         else:
             # Just return the collated tokens normally
             return collate_tokens(
@@ -813,7 +817,7 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
                 tgt_vocab.eos(),
                 left_pad=False,
             )
-        
+
     def merge_text(key, is_list=False):
         # Check if the the provided key's value is a list datatype
         if is_list:
@@ -829,11 +833,11 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
                         left_pad=False,
                     )
                 )
-            
-            # Retun the result of the appending 
+
+            # Retun the result of the appending
             return res
-        
-        # If the given key is not a list, move here 
+
+        # If the given key is not a list, move here
         else:
             # Just return the collated tokens normally
             return data_utils.collate_tokens(
@@ -842,12 +846,11 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
                 src_vocab.eos(),
                 left_pad=False,
             )
-    
-            
+
+
     # Return nothing if samples provided is nothing
     if len(samples) == 0:
         return {}
-    
 
     # Merge the source midi tokens
     dec_in_tokens = merge_midi("dec_input")
@@ -859,18 +862,18 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
     if samples[0]["target"] is not None:
         is_target_list = isinstance(samples[0]["target"], list)
         target = merge_midi("target", is_target_list)
-    # If not, set the target equal to the source dataset 
+    # If not, set the target equal to the source dataset
     else:
         target = dec_in_tokens
-        
-    # Return the resulting information 
+
+    # Return the resulting information
     # TODO: add info for text data
     return {
         "id": torch.LongTensor([s["id"] for s in samples]),
         "nsentences": len(samples),
         "ntokens": sum(s["dec_input"].size(0)  for s in samples),
         "net_input": {
-            "enc_input": enc_input, 
+            "enc_input": enc_input,
             "dec_in_tokens": dec_in_tokens,
             "dec_in_lengths": torch.LongTensor([s["dec_input"].size(0) for s in samples]),
         },
@@ -880,7 +883,7 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
 
 class TupleMultiHeadDataset(TokenBlockDataset):
     """Class Specification for Multiheaded Information"""
-    
+
     def __init__(
         self,
         dataset,
@@ -900,24 +903,24 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         trk_vocab_size=44,
     ):
         """Constructor for class"""
-        
+
         # Try to import modules from fairseq
         try:
             from fairseq.data.token_block_utils_fast import (
                 _get_slice_indices_fast,
                 _get_block_to_dataset_index_fast,
             )
-        
+
         # Raise errors if importingn fails
         except ImportError:
             raise ImportError(
                 "Please build Cython components with: `pip install --editable .` "
                 "or `python setup.py build_ext --inplace`"
             )
-        
+
         # Super call attributes and operations from parent class
         super(TokenBlockDataset, self).__init__()
-        
+
         # Variable initialization
         self.dataset = dataset
         self.pad = pad
@@ -932,7 +935,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         self.max_trk_cnt = trk_vocab_size - spec_tok_cnt
         assert len(dataset) == len(sizes)
         assert len(dataset) > 0
-        
+
         # Turn sizes list into a numpy array datatype
         if isinstance(sizes, list):
             sizes = np.array(sizes, dtype=np.int64)
@@ -944,20 +947,27 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         # Set valuie of break_mode
         break_mode = break_mode if break_mode is not None else "complete_doc"
         assert break_mode == 'complete_doc', break_mode
-        
+
         # Transform and process sizes and other attributes
         sizes_cs = np.cumsum(sizes)
         piece_sep_ids = np.where(sizes == document_sep_len)[0].tolist()
         totpieces = len(piece_sep_ids)
         slice_indices = np.zeros((totpieces,2), dtype=int)
         block_to_dataset_index = np.zeros((totpieces,3), dtype=int)
-        
+
         # Process slicde_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
             s = piece_sep_ids[i-1] if i > 0 else -1
             e = piece_sep_ids[i]
             slice_indices[i, :] = (sizes_cs[s] if s >= 0 else 0, sizes_cs[e-1])
             block_to_dataset_index[i, :] = (s+1, 0, e-1)
+
+        # # Calculate the sample step
+        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
+
+        # # Variable declaration for slices and blocks
+        # new_slice_indices = []
+        # new_block_to_dataset_index = []
 
         # # Calculate the sample step
         # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
@@ -980,27 +990,27 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         # # Concatentate new slice and block indexes together with their other counterparts
         # slice_indices = np.concatenate(new_slice_indices)
         # block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
-        
+
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
         self._sizes[:] = self.sample_len_max
         self._slice_indices = plasma_utils.PlasmaArray(slice_indices)
         self._sizes = plasma_utils.PlasmaArray(self._sizes)
         self._block_to_dataset_index = plasma_utils.PlasmaArray(block_to_dataset_index)
-    
+
     def __getitem__(self, index):
         """Item Retrieval Method"""
-        
+
         # Create index pointers
         start_ds_idx, start_offset, end_ds_idx = self.block_to_dataset_index[index]
         assert start_offset == 0, (start_ds_idx, start_offset, end_ds_idx)
-        
+
         # Create temporary variables
         buffer = []
         cur_len = 0
-        
+
         st = start_ds_idx
-        
+
         # Process information
         for idx in range(st, end_ds_idx+1):
             tmp = self.dataset[idx].view(-1, self.ratio)
@@ -1026,7 +1036,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         buffer = torch.cat(buffer)
         if cur_len < self.sample_len_max:
             buffer = torch.cat([buffer, buffer.new([[self.eos]*(self.ratio+1)])])
-        
+
         # Get item
         item = buffer[:self.sample_len_max, ...]
         if self.perm_inv > 0:
@@ -1034,11 +1044,11 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             item[..., self.trk_idx].apply_(lambda x: perm[x])
 
         assert self.include_targets
-        
+
         # Process item
         source = torch.cat([item.new([[self.eos]*(self.ratio-1) + [0, 0]]), item[:-1, ...]])
         on = torch.sum(item[:, 1].ne(self.pad)).item()
-        
+
         # Return item
         return source, item, on
 
@@ -1056,7 +1066,7 @@ class MultiheadDataset(MonolingualDataset):
         add_bos_token=False,
     ):
         """Contstructor for the class"""
-        
+
         # Variable declaration and initialization
         self.dataset = dataset
         self.sizes = np.array(sizes)
@@ -1065,8 +1075,8 @@ class MultiheadDataset(MonolingualDataset):
         self.add_eos_for_other_targets = add_eos_for_other_targets
         self.shuffle = shuffle
         self.add_bos_token = add_bos_token
-        
-        # Check if the a token in the given dataset 
+
+        # Check if the a token in the given dataset
         # is taken the intended <bos> token
         assert not self.add_bos_token, "<bos> is occupied"
 
@@ -1078,38 +1088,38 @@ class MultiheadDataset(MonolingualDataset):
         if targets is not None and len(targets) == 0:
             targets = None
         assert len(targets) == 1 and targets[0] == 'future'
-        
+
         # Set target data
         self.targets = targets
-        
-    # def collater(self, samples):
-    #     """Token collater method"""
-        
-    #     # Return the collated information of the given sample
-    #     return midi_collate(samples, self.vocab.pad(), self.vocab.eos())
-        
+
+    def collater(self, samples):
+        """Token collater method"""
+
+        # Return the collated information of the given sample
+        return midi_collate(samples, self.vocab.pad(), self.vocab.eos())
+
     def __getitem__(self, index):
         """Get item of an iterable based on its index"""
-        
+
         # Make sure that the target data is not empty
         assert self.targets is not None
-        
+
         # Get the source, target, and on of the passed in dataset
         source, target, on = self.dataset[index]
-        
+
         # Generate the source and target information from the parsed info
         source, target = self._make_source_target(
             source, target, None
         )
 
-        # Add the BOS token 
+        # Add the BOS token
         source, target = self._maybe_add_bos(source, target)
-        
+
         # Return the processed information
         return {"id": index, "source": source, "target": target, "on": on}
 
 class PairDataset(LanguagePairDataset):
-    
+
     def __init__(
         self, 
         src, 
@@ -1120,10 +1130,10 @@ class PairDataset(LanguagePairDataset):
         tgt_dict=None
     ):
         """Text2Music Dataset classification"""
-        
+
         # Super call
         super().__init__(src, src_sizes, src_dict, tgt, tgt_sizes, tgt_dict)
-        
+
         # Variable definitions and initialization
         self.src = src
         self.src_dict = src_dict
@@ -1132,7 +1142,7 @@ class PairDataset(LanguagePairDataset):
 
     def __getitem__(self, index):
         """Get item method"""
-        
+
         # Extract information at given index
         enc_input = self.src[index]
         tgt_input = self.tgt[index]
@@ -1142,35 +1152,35 @@ class PairDataset(LanguagePairDataset):
 
         # Return the information
         return {"id": index, "enc_input": enc_input, "dec_input": dec_input, "target": target, "on": on}
-    
+
     def collater(self, samples):
         """Token collater method"""
         # Return the collated information of the given sample
         return t2m_collate(samples, self.src_dict, self.tgt_dict)
-    
+
 @register_task('text2music')
 class VIVYData(LanguageModelingTask):
     """Dataset Class Specification"""
-    
+
     debug = Debug("VIVYData", 7)
-    
+
     @staticmethod
     def add_args(parser):
         """Argument parsing"""
-        
+
         VIVYData.debug.ldf("<< START >>")
-        
-        # Get the data 
+
+        # Get the data
         parser.add_argument('data', metavar='FILE', help='data')
         VIVYData.debug.ldf("data")
         VIVYData.debug.ldf("<< END >>")
-    
+
     @classmethod
     def setup_task(cls, args, **kwargs):
         """Task setup method"""
-        
+
         VIVYData.debug.ldf("<< START >>")
-        
+
         # Load dictionaries from the data
         src_vocab = Dictionary.load(os.path.join(args.data + "/features", 'dict.txt'))
         VIVYData.debug.ldf("src_vocab")
@@ -1178,50 +1188,50 @@ class VIVYData(LanguageModelingTask):
         VIVYData.debug.ldf("tgt_vocab")
         print('| [input] dictionary: {} types'.format(len(src_vocab)))
         print('| [label] dictionary: {} types'.format(len(tgt_vocab)))
-        
+
         # Return the instance of the training class
         VIVYData.debug.ldf("<< END >>")
         return VIVYData(args, tgt_vocab, src_vocab)
 
     def __init__(self, args, label_vocab, input_vocab):
         """Constructor for VIVYTrain class"""
-        
+
         VIVYData.debug.ldf("<< START >>")
-        
+
         # Set instance variables
         super().__init__(args, input_vocab, output_dictionary=label_vocab)
         # self.args = args
         self.src_vocab = input_vocab
         self.tgt_vocab = label_vocab
         VIVYData.debug.ldf("var dec")
-        VIVYData.debug.ldf("<< END >>")    
-    
+        VIVYData.debug.ldf("<< END >>")
+
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         """Load a given dataset split"""
-        
+
         """
         TARGET DATA HANDLING
         """
-        
+
 
         VIVYData.debug.ldf(f"<< START (split: {split}) >>")
-        
+
         # Split the paths to the data
         paths = utils.split_paths(self.args.data  + "/labels/bin")
         assert len(paths) > 0
         VIVYData.debug.ldf("TGT - paths")
-        
+
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
         VIVYData.debug.ldf("TGT - path split")
-        
+
         # Read and get the information from the .bin and .idx files
         tgt_datasets = data_utils.load_indexed_dataset(
             split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
         )
         VIVYData.debug.ldf("TGT - tgt_datasets")
-        
+
         # If no dataset instance is created, raise an error
         if tgt_datasets is None:
             raise FileNotFoundError(
@@ -1238,7 +1248,7 @@ class VIVYData(LanguageModelingTask):
             self.args.seed,
         )
         VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
-        
+
         tgt_datasets = TupleMultiHeadDataset(
             tgt_datasets,
             tgt_datasets.sizes,
@@ -1262,7 +1272,7 @@ class VIVYData(LanguageModelingTask):
             and self.args.sample_break_mode != "none"
         )
         VIVYData.debug.ldf("TGT - Add EOS for other targets")
-        
+
         final_target = MultiheadDataset(
             dataset=tgt_datasets,
             sizes=tgt_datasets.sizes,
@@ -1279,23 +1289,23 @@ class VIVYData(LanguageModelingTask):
         """
         SOURCE DATA HANDLING
         """
-        
+
         # Split the paths to the data
         paths = utils.split_paths(self.args.data  + "/features")
         assert len(paths) > 0
         VIVYData.debug.ldf("SRC - paths")
-        
+
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
         VIVYData.debug.ldf("SRC - path split")
-        
+
         # Create dataset instance
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")       
-        
+        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")
+
         """
         DATASET COMPILATION
         """
@@ -1310,7 +1320,7 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
-        
+
     @property
     def source_dictionary(self):
         """Return the source :class:`~fairseq.data.Dictionary`."""
@@ -1333,11 +1343,11 @@ class VIVYData(LanguageModelingTask):
 
 @register_criterion("nll_loss")
 class ModelCriterion(CrossEntropyCriterion):
-    
+
     debug = Debug("ModelCriterion", 5)
-    
+
     def forward(self, model, sample, reduce=True):
-        
+
         ModelCriterion.debug.ldf("<< START >>")
         # print("DEBUGGING COLLATER")
         # print(sample["net_input"])
@@ -1350,10 +1360,10 @@ class ModelCriterion(CrossEntropyCriterion):
         
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
-        
+
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
-        
+
         # ModelCriterion.debug.ldf("After computation")
         # print(sample["net_input"])
         # input()
@@ -1366,29 +1376,29 @@ class ModelCriterion(CrossEntropyCriterion):
             "sample_size": sample["ntokens"],
             "on_sample_size": sample["ntokens"],
         }
-        
+
         # Return information
         return loss, sample["ntokens"], logging_output
-    
+
     def compute_loss(self, model, net_output, sample, reduce=True):
-        
+
         # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
         print("lprobs_tuple: ", lprobs_tuple)
         input()
         # Declare a list to store losess
         losses = []
-        
+
         # Iterate through all normalized probability
         for idx, lprobs in enumerate(lprobs_tuple):
-            
+
             # Change the probability dimension
             lprobs = lprobs.view(-1, lprobs.size(-1))
             print("lprobs: ", lprobs)
             input()
             # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
-            
+
             print("sample: ", sample)
             print("net output: ", net_output)
             print("target: ", target)
@@ -1400,9 +1410,9 @@ class ModelCriterion(CrossEntropyCriterion):
                 ignore_index=self.padding_idx,
                 reduction="sum" if reduce else "none",
             )
-            
+
             # Append the loss to the loss list
             losses.append(loss)
-            
+
         # Return the list of losses
         return losses
