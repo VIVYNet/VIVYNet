@@ -207,7 +207,6 @@ class SymphonyNet(FairseqDecoder):
             // args.dec_num_attention_heads,
             feed_forward_dimensions=4 * args.dec_embed_dim,
             activation="gelu",
-            # final_normalization=True,
             dropout=args.dec_dropout,
             self_attention_type="causal-linear",
             cross_attention_type="full",  # Fully masked so that each domain can be merged
@@ -330,17 +329,10 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("<< START >>")
 
         SymphonyNet.debug.ldf("process decoder_in")
-        # decoder_in = torch.unsqueeze(decoder_in, 0) <--- Unecessary because it creates a extra dimension
         bsz, seq_len, ratio = decoder_in.size()
 
         SymphonyNet.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
-
-        # SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
-        # print("X: ", decoder_in[..., 0])
-        # print("Size: ",decoder_in.size())
-        # print(encoder_out.size())
-        # input()
 
         SymphonyNet.debug.ldf("event embedding")
         evt_emb = self.wEvte(decoder_in[..., 0])
@@ -357,12 +349,10 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("duration embedding")
         tmp = self.wDure(decoder_in[..., 1])
         dur_emb = tmp * evton_mask
-        # assert ((tmp==dur_emb).all())
 
         SymphonyNet.debug.ldf("track embedding")
         tmp = self.wTrke(decoder_in[..., 2])
         trk_emb = tmp * evton_mask
-        # assert ((tmp==trk_emb).all())
 
         SymphonyNet.debug.ldf("Calculating LengthMask for tgt")
         # Note: Calc LengthMask for src_lengths
@@ -379,9 +369,6 @@ class SymphonyNet(FairseqDecoder):
                 max_len=seq_len,
                 device=decoder_in.device,
             )
-
-        # print(torch.sum(pad_mask, axis=1))
-        # print(encoder_out_lengths)
 
         SymphonyNet.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for endoer_out_lengths
@@ -403,8 +390,6 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("full mask for cross attention layer")
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(N=seq_len, M=enc_len, device=decoder_in.device)
-
-        # input()
 
         SymphonyNet.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
@@ -440,15 +425,6 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("apply dropout")
         x = self.drop(x)
 
-        # print(x.size())
-        # print(encoder_out.size())
-        # input()
-
-        # print(">>>>>>>>>>>>>>>>>>>>>>>>>>")
-        # print(x.shape)
-        # print(encoder_out.shape)
-        # input()
-
         SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
             x=x,  # decoder_in shape: [batch_size, dec_length, embed_dim]
@@ -458,16 +434,11 @@ class SymphonyNet(FairseqDecoder):
             memory_mask=full_mask,  # WIP
             memory_length_mask=enc_len_mask,  # WIP
         )
-        # print("Output: ",outputs)
         SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
 
-        # print("OUT: ", doutputs)
-        # print("OUT: ", doutputs.size())
-        # input()
-
+        # Return out of the extracted features
         SymphonyNet.debug.ldf("<< END >>")
-
         return doutputs
 
     def get_normalized_probs(
@@ -598,19 +569,23 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
         VIVYNet.debug.ldf("dec-dropout")
 
+        # Freeze encoder
         parser.add_argument(
             "--freeze_enc",
             type=int,
             metavar="N",
             help="Freeze pretrained Encoder layers",
         )
+        VIVYNet.debug.ldf("freeze_enc")
 
+        # Freeze decoder
         parser.add_argument(
             "--freeze_dec",
             type=int,
             metavar="N",
             help="Freeze pretrained Decoder layers",
         )
+        VIVYNet.debug.ldf("freeze_dec")
 
         VIVYNet.debug.ldf("<< END >>")
 
@@ -677,8 +652,8 @@ class VIVYNet(FairseqEncoderDecoderModel):
         vivynet = VIVYNet(bert, symphony_net)
         VIVYNet.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
-        VIVYNet.debug.ldf("<< END >>")
         # Return
+        VIVYNet.debug.ldf("<< END >>")
         return vivynet
 
     def __init__(self, encoder, decoder):
@@ -1047,35 +1022,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             )
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
 
-        # # Calculate the sample step
-        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
-
-        # # Variable declaration for slices and blocks
-        # new_slice_indices = []
-        # new_block_to_dataset_index = []
-
-        # # Calculate the sample step
-        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
-
-        # # Variable declaration for slices and blocks
-        # new_slice_indices = []
-        # new_block_to_dataset_index = []
-
-        # Note: This parts adds more dimensions into block_to_dataset_index
-
-        # # Add line information into slice and block indexes
-        # for line, line_piece in zip(slice_indices, block_to_dataset_index):
-        #     l_piece_tot = line[1] - line[0]
-        #     assert l_piece_tot % self.ratio == 0, (line[0], line[1])
-        #     l_toks = l_piece_tot // self.ratio
-        #     chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
-        #     new_slice_indices.append(np.stack([line]*chosen_cnt))
-        #     new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
-
-        # # Concatentate new slice and block indexes together with their other counterparts
-        # slice_indices = np.concatenate(new_slice_indices)
-        # block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
-
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
         self._sizes[:] = self.sample_len_max
@@ -1377,8 +1323,6 @@ class VIVYData(LanguageModelingTask):
             ratio=self.args.ratio + 1,
             sample_overlap_rate=self.args.sample_overlap_rate,
             permutation_invariant=self.args.perm_inv,
-            # trk_idx=self.args.trk_idx,
-            # spec_tok_cnt=self.args.spec_tok_cnt,
             evt_vocab_size=self.args.evt_voc_size,
             trk_vocab_size=self.args.trk_voc_size,
         )
@@ -1478,13 +1422,8 @@ class ModelCriterion(CrossEntropyCriterion):
     debug = Debug("ModelCriterion", 5)
 
     def forward(self, model, sample, reduce=True):
-        ModelCriterion.debug.ldf("<< START >>")
-        # print("DEBUGGING COLLATER")
-        # print(sample["net_input"])
-        # input()
 
-        # print("sample: ", sample)
-        # input()
+        ModelCriterion.debug.ldf("<< START >>")
 
         # Get output of the model
         net_output = model(
@@ -1497,10 +1436,6 @@ class ModelCriterion(CrossEntropyCriterion):
 
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
-
-        # ModelCriterion.debug.ldf("After computation")
-        # print(sample["net_input"])
-        # input()
 
         # Create logging output
         logging_output = {
@@ -1515,26 +1450,17 @@ class ModelCriterion(CrossEntropyCriterion):
         return loss, sample["ntokens"], logging_output
 
     def compute_loss(self, model, net_output, sample, reduce=True):
+
         # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
-        # print("lprobs_tuple: ", lprobs_tuple)
-        # input()
-        # Declare a list to store losess
         losses = []
 
         # Iterate through all normalized probability
         for idx, lprobs in enumerate(lprobs_tuple):
             # Change the probability dimension
             lprobs = lprobs.view(-1, lprobs.size(-1))
-            # print("lprobs: ", lprobs)
-            # input()
-            # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
 
-            # print("sample: ", sample)
-            # print("net output: ", net_output)
-            # print("target: ", target)
-            # input()
             # Calculate loss
             loss = F.nll_loss(
                 lprobs,
