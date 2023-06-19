@@ -51,7 +51,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = False
+DISABLE_DEBUG = True
 
 #
 #   DEBUGGING
@@ -315,9 +315,6 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
 
-        print(encoder_out.size())
-
-        input()
         # SymphonyNet.debug.ldf("DEBUGGING INPUT MISMATCH")
         # print("X: ", decoder_in[..., 0])
         # print("Size: ",decoder_in.size())
@@ -411,11 +408,6 @@ class SymphonyNet(FairseqDecoder):
         x = self.drop(x)
 
 
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print(x.shape)
-        print(encoder_out.shape)
-        input()
-
         SymphonyNet.debug.ldf("Model Computation")
         doutputs = self.decoder_model(
             x = x,                                  # decoder_in shape: [batch_size, dec_length, embed_dim]
@@ -428,10 +420,6 @@ class SymphonyNet(FairseqDecoder):
         # print("Output: ",outputs)
         SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
-
-        # print("OUT: ", doutputs)
-        # print("OUT: ", doutputs.size())
-        # input()
 
         SymphonyNet.debug.ldf("<< END >>")
 
@@ -640,6 +628,14 @@ class VIVYNet(FairseqEncoderDecoderModel):
         prev_output_tokens_lengths = None,
     ):
         """Forward propagation method"""
+
+        # print(src_tokens)
+        # print(src_tokens.size())
+        # input()
+
+        # print(src_tokens[:100])
+        # print(src_tokens[:100].size())
+        # input()
 
         VIVYNet.debug.ldf("<< START >>")
 
@@ -1238,6 +1234,7 @@ class VIVYData(LanguageModelingTask):
                 "Dataset not found: {} ({})".format(split, split_path)
             )
 
+
         # Shorten dataset if need be
         tgt_datasets = maybe_shorten_dataset(
             tgt_datasets,
@@ -1384,8 +1381,7 @@ class ModelCriterion(CrossEntropyCriterion):
 
         # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
-        print("lprobs_tuple: ", lprobs_tuple)
-        input()
+
         # Declare a list to store losess
         losses = []
 
@@ -1394,15 +1390,10 @@ class ModelCriterion(CrossEntropyCriterion):
 
             # Change the probability dimension
             lprobs = lprobs.view(-1, lprobs.size(-1))
-            print("lprobs: ", lprobs)
-            input()
+
             # Get the target data
             target = model.get_targets(sample, net_output)[..., idx].view(-1)
 
-            print("sample: ", sample)
-            print("net output: ", net_output)
-            print("target: ", target)
-            input()
             # Calculate loss
             loss = F.nll_loss(
                 lprobs,
@@ -1413,6 +1404,9 @@ class ModelCriterion(CrossEntropyCriterion):
 
             # Append the loss to the loss list
             losses.append(loss)
+        
+        # print("LOSS: ", losses)
+        # input()
 
         # Return the list of losses
         return losses

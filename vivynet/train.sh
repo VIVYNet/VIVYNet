@@ -4,12 +4,12 @@ fairseq-train ../data/final \
   --criterion nll_loss \
   --arch vivy_train \
   --optimizer adam \
-  --batch-size 2 \
+  --batch-size 1 \
   --lr 0.001 \
-  --max-tokens 8192 \
+  --max-tokens 1024 \
   --shorten_method none \
   --shorten_data_split_list '' \
-  --tokens_per_sample 4096 \
+  --tokens_per_sample 1024 \
   --seed 1998 \
   --sample_break_mode complete_doc \
   --ratio 4 \
