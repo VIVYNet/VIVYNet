@@ -32,6 +32,7 @@ from transformers import BertModel
 from fast_transformers.builders import (
     TransformerEncoderBuilder,
     TransformerDecoderBuilder,
+    RecurrentDecoderBuilder
 )
 from fast_transformers.masking import (
     TriangularCausalMask,
@@ -197,8 +198,9 @@ class SymphonyNet(FairseqDecoder):
         self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
         SymphonyNet.debug.ldf("Dropout & LayerNorm")
 
-        # Build the decoder model
-        self.decoder_model = TransformerDecoderBuilder.from_kwargs(
+        # Build the recurrent decoder model
+        # Note: RecurrentDecoder is able to utilize the previous context to predict the next token in order
+        self.decoder_model = RecurrentDecoderBuilder.from_kwargs(
             n_layers=args.dec_num_layers,
             n_heads=args.dec_num_attention_heads,
             query_dimensions=args.dec_embed_dim
@@ -288,17 +290,19 @@ class SymphonyNet(FairseqDecoder):
         decoder_in,
         src_lengths=None,
         encoder_out_lengths=None,
+        state=None,
     ):
         """SymphonyNet's Forward Function"""
 
         SymphonyNet.debug.ldf("<< START >>")
 
         # Extract features from the given encoder's output, and decoder_input
-        features = self.extract_features(
+        features, memory = self.extract_features(
             decoder_in=decoder_in,
             encoder_out=encoder_out,
             src_lengths=src_lengths,
             encoder_out_lengths=encoder_out_lengths,
+            state=state
         )
         SymphonyNet.debug.ldf("Feature Extract")
 
@@ -313,7 +317,7 @@ class SymphonyNet(FairseqDecoder):
         SymphonyNet.debug.ldf("<< END >>")
 
         # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
-        return (evt_logits, dur_logits, trk_logits, ins_logits)
+        return (evt_logits, dur_logits, trk_logits, ins_logits), memory
 
     # TODO: Understand how SymphonyNet masks work, including LengthMask and TriangularMask
     # TODO: Understand Permutiation Imvariant in code
@@ -323,6 +327,7 @@ class SymphonyNet(FairseqDecoder):
         encoder_out=None,
         src_lengths=None,
         encoder_out_lengths=None,
+        state = None,
     ):
         """Extract feature method"""
 
@@ -426,19 +431,17 @@ class SymphonyNet(FairseqDecoder):
         x = self.drop(x)
 
         SymphonyNet.debug.ldf("Model Computation")
-        doutputs = self.decoder_model(
+        doutputs, state = self.decoder_model(
             x=x,  # decoder_in shape: [batch_size, dec_length, embed_dim]
             memory=encoder_out,  # encoder_out shape: [batch_size, enc_length, embed_dim]
-            x_mask=self.attn_mask,
-            x_length_mask=len_mask,
-            memory_mask=full_mask,  # WIP
-            memory_length_mask=enc_len_mask,  # WIP
+            memory_length_mask=None, 
+            state=state
         )
         SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
 
         SymphonyNet.debug.ldf("<< END >>")
-        return doutputs
+        return doutputs, state
 
     def get_normalized_probs(
         self,
