@@ -463,7 +463,7 @@ class SymphonyNet(FairseqDecoder):
     def max_positions(self):
         """Return nothing for max positions"""
         SymphonyNet.debug.ldf("<< max_positions >>")
-        return None
+        return 69420    # We used a random number for the indices functions
 
 
 #
