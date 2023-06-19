@@ -58,7 +58,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = True
+DISABLE_DEBUG = False
 
 #
 #   DEBUGGING
@@ -1172,6 +1172,8 @@ class MultiheadDataset(MonolingualDataset):
 
 
 class PairDataset(LanguagePairDataset):
+    """Main dataset structure"""
+
     def __init__(
         self,
         src,
@@ -1419,9 +1421,12 @@ class VIVYData(LanguageModelingTask):
 
 @register_criterion("nll_loss")
 class ModelCriterion(CrossEntropyCriterion):
+    """Model criterion class"""
+
     debug = Debug("ModelCriterion", 5)
 
     def forward(self, model, sample, reduce=True):
+        """Forward function for the criterion"""
 
         ModelCriterion.debug.ldf("<< START >>")
 
@@ -1430,12 +1435,15 @@ class ModelCriterion(CrossEntropyCriterion):
             sample["net_input"]["enc_input"],
             sample["net_input"]["dec_in_tokens"],
         )
+        ModelCriterion.debug.ldf("VIVYNet Output")
 
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
+        ModelCriterion.debug.ldf("Process Losses")
 
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
+        ModelCriterion.debug.ldf("Aggregate Losses")
 
         # Create logging output
         logging_output = {
@@ -1445,15 +1453,21 @@ class ModelCriterion(CrossEntropyCriterion):
             "sample_size": sample["ntokens"],
             "on_sample_size": sample["ntokens"],
         }
+        ModelCriterion.debug.ldf("Generate Logging")
 
         # Return information
+        ModelCriterion.debug.ldf("<< END >>")
         return loss, sample["ntokens"], logging_output
 
     def compute_loss(self, model, net_output, sample, reduce=True):
+        """Loss computation"""
+
+        ModelCriterion.debug.ldf("<< START >>")
 
         # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
         losses = []
+        ModelCriterion.debug.ldf("Normalized Probability")
 
         # Iterate through all normalized probability
         for idx, lprobs in enumerate(lprobs_tuple):
@@ -1471,6 +1485,8 @@ class ModelCriterion(CrossEntropyCriterion):
 
             # Append the loss to the loss list
             losses.append(loss)
+        ModelCriterion.debug.ldf("Losses Calculations")
 
         # Return the list of losses
+        ModelCriterion.debug.ldf("<< END >>")
         return losses

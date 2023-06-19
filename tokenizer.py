@@ -18,6 +18,7 @@ from transformers import AutoTokenizer
 from collections import Counter
 from tqdm import tqdm
 import numpy as np
+import concurrent
 import shutil
 import torch
 import json
@@ -219,30 +220,30 @@ def text_binarize(train_ratio: float) -> None:
 # Main run thread
 if __name__ == "__main__":
 
-    # # MultiThreading process to port files from the DB to the midis
-    # print("Copying Files Over...")
-    # with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-    #     _ = list(tqdm(executor.map(transfer, DATASET_INDEX), total=len(DATASET_INDEX)))
+    # MultiThreading process to port files from the DB to the midis
+    print("Copying Files Over...")
+    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        _ = list(tqdm(executor.map(transfer, DATASET_INDEX), total=len(DATASET_INDEX)))
 
-    # # Run the MIDI preprocess script
-    # print("Preprocessing MIDIs...")
-    # preprocess_midi_run()
+    # Run the MIDI preprocess script
+    print("Preprocessing MIDIs...")
+    preprocess_midi_run()
 
-    # # Build map
-    # print("Building Map...")
-    # build_map()
+    # Build map
+    print("Building Map...")
+    build_map()
 
-    # # Read the files' lines
-    # print("Reading Token Temp File Content...")
-    # file = open(MIDI_TOKEN_TEMP_FILE)
-    # MIDI_TOKEN_FILE_DATA = file.readlines()
+    # Read the files' lines
+    print("Reading Token Temp File Content...")
+    file = open(MIDI_TOKEN_TEMP_FILE)
+    MIDI_TOKEN_FILE_DATA = file.readlines()
 
-    # # MultiThreading process to tokenize data
-    # print("Synchronizing feature data to the label data...")
-    # with concurrent.futures.ProcessPoolExecutor() as executor:
-    #     _ = list(tqdm(executor.map(tokenize, DATASET_INDEX), total=len(DATASET_INDEX)))
+    # MultiThreading process to tokenize data
+    print("Synchronizing feature data to the label data...")
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        _ = list(tqdm(executor.map(tokenize, DATASET_INDEX), total=len(DATASET_INDEX)))
 
     # Binarization step
     print("Binarization of the data")
-    # midi_binarize(TRAIN_SPLIT)
+    midi_binarize(TRAIN_SPLIT)
     text_binarize(TRAIN_SPLIT)
