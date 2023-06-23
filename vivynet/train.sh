@@ -23,6 +23,7 @@ fairseq-train ../data/final \
   --max_mea_pos  5360 \
   --freeze_enc 1 \
   --freeze_dec 1 \
+  --tensorboard-logdir ./test \
   # --evt_voc_size 436 \
   # --trk_voc_size 44 \
   # --dur_voc_size 36 \

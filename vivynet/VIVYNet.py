@@ -58,7 +58,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = False
+DISABLE_DEBUG = True
 
 #
 #   DEBUGGING
@@ -1389,12 +1389,12 @@ class VIVYData(LanguageModelingTask):
         short_src_vocab = []
         short_tgt = []
         short_tgt_vocab = []
-        for i in range(20):
-            short_src.append(src_dataset[i])
-            short_src_vocab.append(src_dataset.sizes[i])
-            short_tgt.append(final_target[i])
-            short_tgt_vocab.append(final_target.sizes[i])
-        VIVYData.debug.ldf("DEBUG - SHORTENING")
+        # for i in range(20):
+        #     short_src.append(src_dataset[i])
+        #     short_src_vocab.append(src_dataset.sizes[i])
+        #     short_tgt.append(final_target[i])
+        #     short_tgt_vocab.append(final_target.sizes[i])
+        # VIVYData.debug.ldf("DEBUG - SHORTENING")
 
         # Data compilation
         self.datasets[split] = PairDataset(
