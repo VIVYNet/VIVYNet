@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
+# 
+
 # Miscellaneous Import
 import numpy as np
 from typing import Dict, List, Optional, Tuple
@@ -15,7 +17,7 @@ import os
 
 def main():
     src_input = input("Enter Text: ")
-    tgt_input = [[2,2,2,2,0,0]] # Target input should always start at BOS
+    tgt_input = [[2,2,2,1,0,0]] # Target input should always start at BOS
 
 
     """
