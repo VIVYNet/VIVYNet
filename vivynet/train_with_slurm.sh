@@ -3,8 +3,8 @@
 #SBATCH -q wildfire                                 ## QOS
 #SBATCH -c 1                                        ## Number of Cores
 #SBATCH --time=4320                                 ## 3 days of compute
-#SBATCH --gres=gpu:RTX6000:1                        ## 1 of GTX1080 GPU
-#SBATCH --mem 64G                                   ## 64 GB of RAM
+#SBATCH --gres=gpu:V100:1                           ## 1 of GTX1080 GPU
+#SBATCH --mem 32G                                   ## 64 GB of RAM
 #SBATCH --output=slurm/out_%j.txt                   ## job /dev/stdout record
 #SBATCH --error=slurm/err_%j.txt                    ## job /dev/stderr record
 #SBATCH --export=NONE                               ## keep environment clean
@@ -17,7 +17,7 @@ module purge
 echo "Loading python 3 from anaconda module"
 module load anaconda/py3
 echo "Loading VIVYNET conda environment"
-source activate vivynet
+source activate vivyenv
 echo "Showing GPU details"
 nvidia-smi -L
 nvidia-smi
