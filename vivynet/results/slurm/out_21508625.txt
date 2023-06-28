@@ -2,17 +2,17 @@ Purging modules
 Loading python 3 from anaconda module
 Loading VIVYNET conda environment
 Showing GPU details
-GPU 0: Tesla V100-PCIE-16GB (UUID: GPU-4d7c206d-909e-07f8-4737-c525be72a296)
-Thu Jun 22 20:34:23 2023       
+GPU 0: Tesla V100-SXM2-16GB (UUID: GPU-d1efc34b-180a-b9df-6350-3ee609bddc5a)
+Tue Jun 27 18:44:47 2023       
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 510.108.03   Driver Version: 510.108.03   CUDA Version: 11.6     |
+| NVIDIA-SMI 510.47.03    Driver Version: 510.47.03    CUDA Version: 11.6     |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
 |                               |                      |               MIG M. |
 |===============================+======================+======================|
-|   0  Tesla V100-PCIE...  Off  | 00000000:D8:00.0 Off |                    0 |
-| N/A   41C    P0    39W / 250W |      0MiB / 16384MiB |      2%      Default |
+|   0  Tesla V100-SXM2...  Off  | 00000000:1A:00.0 Off |                    0 |
+| N/A   43C    P0    55W / 300W |      0MiB / 16384MiB |      2%      Default |
 |                               |                      |                  N/A |
 +-------------------------------+----------------------+----------------------+
                                                                                
@@ -24,12 +24,12 @@ Thu Jun 22 20:34:23 2023
 |  No running processes found                                                 |
 +-----------------------------------------------------------------------------+
 Running training python script
-2023-06-22 20:35:49 | INFO | fairseq_cli.train | Namespace(adam_betas='(0.9, 0.999)', adam_eps=1e-08, all_gather_list_size=16384, arch='vivy_train', batch_size=1, batch_size_valid=1, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='', clip_norm=0.0, cpu=False, criterion='nll_loss', curriculum=0, data='../data/final', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', dec_dropout=0.1, dec_embed_dim=512, dec_num_attention_heads=16, dec_num_layers=12, device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_num_procs=1, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', dur_voc_size=36, empty_cache_freq=0, evt_voc_size=1125, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, freeze_dec=1, freeze_enc=1, gen_subset='test', ins_voc_size=133, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, localsgd_frequency=3, log_format=None, log_interval=100, lr=[0.001], lr_scheduler='fixed', lr_shrink=0.1, max_epoch=0, max_mea_pos=5360, max_rel_pos=198, max_tokens=1024, max_tokens_valid=1024, max_update=0, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, min_lr=-1.0, model_parallel_size=1, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=False, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, nprocs_per_node=1, num_shards=1, num_workers=1, optimizer='adam', optimizer_overrides='{}', patience=-1, perm_inv=2, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, profile=False, quantization_config_path=None, ratio=4, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='checkpoint_last.pt', sample_break_mode='complete_doc', sample_overlap_rate=4, save_dir='checkpoints', save_interval=1, save_interval_updates=0, scoring='bleu', seed=1998, sentence_avg=False, shard_id=0, shorten_data_split_list='', shorten_method='none', skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, stop_time_hours=0, task='text2music', tensorboard_logdir='./test', threshold_loss_scale=None, tokenizer=None, tokens_per_sample=1024, tpu=False, train_subset='train', trk_voc_size=44, update_freq=[1], use_bmuf=False, use_old_adam=False, user_dir='./', valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, warmup_updates=0, weight_decay=0.0, zero_sharding='none')
+2023-06-27 18:46:05 | INFO | fairseq_cli.train | Namespace(adam_betas='(0.9, 0.999)', adam_eps=1e-08, all_gather_list_size=16384, arch='vivy_train', batch_size=1, batch_size_valid=1, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='', clip_norm=0.0, cpu=False, criterion='nll_loss', curriculum=0, data='../data/final', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', dec_dropout=0.1, dec_embed_dim=512, dec_num_attention_heads=16, dec_num_layers=12, device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_num_procs=1, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', dur_voc_size=36, empty_cache_freq=0, evt_voc_size=1125, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, force_anneal=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, freeze_dec=1, freeze_enc=1, gen_subset='test', ins_voc_size=133, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=-1, localsgd_frequency=3, log_format=None, log_interval=100, lr=[0.001], lr_scheduler='fixed', lr_shrink=0.1, max_epoch=0, max_mea_pos=5360, max_rel_pos=198, max_tokens=8192, max_tokens_valid=8192, max_update=0, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, min_lr=-1.0, model_parallel_size=1, no_epoch_checkpoints=True, no_last_checkpoints=False, no_progress_bar=False, no_save=False, no_save_optimizer_state=False, no_seed_provided=False, nprocs_per_node=1, num_shards=1, num_workers=1, optimizer='adam', optimizer_overrides='{}', patience=-1, perm_inv=2, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, profile=False, quantization_config_path=None, ratio=4, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='checkpoint_last.pt', sample_break_mode='complete_doc', sample_overlap_rate=4, save_dir='./results/ckpt', save_interval=1, save_interval_updates=0, scoring='bleu', seed=1998, sentence_avg=False, shard_id=0, shorten_data_split_list='', shorten_method='none', skip_invalid_size_inputs_valid_test=False, slowmo_algorithm='LocalSGD', slowmo_momentum=None, stop_time_hours=0, task='text2music', tensorboard_logdir='./results/logs', threshold_loss_scale=None, tokenizer=None, tokens_per_sample=4096, tpu=False, train_subset='train', trk_voc_size=44, update_freq=[1], use_bmuf=False, use_old_adam=False, user_dir='./', valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, warmup_updates=0, weight_decay=0.0, zero_sharding='none')
 | [input] dictionary: 16312 types
 | [label] dictionary: 380 types
-2023-06-22 20:36:10 | INFO | fairseq.data.data_utils | loaded 2084234 examples from: ../data/final/labels/bin/valid
-2023-06-22 20:36:11 | INFO | fairseq.data.data_utils | loaded 26788 examples from: ../data/final/features/valid
-2023-06-22 20:37:12 | INFO | fairseq_cli.train | VIVYNet(
+2023-06-27 18:46:21 | INFO | fairseq.data.data_utils | loaded 2084234 examples from: ../data/final/labels/bin/valid
+2023-06-27 18:46:22 | INFO | fairseq.data.data_utils | loaded 26788 examples from: ../data/final/features/valid
+2023-06-27 18:47:23 | INFO | fairseq_cli.train | VIVYNet(
   (encoder): BERT(
     (model): BertModel(
       (embeddings): BertEmbeddings(
@@ -669,49 +669,56 @@ Running training python script
   )
   (linear): Linear(in_features=768, out_features=512, bias=True)
 )
-2023-06-22 20:37:12 | INFO | fairseq_cli.train | task: text2music (VIVYData)
-2023-06-22 20:37:12 | INFO | fairseq_cli.train | model: vivy_train (VIVYNet)
-2023-06-22 20:37:12 | INFO | fairseq_cli.train | criterion: nll_loss (ModelCriterion)
-2023-06-22 20:37:12 | INFO | fairseq_cli.train | num. model params: 232846336 (num. trained: 42385408)
-2023-06-22 20:37:12 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_dur.bias
-2023-06-22 20:37:12 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_trk.bias
-2023-06-22 20:37:12 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_ins.bias
-2023-06-22 20:37:12 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
-2023-06-22 20:37:12 | INFO | fairseq.utils | rank   0: capabilities =  7.0  ; total memory = 15.782 GB ; name = Tesla V100-PCIE-16GB                    
-2023-06-22 20:37:12 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
-2023-06-22 20:37:12 | INFO | fairseq_cli.train | training on 1 devices (GPUs/TPUs)
-2023-06-22 20:37:12 | INFO | fairseq_cli.train | max tokens per GPU = 1024 and max sentences per GPU = 1
-2023-06-22 20:37:13 | INFO | fairseq.trainer | no existing checkpoint found checkpoints/checkpoint_last.pt
-2023-06-22 20:37:13 | INFO | fairseq.trainer | loading train data for epoch 1
-2023-06-22 20:37:41 | INFO | fairseq.data.data_utils | loaded 2821420 examples from: ../data/final/labels/bin/train
-2023-06-22 20:37:42 | INFO | fairseq.data.data_utils | loaded 40180 examples from: ../data/final/features/train
-2023-06-22 20:37:42 | INFO | fairseq.trainer | NOTE: your device may support faster training with --fp16
-2023-06-22 20:37:42 | INFO | fairseq.trainer | begin training epoch 1
-2023-06-22 20:38:02 | INFO | train_inner | epoch 001:    100 / 40180 loss=3.158, ppl=8.93, wps=4715.9, ups=5.34, wpb=884, bsz=1, num_updates=100, lr=0.001, gnorm=3.545, train_wall=19, wall=50
-2023-06-22 20:38:21 | INFO | train_inner | epoch 001:    200 / 40180 loss=2.881, ppl=7.36, wps=4811.1, ups=5.36, wpb=898.1, bsz=1, num_updates=200, lr=0.001, gnorm=2.137, train_wall=18, wall=68
-2023-06-22 20:38:40 | INFO | train_inner | epoch 001:    300 / 40180 loss=2.722, ppl=6.6, wps=4888.5, ups=5.16, wpb=947.5, bsz=1, num_updates=300, lr=0.001, gnorm=1.763, train_wall=19, wall=88
-2023-06-22 20:38:59 | INFO | train_inner | epoch 001:    400 / 40180 loss=2.693, ppl=6.47, wps=4560.1, ups=5.2, wpb=877.1, bsz=1, num_updates=400, lr=0.001, gnorm=1.539, train_wall=19, wall=107
-2023-06-22 20:39:19 | INFO | train_inner | epoch 001:    500 / 40180 loss=2.681, ppl=6.41, wps=4561.7, ups=5.22, wpb=873.5, bsz=1, num_updates=500, lr=0.001, gnorm=1.519, train_wall=19, wall=127
-2023-06-22 20:39:39 | INFO | train_inner | epoch 001:    600 / 40180 loss=2.692, ppl=6.46, wps=4487.4, ups=5.2, wpb=863.1, bsz=1, num_updates=600, lr=0.001, gnorm=1.434, train_wall=19, wall=146
-2023-06-22 20:39:58 | INFO | train_inner | epoch 001:    700 / 40180 loss=2.691, ppl=6.46, wps=4306.8, ups=5.24, wpb=822.4, bsz=1, num_updates=700, lr=0.001, gnorm=1.435, train_wall=19, wall=165
-2023-06-22 20:40:17 | INFO | train_inner | epoch 001:    800 / 40180 loss=2.7, ppl=6.5, wps=4743.8, ups=5.31, wpb=894.2, bsz=1, num_updates=800, lr=0.001, gnorm=1.336, train_wall=18, wall=184
-2023-06-22 20:40:35 | INFO | train_inner | epoch 001:    900 / 40180 loss=2.747, ppl=6.71, wps=4735, ups=5.33, wpb=888.8, bsz=1, num_updates=900, lr=0.001, gnorm=1.318, train_wall=18, wall=203
-2023-06-22 20:40:54 | INFO | train_inner | epoch 001:   1000 / 40180 loss=2.67, ppl=6.37, wps=4769.3, ups=5.34, wpb=893.1, bsz=1, num_updates=1000, lr=0.001, gnorm=1.188, train_wall=18, wall=222
-2023-06-22 20:41:13 | INFO | train_inner | epoch 001:   1100 / 40180 loss=2.719, ppl=6.58, wps=4746.6, ups=5.36, wpb=886.2, bsz=1, num_updates=1100, lr=0.001, gnorm=1.164, train_wall=18, wall=240
-2023-06-22 20:41:31 | INFO | train_inner | epoch 001:   1200 / 40180 loss=2.685, ppl=6.43, wps=4874.6, ups=5.37, wpb=907, bsz=1, num_updates=1200, lr=0.001, gnorm=1.191, train_wall=18, wall=259
-2023-06-22 20:41:50 | INFO | train_inner | epoch 001:   1300 / 40180 loss=2.639, ppl=6.23, wps=4819.9, ups=5.4, wpb=891.9, bsz=1, num_updates=1300, lr=0.001, gnorm=1.082, train_wall=18, wall=278
-2023-06-22 20:42:09 | INFO | train_inner | epoch 001:   1400 / 40180 loss=2.612, ppl=6.11, wps=4878.1, ups=5.4, wpb=903.4, bsz=1, num_updates=1400, lr=0.001, gnorm=1, train_wall=18, wall=296
-2023-06-22 20:42:27 | INFO | train_inner | epoch 001:   1500 / 40180 loss=2.616, ppl=6.13, wps=4593.6, ups=5.34, wpb=859.7, bsz=1, num_updates=1500, lr=0.001, gnorm=1.027, train_wall=18, wall=315
-2023-06-22 20:42:46 | INFO | train_inner | epoch 001:   1600 / 40180 loss=2.645, ppl=6.25, wps=4681.9, ups=5.42, wpb=864, bsz=1, num_updates=1600, lr=0.001, gnorm=1.052, train_wall=18, wall=333
-2023-06-22 20:43:05 | INFO | train_inner | epoch 001:   1700 / 40180 loss=2.636, ppl=6.22, wps=4692, ups=5.17, wpb=907.2, bsz=1, num_updates=1700, lr=0.001, gnorm=1.001, train_wall=19, wall=353
-2023-06-22 20:43:24 | INFO | train_inner | epoch 001:   1800 / 40180 loss=2.688, ppl=6.44, wps=4629.7, ups=5.15, wpb=899, bsz=1, num_updates=1800, lr=0.001, gnorm=0.976, train_wall=19, wall=372
-2023-06-22 20:43:44 | INFO | train_inner | epoch 001:   1900 / 40180 loss=2.695, ppl=6.48, wps=4589, ups=5.15, wpb=890.7, bsz=1, num_updates=1900, lr=0.001, gnorm=0.992, train_wall=19, wall=391
-2023-06-22 20:44:03 | INFO | train_inner | epoch 001:   2000 / 40180 loss=2.673, ppl=6.38, wps=4776.7, ups=5.17, wpb=923.4, bsz=1, num_updates=2000, lr=0.001, gnorm=0.942, train_wall=19, wall=411
-2023-06-22 20:44:23 | INFO | train_inner | epoch 001:   2100 / 40180 loss=2.687, ppl=6.44, wps=4500.5, ups=5.18, wpb=868, bsz=1, num_updates=2100, lr=0.001, gnorm=0.938, train_wall=19, wall=430
-2023-06-22 20:44:41 | INFO | train_inner | epoch 001:   2200 / 40180 loss=2.701, ppl=6.5, wps=4605.8, ups=5.38, wpb=856.3, bsz=1, num_updates=2200, lr=0.001, gnorm=0.92, train_wall=18, wall=449
-2023-06-22 20:45:00 | INFO | train_inner | epoch 001:   2300 / 40180 loss=2.687, ppl=6.44, wps=4546.7, ups=5.16, wpb=880.5, bsz=1, num_updates=2300, lr=0.001, gnorm=0.845, train_wall=19, wall=468
-2023-06-22 20:45:20 | INFO | train_inner | epoch 001:   2400 / 40180 loss=2.61, ppl=6.11, wps=4738.2, ups=5.21, wpb=909.3, bsz=1, num_updates=2400, lr=0.001, gnorm=0.817, train_wall=19, wall=487
-2023-06-22 20:45:39 | INFO | train_inner | epoch 001:   2500 / 40180 loss=2.687, ppl=6.44, wps=4627.5, ups=5.19, wpb=891.6, bsz=1, num_updates=2500, lr=0.001, gnorm=0.846, train_wall=19, wall=506
-2023-06-22 20:45:58 | INFO | train_inner | epoch 001:   2600 / 40180 loss=2.666, ppl=6.35, wps=4650.7, ups=5.24, wpb=887.6, bsz=1, num_updates=2600, lr=0.001, gnorm=0.888, train_wall=19, wall=526
-2023-06-22 20:46:17 | INFO | train_inner | epoch 001:   2700 / 40180 loss=2.676, ppl=6.39, wps=4657.8, ups=5.23, wpb=889.8, bsz=1, num_updates=2700, lr=0.001, gnorm=0.829, train_wall=19, wall=545
-2023-06-22 20:46:36 | INFO | train_inner | epoch 001:   2800 / 40180 loss=2.64, ppl=6.23, wps=4552, ups=5.29, wpb=861.2, bsz=1, num_updates=2800, lr=0.001, gnorm=0.806, train_wall=18, wall=564
+2023-06-27 18:47:23 | INFO | fairseq_cli.train | task: text2music (VIVYData)
+2023-06-27 18:47:23 | INFO | fairseq_cli.train | model: vivy_train (VIVYNet)
+2023-06-27 18:47:23 | INFO | fairseq_cli.train | criterion: nll_loss (ModelCriterion)
+2023-06-27 18:47:23 | INFO | fairseq_cli.train | num. model params: 232846336 (num. trained: 42385408)
+2023-06-27 18:47:23 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_dur.bias
+2023-06-27 18:47:23 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_trk.bias
+2023-06-27 18:47:23 | INFO | fairseq.trainer | detected shared parameter: decoder.proj_evt.bias <- decoder.proj_ins.bias
+2023-06-27 18:47:23 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-06-27 18:47:23 | INFO | fairseq.utils | rank   0: capabilities =  7.0  ; total memory = 15.782 GB ; name = Tesla V100-SXM2-16GB                    
+2023-06-27 18:47:23 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-06-27 18:47:23 | INFO | fairseq_cli.train | training on 1 devices (GPUs/TPUs)
+2023-06-27 18:47:23 | INFO | fairseq_cli.train | max tokens per GPU = 8192 and max sentences per GPU = 1
+2023-06-27 18:47:23 | INFO | fairseq.trainer | no existing checkpoint found ./results/ckpt/checkpoint_last.pt
+2023-06-27 18:47:23 | INFO | fairseq.trainer | loading train data for epoch 1
+2023-06-27 18:47:44 | INFO | fairseq.data.data_utils | loaded 2821420 examples from: ../data/final/labels/bin/train
+2023-06-27 18:47:45 | INFO | fairseq.data.data_utils | loaded 40180 examples from: ../data/final/features/train
+2023-06-27 18:47:45 | INFO | fairseq.trainer | NOTE: your device may support faster training with --fp16
+2023-06-27 18:47:45 | INFO | fairseq.trainer | begin training epoch 1
+2023-06-27 18:48:11 | INFO | train_inner | epoch 001:    100 / 40180 loss=3.28, ppl=9.71, wps=7349.7, ups=4.09, wpb=1818.2, bsz=1, num_updates=100, lr=0.001, gnorm=3.442, train_wall=25, wall=48
+2023-06-27 18:48:34 | INFO | train_inner | epoch 001:    200 / 40180 loss=2.934, ppl=7.64, wps=7169.9, ups=4.21, wpb=1703.5, bsz=1, num_updates=200, lr=0.001, gnorm=2.072, train_wall=23, wall=72
+2023-06-27 18:48:59 | INFO | train_inner | epoch 001:    300 / 40180 loss=2.713, ppl=6.56, wps=7772.9, ups=4.13, wpb=1880.8, bsz=1, num_updates=300, lr=0.001, gnorm=1.695, train_wall=24, wall=96
+2023-06-27 18:49:24 | INFO | train_inner | epoch 001:    400 / 40180 loss=2.727, ppl=6.62, wps=8477.9, ups=3.99, wpb=2125.2, bsz=1, num_updates=400, lr=0.001, gnorm=1.498, train_wall=25, wall=121
+2023-06-27 18:49:48 | INFO | train_inner | epoch 001:    500 / 40180 loss=2.812, ppl=7.02, wps=7196.5, ups=4.15, wpb=1734, bsz=1, num_updates=500, lr=0.001, gnorm=1.471, train_wall=24, wall=145
+2023-06-27 18:50:11 | INFO | train_inner | epoch 001:    600 / 40180 loss=2.776, ppl=6.85, wps=7152.5, ups=4.27, wpb=1675.2, bsz=1, num_updates=600, lr=0.001, gnorm=1.405, train_wall=23, wall=168
+2023-06-27 18:50:36 | INFO | train_inner | epoch 001:    700 / 40180 loss=2.757, ppl=6.76, wps=7144.1, ups=4.06, wpb=1757.6, bsz=1, num_updates=700, lr=0.001, gnorm=1.384, train_wall=24, wall=193
+2023-06-27 18:51:00 | INFO | train_inner | epoch 001:    800 / 40180 loss=2.766, ppl=6.8, wps=7510.2, ups=4.17, wpb=1801.3, bsz=1, num_updates=800, lr=0.001, gnorm=1.294, train_wall=23, wall=217
+2023-06-27 18:51:25 | INFO | train_inner | epoch 001:    900 / 40180 loss=2.778, ppl=6.86, wps=8090.9, ups=3.99, wpb=2026.3, bsz=1, num_updates=900, lr=0.001, gnorm=1.268, train_wall=24, wall=242
+2023-06-27 18:51:50 | INFO | train_inner | epoch 001:   1000 / 40180 loss=2.774, ppl=6.84, wps=7531.7, ups=4.03, wpb=1870.8, bsz=1, num_updates=1000, lr=0.001, gnorm=1.154, train_wall=24, wall=267
+2023-06-27 18:52:14 | INFO | train_inner | epoch 001:   1100 / 40180 loss=2.747, ppl=6.71, wps=7466.9, ups=4.07, wpb=1833.5, bsz=1, num_updates=1100, lr=0.001, gnorm=1.106, train_wall=24, wall=291
+2023-06-27 18:52:38 | INFO | train_inner | epoch 001:   1200 / 40180 loss=2.74, ppl=6.68, wps=7502.7, ups=4.23, wpb=1773.6, bsz=1, num_updates=1200, lr=0.001, gnorm=1.155, train_wall=23, wall=315
+2023-06-27 18:53:01 | INFO | train_inner | epoch 001:   1300 / 40180 loss=2.732, ppl=6.64, wps=7549, ups=4.26, wpb=1773.2, bsz=1, num_updates=1300, lr=0.001, gnorm=1.046, train_wall=23, wall=338
+2023-06-27 18:53:25 | INFO | train_inner | epoch 001:   1400 / 40180 loss=2.661, ppl=6.32, wps=8452.3, ups=4.25, wpb=1986.6, bsz=1, num_updates=1400, lr=0.001, gnorm=0.962, train_wall=23, wall=362
+2023-06-27 18:53:49 | INFO | train_inner | epoch 001:   1500 / 40180 loss=2.662, ppl=6.33, wps=7640.3, ups=4.14, wpb=1846.2, bsz=1, num_updates=1500, lr=0.001, gnorm=0.991, train_wall=24, wall=386
+2023-06-27 18:54:13 | INFO | train_inner | epoch 001:   1600 / 40180 loss=2.668, ppl=6.35, wps=7679.9, ups=4.15, wpb=1851.1, bsz=1, num_updates=1600, lr=0.001, gnorm=1.016, train_wall=24, wall=410
+2023-06-27 18:54:38 | INFO | train_inner | epoch 001:   1700 / 40180 loss=2.69, ppl=6.45, wps=8074.2, ups=4.11, wpb=1963.7, bsz=1, num_updates=1700, lr=0.001, gnorm=0.967, train_wall=24, wall=435
+2023-06-27 18:55:02 | INFO | train_inner | epoch 001:   1800 / 40180 loss=2.75, ppl=6.73, wps=8286.5, ups=4.05, wpb=2047.8, bsz=1, num_updates=1800, lr=0.001, gnorm=0.943, train_wall=24, wall=459
+2023-06-27 18:55:27 | INFO | train_inner | epoch 001:   1900 / 40180 loss=2.733, ppl=6.65, wps=7718.3, ups=4.1, wpb=1884.8, bsz=1, num_updates=1900, lr=0.001, gnorm=0.963, train_wall=24, wall=484
+2023-06-27 18:55:51 | INFO | train_inner | epoch 001:   2000 / 40180 loss=2.715, ppl=6.57, wps=7807.8, ups=4.09, wpb=1909.2, bsz=1, num_updates=2000, lr=0.001, gnorm=0.908, train_wall=24, wall=508
+2023-06-27 18:56:15 | INFO | train_inner | epoch 001:   2100 / 40180 loss=2.767, ppl=6.8, wps=7615.8, ups=4.18, wpb=1822.6, bsz=1, num_updates=2100, lr=0.001, gnorm=0.917, train_wall=23, wall=532
+2023-06-27 18:56:40 | INFO | train_inner | epoch 001:   2200 / 40180 loss=2.808, ppl=7, wps=6860.6, ups=4.02, wpb=1707.7, bsz=1, num_updates=2200, lr=0.001, gnorm=0.88, train_wall=24, wall=557
+2023-06-27 18:57:04 | INFO | train_inner | epoch 001:   2300 / 40180 loss=2.743, ppl=6.69, wps=7602.9, ups=4.1, wpb=1852.8, bsz=1, num_updates=2300, lr=0.001, gnorm=0.815, train_wall=24, wall=581
+2023-06-27 18:57:29 | INFO | train_inner | epoch 001:   2400 / 40180 loss=2.684, ppl=6.43, wps=7865.7, ups=4.05, wpb=1942.8, bsz=1, num_updates=2400, lr=0.001, gnorm=0.793, train_wall=24, wall=606
+2023-06-27 18:57:53 | INFO | train_inner | epoch 001:   2500 / 40180 loss=2.756, ppl=6.76, wps=8169.9, ups=4.13, wpb=1978.2, bsz=1, num_updates=2500, lr=0.001, gnorm=0.819, train_wall=24, wall=630
+2023-06-27 18:58:18 | INFO | train_inner | epoch 001:   2600 / 40180 loss=2.735, ppl=6.66, wps=7545.5, ups=4.03, wpb=1871.6, bsz=1, num_updates=2600, lr=0.001, gnorm=0.856, train_wall=24, wall=655
+2023-06-27 18:58:42 | INFO | train_inner | epoch 001:   2700 / 40180 loss=2.682, ppl=6.42, wps=7833.1, ups=4.14, wpb=1893.9, bsz=1, num_updates=2700, lr=0.001, gnorm=0.798, train_wall=24, wall=679
+2023-06-27 18:59:06 | INFO | train_inner | epoch 001:   2800 / 40180 loss=2.716, ppl=6.57, wps=7389.2, ups=4.16, wpb=1776.1, bsz=1, num_updates=2800, lr=0.001, gnorm=0.784, train_wall=23, wall=703
+2023-06-27 18:59:31 | INFO | train_inner | epoch 001:   2900 / 40180 loss=2.656, ppl=6.3, wps=7296.6, ups=4.09, wpb=1783.2, bsz=1, num_updates=2900, lr=0.001, gnorm=0.748, train_wall=24, wall=728
+2023-06-27 18:59:55 | INFO | train_inner | epoch 001:   3000 / 40180 loss=2.635, ppl=6.21, wps=8198.9, ups=4.07, wpb=2013.6, bsz=1, num_updates=3000, lr=0.001, gnorm=0.748, train_wall=24, wall=752
+2023-06-27 19:00:20 | INFO | train_inner | epoch 001:   3100 / 40180 loss=2.715, ppl=6.57, wps=8035.9, ups=4.08, wpb=1970.4, bsz=1, num_updates=3100, lr=0.001, gnorm=0.751, train_wall=24, wall=777
+2023-06-27 19:00:44 | INFO | train_inner | epoch 001:   3200 / 40180 loss=2.718, ppl=6.58, wps=7772.4, ups=4.08, wpb=1904.2, bsz=1, num_updates=3200, lr=0.001, gnorm=0.71, train_wall=24, wall=801
+2023-06-27 19:01:09 | INFO | train_inner | epoch 001:   3300 / 40180 loss=2.659, ppl=6.32, wps=8211.4, ups=4.1, wpb=2001.5, bsz=1, num_updates=3300, lr=0.001, gnorm=0.698, train_wall=24, wall=826
+2023-06-27 19:01:33 | INFO | train_inner | epoch 001:   3400 / 40180 loss=2.728, ppl=6.63, wps=7801.4, ups=4.03, wpb=1936.3, bsz=1, num_updates=3400, lr=0.001, gnorm=0.711, train_wall=24, wall=851
+2023-06-27 19:01:58 | INFO | train_inner | epoch 001:   3500 / 40180 loss=2.639, ppl=6.23, wps=7759.2, ups=4.14, wpb=1875.9, bsz=1, num_updates=3500, lr=0.001, gnorm=0.66, train_wall=24, wall=875

@@ -1,3 +1,5 @@
+# flake8: noqa
+
 # Torch Imports
 import torch
 import torch.nn as nn
@@ -32,12 +34,12 @@ def main():
     """
     bert_tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
     encoded = bert_tokenizer(
-        src_input, 
+        src_input,
         truncation=True,
-        padding="max_length", 
+        padding="max_length",
         max_length=512
         )["input_ids"] # We are using only input_ids for now
-    
+
     """
     Process Midi
     """
@@ -76,7 +78,7 @@ def main():
             continue
     trk_ins_map = get_trk_ins_map(generated, ins_logits)
     note_seq = get_note_seq(generated, trk_ins_map)
-    # timestamp = time.strftime("%m-%d_%H-%M-%S", time.localtime()) 
+    # timestamp = time.strftime("%m-%d_%H-%M-%S", time.localtime())
     # output_name = f'output_prime{max_measure_cnt}_chord{max_chord_measure_cnt}_{timestamp}.mid'
     # note_seq_to_midi_file(note_seq, output_name)
 

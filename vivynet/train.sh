@@ -6,10 +6,10 @@ fairseq-train ../data/final \
   --optimizer adam \
   --batch-size 1 \
   --lr 0.001 \
-  --max-tokens 1024 \
+  --max-tokens 8192 \
   --shorten_method none \
   --shorten_data_split_list '' \
-  --tokens_per_sample 1024 \
+  --tokens_per_sample 4096 \
   --seed 1998 \
   --sample_break_mode complete_doc \
   --ratio 4 \
@@ -23,7 +23,9 @@ fairseq-train ../data/final \
   --max_mea_pos  5360 \
   --freeze_enc 1 \
   --freeze_dec 1 \
-  --tensorboard-logdir ./test \
+  --save-dir ./results/ckpt \
+  --tensorboard-logdir ./results/logs \
+  --no-epoch-checkpoints
   # --evt_voc_size 436 \
   # --trk_voc_size 44 \
   # --dur_voc_size 36 \

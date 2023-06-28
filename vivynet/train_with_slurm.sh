@@ -5,8 +5,8 @@
 #SBATCH --time=4320                                 ## 3 days of compute
 #SBATCH --gres=gpu:V100:1                           ## 1 of GTX1080 GPU
 #SBATCH --mem 32G                                   ## 64 GB of RAM
-#SBATCH --output=slurm/out_%j.txt                   ## job /dev/stdout record
-#SBATCH --error=slurm/err_%j.txt                    ## job /dev/stderr record
+#SBATCH --output=results/slurm/out_%j.txt           ## job /dev/stdout record
+#SBATCH --error=results/slurm/err_%j.txt            ## job /dev/stderr record
 #SBATCH --export=NONE                               ## keep environment clean
 #SBATCH --mail-type=ALL                             ## notify for any job state change
 #SBATCH --mail-user=blherre4@asu.edu                ## notify email (%u expands -> username)
