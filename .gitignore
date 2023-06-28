@@ -3,3 +3,4 @@ testing/fsq/*
 data/*
 *.pyc
 .vscode/
+vivynet/results/
