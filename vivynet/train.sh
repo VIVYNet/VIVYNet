@@ -23,8 +23,8 @@ fairseq-train ../data/final \
   --max_mea_pos  5360 \
   --freeze_enc 1 \
   --freeze_dec 1 \
-  --save-dir ./results/ckpt \
-  --tensorboard-logdir ./results/logs \
+  --save-dir ./results/lr1e-4_bsz2/ckpt \
+  --tensorboard-logdir ./results/lr1e-4_bsz2/logs \
   --no-epoch-checkpoints
   # --evt_voc_size 436 \
   # --trk_voc_size 44 \
