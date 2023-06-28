@@ -1,3 +1,5 @@
+VARIANT="lr1e-5_bsz2_lrsPlateau_head32_frozenEmbedding"
+
 fairseq-train ../data/final \
   --user-dir ./ \
   --task text2music \
@@ -5,7 +7,7 @@ fairseq-train ../data/final \
   --arch vivy_train \
   --optimizer adam \
   --batch-size 1 \
-  --lr 0.0001 \
+  --lr 0.00001 \
   --max-tokens 8192 \
   --shorten_method none \
   --shorten_data_split_list '' \
@@ -23,12 +25,7 @@ fairseq-train ../data/final \
   --max_mea_pos  5360 \
   --freeze_enc 1 \
   --freeze_dec 1 \
-  --save-dir ./results/lr1e-4_bsz2/ckpt \
-  --tensorboard-logdir ./results/lr1e-4_bsz2/logs \
+  --lr-scheduler reduce_lr_on_plateau \
+  --save-dir ./results/$VARIANT/ckpt \
+  --tensorboard-logdir ./results/$VARIANT/logs \
   --no-epoch-checkpoints
-  # --evt_voc_size 436 \
-  # --trk_voc_size 44 \
-  # --dur_voc_size 36 \
-  # --ins_voc_size 84 \
-  # --max_rel_pos  134 \
-  # --max_mea_pos  2810 \
