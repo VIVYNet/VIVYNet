@@ -623,7 +623,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
             # Freezing self-attentions
             VIVYNet.debug.ldf("Freezing pretrained Decoder layers")
             for name, param in symphony_net.named_parameters():
-                if "self_attention" in name:
+                if "self_attention" or "wEvte.weight" or "wTrke.weight" or "wDure.weight" or "wRpe.weight" or "wMpe.weight" in name:
                     param.requires_grad = False
 
             # for name, param in symphony_net.named_parameters():
