@@ -1,4 +1,4 @@
-VARIANT="lr1e-5_bsz2_lrsPlateau_head32_frozenEmbedding"
+VARIANT="interactive"
 
 fairseq-train ../data/final \
   --user-dir ./ \

@@ -58,7 +58,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = True
+DISABLE_DEBUG = False
 
 #
 #   DEBUGGING
@@ -1355,7 +1355,7 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - MultiheadDataset Init")
         VIVYData.debug.ldf(
-            f"TGT - *FINALIZED* (size: {len(final_target.sizes)})"
+            f"TGT - *FINALIZED* (size: {len(final_target.sizes)}) - {split}"
         )
 
         """
