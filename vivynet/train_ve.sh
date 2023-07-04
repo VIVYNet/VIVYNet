@@ -1,11 +1,14 @@
+VARIANT="interactive"
+
 fairseq-train ../data/final \
   --user-dir ./ \
   --task text2music_ve \
   --criterion nll_loss_ve \
   --arch vivy_train_ve \
   --optimizer adam \
-  --lr 0.001 \
-  --max-tokens 4096 \
+  --batch-size 1 \
+  --lr 0.00001 \
+  --max-tokens 8192 \
   --shorten_method none \
   --shorten_data_split_list '' \
   --tokens_per_sample 4096 \
@@ -20,12 +23,9 @@ fairseq-train ../data/final \
   --ins_voc_size 133 \
   --max_rel_pos  198 \
   --max_mea_pos  5360 \
-  --batch-size 2 \
   --freeze_enc 1 \
-  --freeze_dec 1
-  # --evt_voc_size 436 \
-  # --trk_voc_size 44 \
-  # --dur_voc_size 36 \
-  # --ins_voc_size 84 \
-  # --max_rel_pos  134 \
-  # --max_mea_pos  2810 \
+  --freeze_dec 1 \
+  --lr-scheduler reduce_lr_on_plateau \
+  --save-dir ./results/$VARIANT/ckpt \
+  --tensorboard-logdir ./results/$VARIANT/logs \
+  --no-epoch-checkpoints

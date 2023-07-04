@@ -587,6 +587,7 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
         enc_output = self.encoder(src_tokens.reshape(-1, 1))
         VIVYNet_VE.debug.ldf("res 1")
 
+        # Process BERT out from 768 dimension to 512 dimension
         bert_out = self.linear(enc_output[0])
         src_lengths = len(src_tokens)
         VIVYNet_VE.debug.ldf(
