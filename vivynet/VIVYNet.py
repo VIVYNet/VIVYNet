@@ -58,7 +58,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = True
+DISABLE_DEBUG = False
 
 #
 #   DEBUGGING
@@ -736,7 +736,7 @@ def train(args):
     debug.ldf("<< train >>")
 
     args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
-    args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 16)
+    args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 32)
     args.dec_num_layers = getattr(args, "dec_num_layers", 12)
     args.dec_dropout = getattr(args, "dec_dropout", 0.1)
 
@@ -1182,12 +1182,12 @@ class PairDataset(LanguagePairDataset):
     """Main dataset structure"""
 
     def __init__(
-        self, 
-        src, 
-        src_sizes, 
-        src_dict, 
-        tgt=None, 
-        tgt_sizes=None, 
+        self,
+        src,
+        src_sizes,
+        src_dict,
+        tgt=None,
+        tgt_sizes=None,
         tgt_dict=None
     ):
         """Text2Music Dataset classification"""
@@ -1355,7 +1355,7 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - MultiheadDataset Init")
         VIVYData.debug.ldf(
-            f"TGT - *FINALIZED* (size: {len(final_target.sizes)})"
+            f"TGT - *FINALIZED* (size: {len(final_target.sizes)}) - {split}"
         )
 
         """
