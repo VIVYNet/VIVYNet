@@ -614,7 +614,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Get the checkpoint
         checkpoint = torch.load(
-            "../symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
+            "symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
         )
         VIVYNet.debug.ldf("Checkpoint loading")
 

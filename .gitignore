@@ -4,3 +4,4 @@ data/*
 *.pyc
 .vscode/
 vivynet/results/
+vivynet/checkpoints/
