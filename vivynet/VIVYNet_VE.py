@@ -581,7 +581,8 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
 
         # Clear previously caluclated gradients
         self.encoder.zero_grad()
-        VIVYNet_VE.debug.ldf("encoder.zero_grad()")
+        self.decoder.zero_grad()
+        VIVYNet_VE.debug.ldf("zero_grad()")
 
         # Get loss and the logits from the model
         enc_output = self.encoder(src_tokens.reshape(-1, 1))
@@ -732,7 +733,7 @@ def midi_collate(samples, max_sample_size, pad_idx, eos_idx):
     }
 
 
-def t2m_collate(samples, pad_idx, eos_idx):
+def t2m_collate(samples, max_sample_size, pad_idx, eos_idx):
     """Text2Music PairDataset Collate Function"""
 
     # TODO: add a merge func for text encoder_in
@@ -748,6 +749,7 @@ def t2m_collate(samples, pad_idx, eos_idx):
                 res.append(
                     collate_tokens(
                         [s[key][i] for s in samples],
+                        max_sample_size,
                         pad_idx,
                         eos_idx,
                         left_pad=False,
@@ -762,6 +764,7 @@ def t2m_collate(samples, pad_idx, eos_idx):
             # Just return the collated tokens normally
             return collate_tokens(
                 [s[key] for s in samples],
+                max_sample_size,
                 pad_idx,
                 eos_idx,
                 left_pad=False,
@@ -1042,6 +1045,7 @@ class PairDataset(LanguagePairDataset):
         src_sizes,
         src_dict,
         midi_dict,
+        max_sample_size,
         tgt=None,
         tgt_sizes=None,
         tgt_dict=None,
@@ -1057,6 +1061,7 @@ class PairDataset(LanguagePairDataset):
         self.midi_dict = midi_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
+        self.max_sample_size = max_sample_size
 
     def __getitem__(self, index):
         """Get item method"""
@@ -1080,7 +1085,7 @@ class PairDataset(LanguagePairDataset):
     def collater(self, samples):
         """Token collater method"""
         # Return the collated information of the given sample
-        return t2m_collate(samples, self.midi_dict.pad(), self.midi_dict.eos())
+        return t2m_collate(samples, self.max_sample_size, self.midi_dict.pad(), self.midi_dict.eos())
 
 
 @register_task("text2music_ve")
@@ -1238,6 +1243,8 @@ class VIVYData_VE(LanguageModelingTask):
         VIVYData_VE.debug.ldf("SRC - loading")
 
         # Add padding to source information
+        final_src_dataset = []
+        final_src_dataset_size = []
         for idx in range(len(src_dataset)):
             # Get current element
             element = src_dataset[idx]
@@ -1256,7 +1263,8 @@ class VIVYData_VE(LanguageModelingTask):
                 padded_element = element
 
             # Replace index with padded element
-            src_dataset[idx] = padded_element
+            final_src_dataset.append(padded_element)
+            final_src_dataset_size.append(src_dataset.sizes[idx])
         VIVYData_VE.debug.ldf("SRC - padding")
         VIVYData_VE.debug.ldf(
             f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
@@ -1268,13 +1276,14 @@ class VIVYData_VE(LanguageModelingTask):
 
         # Compile the data
         self.datasets[split] = PairDataset(
-            src=src_dataset,
-            src_sizes=src_dataset.sizes,
+            src=final_src_dataset,
+            src_sizes=final_src_dataset_size,
             src_dict=self.src_vocab,
             midi_dict=self.dictionary,
             tgt=final_target,
             tgt_sizes=final_target.sizes,
             tgt_dict=self.tgt_vocab,
+            max_sample_size=self.args.tokens_per_sample,
         )
         VIVYData_VE.debug.ldf("COMPILATION")
         VIVYData_VE.debug.ldf(f"<< END (split: {split}) >>")
