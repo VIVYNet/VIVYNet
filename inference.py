@@ -10,7 +10,7 @@ from torch import Tensor
 from transformers import BertTokenizer
 
 # Fairseq and SymphonyNet Imports
-from symphonynet.src.fairseq.gen_utils import process_prime_midi, gen_one, get_trk_ins_map, get_note_seq, note_seq_to_midi_file, music_dict
+from utils.gen_utils import process_prime_midi, gen_one, get_trk_ins_map, get_note_seq, note_seq_to_midi_file, music_dict
 from fairseq.models import FairseqLanguageModel
 
 
@@ -65,21 +65,22 @@ def main():
         checkpoint_file=CKPT_DIR,
         data_name_or_path=DATA_DIR,
         user_dir=INFERENCE_DIR)
-    print(vivynet)
-    # """
-    # Generation
-    # """
-    # while(True):
-    #     try:
-            # generated, ins_logits = gen_one(vivynet, tgt_input, MIN_LEN = 1024)
-    #         break
-    #     except Exception as e:
-    #         print(e)
-    #         continue
-    # trk_ins_map = get_trk_ins_map(generated, ins_logits)
-    # note_seq = get_note_seq(generated, trk_ins_map)
-    # # timestamp = time.strftime("%m-%d_%H-%M-%S", time.localtime())
-    # # output_name = f'output_prime{max_measure_cnt}_chord{max_chord_measure_cnt}_{timestamp}.mid'
-    # # note_seq_to_midi_file(note_seq, output_name)
+    
+
+    """
+    Generation
+    """
+    while(True):
+        try:
+            generated, ins_logits = gen_one(vivynet, encoded, tgt_input, MIN_LEN = 1024)
+            break
+        except Exception as e:
+            print(e)
+            continue
+    trk_ins_map = get_trk_ins_map(generated, ins_logits)
+    note_seq = get_note_seq(generated, trk_ins_map)
+    # timestamp = time.strftime("%m-%d_%H-%M-%S", time.localtime())
+    # output_name = f'output_prime{max_measure_cnt}_chord{max_chord_measure_cnt}_{timestamp}.mid'
+    # note_seq_to_midi_file(note_seq, output_name)
 
 main()

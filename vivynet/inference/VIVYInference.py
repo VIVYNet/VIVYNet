@@ -59,7 +59,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = False
+DISABLE_DEBUG = True
 
 #
 #   DEBUGGING
@@ -683,6 +683,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         src_tokens,
         prev_output_tokens,
         prev_output_tokens_lengths=None,
+        state=None,
     ):
         """Forward propagation method"""
 
@@ -711,17 +712,18 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
 
         # Get overall features from decoder
-        features = self.decoder(
+        features, state = self.decoder(
             encoder_out=bert_out,
             decoder_in=prev_output_tokens,
             src_lengths=prev_output_tokens_lengths,
             encoder_out_lengths=src_lengths,  # TODO: Pass in the Encoder Output length
+            state=state,
         )
         VIVYNet.debug.ldf("res 3")
 
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
-        return features
+        return features, state
 
     @property
     def supported_targets(self):
@@ -1426,12 +1428,13 @@ class VIVYData(LanguageModelingTask):
     def _initialize_dataset(self, **kwargs):
         """Method to Initialize the Pair Dataset (Text, Midi)"""
         return PairDataset(**kwargs)
-
+    
+    def build_dataset_for_inference(self, src_tokens, prev_output_tokens, state, **kwargs):
+        assert False, "inference not implemented"
 
 #
 #   CRITERION SPECIFICATION
 #
-
 
 @register_criterion("nll_loss")
 class ModelCriterion(CrossEntropyCriterion):
