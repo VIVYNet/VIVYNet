@@ -159,12 +159,9 @@ def get_next_chord(ori):
 def get_next(model, text, prime, memory, has_prime = False):
     pr = torch.from_numpy(np.array(prime))[None, None, :].cuda()
     text = torch.Tensor(text).cuda()
-    import inspect
-    print(inspect.getargspec(model))
-    input()
     (e,d,t,ins), memory = model(src_tokens=text, prev_output_tokens=pr, state=memory)
-    print((e,d,t,ins))
-    input()
+    # print((e,d,t,ins))
+    # input()
     e, d, t, ins = e[0,:], d[0,:], t[0,:], ins[0,:]
     if has_prime:
         return (np.int64(EOS), np.int64(EOS), np.int64(EOS), ins), memory
@@ -187,7 +184,6 @@ def get_next(model, text, prime, memory, has_prime = False):
        
     trk = sampling(t, p=0)
     
-
     return (evt, dur, trk, ins), memory
 
 def calc_pos(evt_tok, last_rel_pos, last_mea_pos):

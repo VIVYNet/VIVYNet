@@ -143,11 +143,12 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("<< START >>")
 
         # Send data to device
-        src_token = src_token.to(src_token.device).long()
+        src_token = src_token.to(src_token.device).long().unsqueeze(0)
         BERT.debug.ldf("src_token")
 
         # Return logits from BERT << BROKEN >>
-        output = self.model(src_token)
+        output = self.model(input_ids = src_token)
+
         BERT.debug.ldf("output")
 
         # Return result
@@ -429,17 +430,16 @@ class SymphonyNet(FairseqDecoder):
 
         SymphonyNet.debug.ldf("apply dropout")
         x = self.drop(x)
-
+        
         SymphonyNet.debug.ldf("Model Computation")
         doutputs, state = self.decoder_model(
-            x=x,  # decoder_in shape: [batch_size, dec_length, embed_dim]
+            x=x.squeeze(0),  # decoder_in shape: [batch_size, embed_dim]
             memory=encoder_out,  # encoder_out shape: [batch_size, enc_length, embed_dim]
             memory_length_mask=None, 
             state=state
         )
         SymphonyNet.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
-
         SymphonyNet.debug.ldf("<< END >>")
         return doutputs, state
 
