@@ -1255,6 +1255,37 @@ class VIVYData_VE(LanguageModelingTask):
             f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
         )
 
+        # TODO: Add Padding
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        '''for idx in range(len(src_dataset)):
+            element = src_dataset[idx]
+            # Process the element here (e.g., print it)
+            print(element.shape)'''
+        
+        for idx in range(len(src_dataset)):
+            element = src_dataset[idx]
+            # Get the shape of the element if it's a NumPy array or similar object
+            
+            element_shape = element.shape
+            # Calculate the padding size
+            padding_size = max(0, self.args.tokens_per_sample - element_shape[0])
+            print(element_shape[0])
+            print(self.args.tokens_per_sample - element_shape[0])
+            # Pad the element if necessary
+            if padding_size > 0:
+                padding = torch.zeros(padding_size, dtype=torch.long)
+                padded_element = torch.cat([element, padding])
+            else:
+                padded_element = element
+            # Print the shape of the padded element
+            print(padded_element.shape)
+
+        VIVYData_VE.debug.ldf("Display Padding")
+        VIVYData_VE.debug.ldf(self.args.tokens_per_sample)
+        print("Display Padding")
+        print(self.args.tokens_per_sample)
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        
         """
         DATASET COMPILATION
         """
