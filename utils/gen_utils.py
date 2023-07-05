@@ -160,8 +160,7 @@ def get_next(model, text, prime, memory, has_prime = False):
     pr = torch.from_numpy(np.array(prime))[None, None, :].cuda()
     text = torch.Tensor(text).cuda()
     (e,d,t,ins), memory = model(src_tokens=text, prev_output_tokens=pr, state=memory)
-    # print((e,d,t,ins))
-    # input()
+
     e, d, t, ins = e[0,:], d[0,:], t[0,:], ins[0,:]
     if has_prime:
         return (np.int64(EOS), np.int64(EOS), np.int64(EOS), ins), memory
@@ -243,7 +242,7 @@ def gen_one(model, src_input, prime_nums, MAX_LEN = 4090, MIN_LEN = 0):
         ins_list.append(ins)
 
         for i in tqdm(range(MAX_LEN - len(prime))):
-            (e,d,t,ins), memo = get_next(model, prime[-1], memo)
+            (e,d,t,ins), memo = get_next(model, src_input, prime[-1], memo)
             if t == EOS:
                 assert len(prime) > MIN_LEN, 'Invalid generation: Generated excerpt too short.'
                 break
