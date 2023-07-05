@@ -1235,45 +1235,38 @@ class VIVYData_VE(LanguageModelingTask):
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData_VE.debug.ldf(
-            f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
-        )
+        VIVYData_VE.debug.ldf("SRC - loading")
 
-        # TODO: Add Padding
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        '''for idx in range(len(src_dataset)):
-            element = src_dataset[idx]
-            # Process the element here (e.g., print it)
-            print(element.shape)'''
-        
+        # Add padding to source information
         for idx in range(len(src_dataset)):
+            # Get current element
             element = src_dataset[idx]
+
             # Get the shape of the element if it's a NumPy array or similar object
-            
             element_shape = element.shape
+
             # Calculate the padding size
             padding_size = max(0, self.args.tokens_per_sample - element_shape[0])
-            print(element_shape[0])
-            print(self.args.tokens_per_sample - element_shape[0])
+
             # Pad the element if necessary
             if padding_size > 0:
                 padding = torch.zeros(padding_size, dtype=torch.long)
                 padded_element = torch.cat([element, padding])
             else:
                 padded_element = element
-            # Print the shape of the padded element
-            print(padded_element.shape)
 
-        VIVYData_VE.debug.ldf("Display Padding")
-        VIVYData_VE.debug.ldf(self.args.tokens_per_sample)
-        print("Display Padding")
-        print(self.args.tokens_per_sample)
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        
+            # Replace index with padded element
+            src_dataset[idx] = padded_element
+        VIVYData_VE.debug.ldf("SRC - padding")
+        VIVYData_VE.debug.ldf(
+            f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
+        )
+
         """
         DATASET COMPILATION
         """
 
+        # Compile the data
         self.datasets[split] = PairDataset(
             src=src_dataset,
             src_sizes=src_dataset.sizes,
