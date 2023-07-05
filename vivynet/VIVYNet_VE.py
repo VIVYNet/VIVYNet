@@ -634,7 +634,7 @@ def copy_tensor(src, dst):
     """Tensor Copying Function"""
 
     # Check if the source and target tensors are equal in length
-    assert dst.numel() == src.numel()
+    assert dst.numel() == src.numel(), f"dst ({dst.numel()}) is not src ({src.numel()})"
 
     # Copy the target tokens to the source information
     dst.copy_(src)
@@ -642,6 +642,7 @@ def copy_tensor(src, dst):
 
 def collate_tokens(
     values,
+    max_sample_size,
     pad_idx,
     eos_idx=None,
     left_pad=False,
@@ -651,7 +652,7 @@ def collate_tokens(
     size = max(v.size(0) for v in values)
 
     # Generate the resulting values from the merge
-    res = values[0].new(len(values), size, values[0].size(-1)).fill_(pad_idx)
+    res = values[0].new(len(values), max_sample_size, values[0].size(-1)).fill_(pad_idx)
 
     # Iterate through the provided values for collation and copy the
     # tensor values to the resulting list
@@ -664,7 +665,7 @@ def collate_tokens(
     return res
 
 
-def midi_collate(samples, pad_idx, eos_idx):
+def midi_collate(samples, max_sample_size, pad_idx, eos_idx):
     """Midi MultiHeadDataset Collater Function"""
 
     def merge(key, is_list=False):
@@ -679,6 +680,7 @@ def midi_collate(samples, pad_idx, eos_idx):
                 res.append(
                     collate_tokens(
                         [s[key][i] for s in samples],
+                        max_sample_size,
                         pad_idx,
                         eos_idx,
                         left_pad=False,
@@ -693,6 +695,7 @@ def midi_collate(samples, pad_idx, eos_idx):
             # Just return the collated tokens normally
             return collate_tokens(
                 [s[key] for s in samples],
+                max_sample_size,
                 pad_idx,
                 eos_idx,
                 left_pad=False,
@@ -881,28 +884,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             )
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
 
-        # # Calculate the sample step
-        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
-
-        # # Variable declaration for slices and blocks
-        # new_slice_indices = []
-        # new_block_to_dataset_index = []
-
-        # Note: This parts adds more dimensions into block_to_dataset_index
-
-        # # Add line information into slice and block indexes
-        # for line, line_piece in zip(slice_indices, block_to_dataset_index):
-        #     l_piece_tot = line[1] - line[0]
-        #     assert l_piece_tot % self.ratio == 0, (line[0], line[1])
-        #     l_toks = l_piece_tot // self.ratio
-        #     chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
-        #     new_slice_indices.append(np.stack([line]*chosen_cnt))
-        #     new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
-
-        # # Concatentate new slice and block indexes together with their other counterparts
-        # slice_indices = np.concatenate(new_slice_indices)
-        # block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
-
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
         self._sizes[:] = self.sample_len_max
@@ -997,6 +978,7 @@ class MultiheadDataset(MonolingualDataset):
         tgt_vocab,
         add_eos_for_other_targets,
         shuffle,
+        max_sample_size,
         targets=None,
         add_bos_token=False,
     ):
@@ -1009,6 +991,7 @@ class MultiheadDataset(MonolingualDataset):
         self.tgt_vocab = tgt_vocab
         self.add_eos_for_other_targets = add_eos_for_other_targets
         self.shuffle = shuffle
+        self.max_sample_size = max_sample_size
         self.add_bos_token = add_bos_token
 
         # Check if the a token in the given dataset
@@ -1031,7 +1014,7 @@ class MultiheadDataset(MonolingualDataset):
         """Token collater method"""
 
         # Return the collated information of the given sample
-        return midi_collate(samples, self.vocab.pad(), self.vocab.eos())
+        return midi_collate(samples, self.max_sample_size, self.vocab.pad(), self.vocab.eos())
 
     def __getitem__(self, index):
         """Get item of an iterable based on its index"""
@@ -1223,6 +1206,7 @@ class VIVYData_VE(LanguageModelingTask):
             sizes=tgt_datasets.sizes,
             src_vocab=self.dictionary,
             tgt_vocab=self.output_dictionary,
+            max_sample_size=self.args.tokens_per_sample,
             add_eos_for_other_targets=add_eos_for_other_targets,
             shuffle=True,
             targets=self.targets,
