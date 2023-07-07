@@ -1,5 +1,8 @@
 VARIANT="interactive"
 
+mkdir "./results/$VARIANT"
+mkdir "./results/$VARIANT/slurm"
+
 fairseq-train ../data/final \
   --user-dir ./ \
   --task text2music \

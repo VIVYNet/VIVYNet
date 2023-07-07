@@ -1,4 +1,7 @@
-VARIANT="VanAE"
+VARIANT="test"
+
+mkdir "./results/$VARIANT"
+mkdir "./results/$VARIANT/slurm"
 
 fairseq-train ../data/final \
   --user-dir ./ \
