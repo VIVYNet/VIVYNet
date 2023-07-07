@@ -55,6 +55,12 @@ import math
 import os
 
 #
+#   CONSTANT DEFINITIONS
+#
+
+DISABLE_DEBUG = True
+
+#
 #   DEBUGGING
 #
 
@@ -86,14 +92,16 @@ class Debug:
     def ldf(self, iter):
         """Litmus Debug Method"""
 
-        # Get function name
-        frame = inspect.currentframe().f_back
-        func_name = inspect.getframeinfo(frame).function
+        # Control debugging
+        if not DISABLE_DEBUG:
+            # Get function name
+            frame = inspect.currentframe().f_back
+            func_name = inspect.getframeinfo(frame).function
 
-        # Litmus print
-        print(
-            f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}"
-        )
+            # Litmus print
+            print(
+                f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}"
+            )
 
 
 #

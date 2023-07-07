@@ -1,4 +1,4 @@
-VARIANT="interactive"
+VARIANT="VanAE"
 
 fairseq-train ../data/final \
   --user-dir ./ \
@@ -6,6 +6,10 @@ fairseq-train ../data/final \
   --criterion nll_loss_ve \
   --arch vivy_train_ve \
   --optimizer adam \
+  --adam-betas '(0.9, 0.98)' \
+  --adam-eps 1e-6 \
+  --clip-norm 0.0 \
+  --weight-decay 0.01 \
   --batch-size 1 \
   --lr 0.00001 \
   --max-tokens 8192 \
@@ -25,7 +29,7 @@ fairseq-train ../data/final \
   --max_mea_pos  5360 \
   --freeze_enc 1 \
   --freeze_dec 1 \
-  --lr-scheduler reduce_lr_on_plateau \
+  --lr-scheduler polynomial_decay \
   --save-dir ./results/$VARIANT/ckpt \
   --tensorboard-logdir ./results/$VARIANT/logs \
   --no-epoch-checkpoints

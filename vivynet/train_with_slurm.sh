@@ -5,12 +5,12 @@
 #SBATCH --time=4320                                                                                   ## 3 days of compute
 #SBATCH --gres=gpu:V100:1                                                                             ## 1 of GTX1080 GPU
 #SBATCH --mem 32G                                                                                     ## 64 GB of RAM
-#SBATCH --output=results/lr1e-5_bsz2_lrsPlateau_head32_frozenEmbedding/slurm/out_%j.txt               ## job /dev/stdout record
-#SBATCH --error=results/lr1e-5_bsz2_lrsPlateau_head32_frozenEmbedding/slurm/err_%j.txt                ## job /dev/stderr record
+#SBATCH --output=results/VanAE/slurm/out_%j.txt                                                       ## job /dev/stdout record
+#SBATCH --error=results/VanAE/slurm/err_%j.txt                                                        ## job /dev/stderr record
 #SBATCH --export=NONE                                                                                 ## keep environment clean
 #SBATCH --mail-type=ALL                                                                               ## notify for any job state change
 #SBATCH --mail-user=blherre4@asu.edu                                                                  ## notify email (%u expands -> username)
-#SBATCH --job-name="VIVYNet Training (LR 1e-5; BS 2; LRS Plateau; FrozenEmbed)"                       ## optional job name
+#SBATCH --job-name="VIVYNet Training (VanAE)"                                                         ## optional job name
 
 echo "Purging modules"
 module purge
@@ -22,5 +22,5 @@ echo "Showing GPU details"
 nvidia-smi -L
 nvidia-smi
 echo "Running training python script"
-bash train.sh
+bash train_ve.sh
 echo "Finished"
