@@ -66,6 +66,9 @@ def main():
         data_name_or_path=DATA_DIR,
         user_dir=INFERENCE_DIR)
     
+    vivynet = vivynet.models[0]
+    vivynet.cuda()
+    vivynet.eval()
 
     """
     Generation
