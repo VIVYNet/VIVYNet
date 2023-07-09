@@ -1,13 +1,10 @@
 VARIANT="test"
 
-mkdir "./results/$VARIANT"
-mkdir "./results/$VARIANT/slurm"
-
 fairseq-train ../data/final \
   --user-dir ./ \
-  --task text2music_ve \
-  --criterion nll_loss_ve \
-  --arch vivy_train_ve \
+  --task text2music_van_ae \
+  --criterion nll_loss_van_ae \
+  --arch vivy_train_van_ae \
   --optimizer adam \
   --adam-betas '(0.9, 0.98)' \
   --adam-eps 1e-6 \
