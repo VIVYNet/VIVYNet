@@ -219,10 +219,10 @@ def gen_one(model, src_input, prime_nums, MAX_LEN = 4090, MIN_LEN = 0):
     prime_mea_idx = 0
     prime = copy.deepcopy(prime_nums)
     ins_list = [-1] 
-    print(prime)
-    print(prime[:-1])
-    print(prime[1:])
-    input()
+    # print(prime)
+    # print(prime[:-1])
+    # print(prime[1:])
+    # input()
 
     with torch.no_grad():
         memo = None
@@ -279,6 +279,7 @@ def get_note_seq(prime, trk_ins_map):
     for (e,d,t,_, _, _) in prime[1:]:
 
         ee = music_dict.index2word(0, e)
+        print(ee)
         if ee[0].lower() == 'm':
 
             measure_time += last_bom

@@ -59,7 +59,7 @@ def main():
     """
     Model Initialization
     """
-    CKPT_DIR = "vivynet/checkpoints/checkpoint_best_3.pt"
+    CKPT_DIR = "vivynet/checkpoints/checkpoint_best_1.pt"
     INFERENCE_DIR = "vivynet/inference"
     vivynet = FairseqLanguageModel.from_pretrained('.',
         checkpoint_file=CKPT_DIR,
@@ -75,15 +75,19 @@ def main():
     """
     while(True):
         try:
-            generated, ins_logits = gen_one(vivynet, encoded, tgt_input, MIN_LEN = 1024)
+            generated, ins_logits = gen_one(vivynet, encoded, tgt_input, MIN_LEN = 256, MAX_LEN=600)
             break
         except Exception as e:
             print(e)
             continue
+    print("Generated: ", generated)
+    # print("Logits: ", ins_logits)
+    # input()
+
     trk_ins_map = get_trk_ins_map(generated, ins_logits)
     note_seq = get_note_seq(generated, trk_ins_map)
-    # timestamp = time.strftime("%m-%d_%H-%M-%S", time.localtime())
-    # output_name = f'output_prime{max_measure_cnt}_chord{max_chord_measure_cnt}_{timestamp}.mid'
-    # note_seq_to_midi_file(note_seq, output_name)
+    timestamp = time.strftime("%m-%d_%H-%M-%S", time.localtime())
+    output_name = f'output_prime_{timestamp}.mid'
+    note_seq_to_midi_file(note_seq, output_name)
 
 main()
