@@ -55,6 +55,12 @@ import math
 import os
 
 #
+#   CONSTANT DEFINITIONS
+#
+
+DISABLE_DEBUG = True
+
+#
 #   DEBUGGING
 #
 
@@ -86,14 +92,16 @@ class Debug:
     def ldf(self, iter):
         """Litmus Debug Method"""
 
-        # Get function name
-        frame = inspect.currentframe().f_back
-        func_name = inspect.getframeinfo(frame).function
+        # Control debugging
+        if not DISABLE_DEBUG:
+            # Get function name
+            frame = inspect.currentframe().f_back
+            func_name = inspect.getframeinfo(frame).function
 
-        # Litmus print
-        print(
-            f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}"
-        )
+            # Litmus print
+            print(
+                f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}"
+            )
 
 
 #
@@ -371,8 +379,8 @@ class SymphonyNet(FairseqDecoder):
 #
 
 
-@register_model("vivy_ve")
-class VIVYNet_VE(FairseqEncoderDecoderModel):
+@register_model("vivy_van_ae")
+class VIVYNet_VanAE(FairseqEncoderDecoderModel):
     """Encoder and Decoder Specification for Full Training"""
 
     # DEBUG
@@ -381,59 +389,59 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
     @staticmethod
     def add_args(parser):
         """Argument Definition class"""
-        VIVYNet_VE.debug.ldf("<< START >>")
+        VIVYNet_VanAE.debug.ldf("<< START >>")
 
         # Shorten Method
         parser.add_argument("--shorten_method", type=str, metavar="N")
-        VIVYNet_VE.debug.ldf("shorten_method")
+        VIVYNet_VanAE.debug.ldf("shorten_method")
 
         # Shorten Data Split List
         parser.add_argument("--shorten_data_split_list", type=str, metavar="N")
-        VIVYNet_VE.debug.ldf("shorten_data_split_list")
+        VIVYNet_VanAE.debug.ldf("shorten_data_split_list")
 
         # Token Per Sample
         parser.add_argument("--tokens_per_sample", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("tokens_per_sample")
+        VIVYNet_VanAE.debug.ldf("tokens_per_sample")
 
         # Sample Break Mode
         parser.add_argument("--sample_break_mode", type=str, metavar="N")
-        VIVYNet_VE.debug.ldf("sample_break_mode")
+        VIVYNet_VanAE.debug.ldf("sample_break_mode")
 
         # Ratio
         parser.add_argument("--ratio", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("ratio")
+        VIVYNet_VanAE.debug.ldf("ratio")
 
         # Sample Overlap Rate
         parser.add_argument("--sample_overlap_rate", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("sample_overlap_rate")
+        VIVYNet_VanAE.debug.ldf("sample_overlap_rate")
 
         # Permutation invariance
         parser.add_argument("--perm_inv", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("perm_inv")
+        VIVYNet_VanAE.debug.ldf("perm_inv")
 
         # Event Token Size
         parser.add_argument("--evt_voc_size", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("evt_voc_size")
+        VIVYNet_VanAE.debug.ldf("evt_voc_size")
 
         # Track Token Size
         parser.add_argument("--trk_voc_size", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("trk_voc_size")
+        VIVYNet_VanAE.debug.ldf("trk_voc_size")
 
         # Duration Vocab Size
         parser.add_argument("--dur_voc_size", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("dur_voc_size")
+        VIVYNet_VanAE.debug.ldf("dur_voc_size")
 
         # Instrument Vocab Size
         parser.add_argument("--ins_voc_size", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("ins_voc_size")
+        VIVYNet_VanAE.debug.ldf("ins_voc_size")
 
         # Maximum Relative Position
         parser.add_argument("--max_rel_pos", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("max_rel_pos")
+        VIVYNet_VanAE.debug.ldf("max_rel_pos")
 
         # Maximum Measure Count within a Sample
         parser.add_argument("--max_mea_pos", type=int, metavar="N")
-        VIVYNet_VE.debug.ldf("max_mea_pos")
+        VIVYNet_VanAE.debug.ldf("max_mea_pos")
 
         # Decoder Embedding Dimension
         parser.add_argument(
@@ -442,7 +450,7 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
             metavar="N",
             help="embedding dimension",
         )
-        VIVYNet_VE.debug.ldf("dec-embed-dim")
+        VIVYNet_VanAE.debug.ldf("dec-embed-dim")
 
         # Decoder Attention Head Numbers
         parser.add_argument(
@@ -451,13 +459,13 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
             metavar="N",
             help="num attention heads",
         )
-        VIVYNet_VE.debug.ldf("dec-num-attention-heads")
+        VIVYNet_VanAE.debug.ldf("dec-num-attention-heads")
 
         # Number Decoder Layers
         parser.add_argument(
             "--dec-num-layers", type=int, metavar="N", help="num layers"
         )
-        VIVYNet_VE.debug.ldf("dec-num-layers")
+        VIVYNet_VanAE.debug.ldf("dec-num-layers")
 
         # Decoder Dropout
         parser.add_argument(
@@ -467,7 +475,7 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
             help="dropout probability for all fully connected layers "
             "in the embeddings, encoder, and pooler",
         )
-        VIVYNet_VE.debug.ldf("dec-dropout")
+        VIVYNet_VanAE.debug.ldf("dec-dropout")
 
         parser.add_argument(
             "--freeze_enc",
@@ -483,34 +491,34 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
             help="Freeze pretrained Decoder layers",
         )
 
-        VIVYNet_VE.debug.ldf("<< END >>")
+        VIVYNet_VanAE.debug.ldf("<< END >>")
 
     @classmethod
     def build_model(cls, args, task):
         """Build model function"""
 
-        VIVYNet_VE.debug.ldf("<< START >>")
+        VIVYNet_VanAE.debug.ldf("<< START >>")
 
         # Create BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
-        VIVYNet_VE.debug.ldf("Model Creation: BERT")
+        VIVYNet_VanAE.debug.ldf("Model Creation: BERT")
 
         # Freezing the Encoder layers and load pretrained weights
         if args.freeze_enc == 1:
             # Freezing BERT
             for name, param in bert.named_parameters():
                 param.requires_grad = False
-        VIVYNet_VE.debug.ldf("Freezing pretrained Encoder layers")
+        VIVYNet_VanAE.debug.ldf("Freezing pretrained Encoder layers")
 
         # Create SymphonyNet model
         symphony_net = SymphonyNet(args=args, task=task)
-        VIVYNet_VE.debug.ldf("Model Creation: SymphonyNet")
+        VIVYNet_VanAE.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint
         checkpoint = torch.load(
             "../symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
         )
-        VIVYNet_VE.debug.ldf("Checkpoint loading")
+        VIVYNet_VanAE.debug.ldf("Checkpoint loading")
 
         # WIP: Currently unable to transfer weights since the original checkpoint has different dimension due to
         #      being trained on a different dataset.
@@ -521,17 +529,17 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
             for name, param in symphony_net.named_parameters():
                 if "self_attention" in name:
                     param.requires_grad = False
-            VIVYNet_VE.debug.ldf("Freezing pretrained Decoder layers")
+            VIVYNet_VanAE.debug.ldf("Freezing pretrained Decoder layers")
 
             # Zipping two models param dicts
             pretrained_params = []
             for param in symphony_net.state_dict():
                 if not ("cross_attention" in param or "norm3" in param):
                     pretrained_params.append(param)
-            VIVYNet_VE.debug.ldf("Weight targeting copy")
+            VIVYNet_VanAE.debug.ldf("Weight targeting copy")
 
             # Weight copying
-            VIVYNet_VE.debug.ldf("Proceed loading Decoder pretrained weights")
+            VIVYNet_VanAE.debug.ldf("Proceed loading Decoder pretrained weights")
             with torch.no_grad():
                 for param1, param2 in zip(
                     pretrained_params, checkpoint["model"]
@@ -539,35 +547,35 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
                     symphony_net.state_dict()[param1].copy_(
                         checkpoint["model"][param2]
                     )
-                    VIVYNet_VE.debug.ldf(f"Loading {param1}")
-            VIVYNet_VE.debug.ldf("Loading Finished!")
+                    VIVYNet_VanAE.debug.ldf(f"Loading {param1}")
+            VIVYNet_VanAE.debug.ldf("Loading Finished!")
 
-        vivynet = VIVYNet_VE(bert, symphony_net)
-        VIVYNet_VE.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
+        vivynet = VIVYNet_VanAE(bert, symphony_net)
+        VIVYNet_VanAE.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
         # Return compiled vivynet
-        VIVYNet_VE.debug.ldf("<< END >>")
+        VIVYNet_VanAE.debug.ldf("<< END >>")
         return vivynet
 
     def __init__(self, encoder, decoder):
         """Constructor for the VIVYNet model"""
 
-        VIVYNet_VE.debug.ldf("<< START >>")
+        VIVYNet_VanAE.debug.ldf("<< START >>")
 
         # Retrieves attributes
         super().__init__(encoder, decoder)
-        VIVYNet_VE.debug.ldf("super()")
+        VIVYNet_VanAE.debug.ldf("super()")
 
         # Create instance variables based on parameters given
         self.encoder = encoder
         self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
-        VIVYNet_VE.debug.ldf("var dec")
+        VIVYNet_VanAE.debug.ldf("var dec")
 
         # Put models into train mode
         self.encoder.train()
-        VIVYNet_VE.debug.ldf("encoder.train")
-        VIVYNet_VE.debug.ldf("<< END >>")
+        VIVYNet_VanAE.debug.ldf("encoder.train")
+        VIVYNet_VanAE.debug.ldf("<< END >>")
 
     def forward(
         self,
@@ -577,21 +585,21 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
     ):
         """Forward propagation method"""
 
-        VIVYNet_VE.debug.ldf("<< START >>")
+        VIVYNet_VanAE.debug.ldf("<< START >>")
 
         # Clear previously caluclated gradients
         self.encoder.zero_grad()
         self.decoder.zero_grad()
-        VIVYNet_VE.debug.ldf("zero_grad()")
+        VIVYNet_VanAE.debug.ldf("zero_grad()")
 
         # Get loss and the logits from the model
         enc_output = self.encoder(src_tokens.reshape(-1, 1))
-        VIVYNet_VE.debug.ldf("res 1")
+        VIVYNet_VanAE.debug.ldf("res 1")
 
         # Process BERT out from 768 dimension to 512 dimension
         bert_out = self.linear(enc_output[0])
         src_lengths = len(src_tokens)
-        VIVYNet_VE.debug.ldf(
+        VIVYNet_VanAE.debug.ldf(
             "res 2 : " + str(bert_out.shape) + " : " + str(src_lengths)
         )
 
@@ -599,21 +607,21 @@ class VIVYNet_VE(FairseqEncoderDecoderModel):
         features = self.decoder(
             decoder_in=bert_out,
         )
-        VIVYNet_VE.debug.ldf("res 3")
+        VIVYNet_VanAE.debug.ldf("res 3")
 
         # Return the logits
-        VIVYNet_VE.debug.ldf("<< END >>")
+        VIVYNet_VanAE.debug.ldf("<< END >>")
         return features
 
     @property
     def supported_targets(self):
         """Supported Targets Property"""
-        VIVYNet_VE.debug.ldf("<< supported_targets >>")
+        VIVYNet_VanAE.debug.ldf("<< supported_targets >>")
         return {"future"}
 
 
-@register_model_architecture("vivy_ve", "vivy_train_ve")
-def train_VE(args):
+@register_model_architecture("vivy_van_ae", "vivy_train_van_ae")
+def train_VanAE(args):
     """Train function"""
 
     # DEBUG
@@ -1088,8 +1096,8 @@ class PairDataset(LanguagePairDataset):
         return t2m_collate(samples, self.max_sample_size, self.midi_dict.pad(), self.midi_dict.eos())
 
 
-@register_task("text2music_ve")
-class VIVYData_VE(LanguageModelingTask):
+@register_task("text2music_van_ae")
+class VIVYData_VanAE(LanguageModelingTask):
     """Dataset Class Specification"""
 
     debug = Debug("VIVYData", 7)
@@ -1098,47 +1106,47 @@ class VIVYData_VE(LanguageModelingTask):
     def add_args(parser):
         """Argument parsing"""
 
-        VIVYData_VE.debug.ldf("<< START >>")
+        VIVYData_VanAE.debug.ldf("<< START >>")
 
         # Get the data
         parser.add_argument("data", metavar="FILE", help="data")
-        VIVYData_VE.debug.ldf("data")
-        VIVYData_VE.debug.ldf("<< END >>")
+        VIVYData_VanAE.debug.ldf("data")
+        VIVYData_VanAE.debug.ldf("<< END >>")
 
     @classmethod
     def setup_task(cls, args, **kwargs):
         """Task setup method"""
 
-        VIVYData_VE.debug.ldf("<< START >>")
+        VIVYData_VanAE.debug.ldf("<< START >>")
 
         # Load dictionaries from the data
         src_vocab = Dictionary.load(
             os.path.join(args.data + "/features", "dict.txt")
         )
-        VIVYData_VE.debug.ldf("src_vocab")
+        VIVYData_VanAE.debug.ldf("src_vocab")
         tgt_vocab = Dictionary.load(
             os.path.join(args.data + "/labels/bin", "dict.txt")
         )
-        VIVYData_VE.debug.ldf("tgt_vocab")
+        VIVYData_VanAE.debug.ldf("tgt_vocab")
         print("| [input] dictionary: {} types".format(len(src_vocab)))
         print("| [label] dictionary: {} types".format(len(tgt_vocab)))
 
         # Return the instance of the training class
-        VIVYData_VE.debug.ldf("<< END >>")
-        return VIVYData_VE(args, tgt_vocab, src_vocab)
+        VIVYData_VanAE.debug.ldf("<< END >>")
+        return VIVYData_VanAE(args, tgt_vocab, src_vocab)
 
     def __init__(self, args, label_vocab, input_vocab):
         """Constructor for VIVYTrain class"""
 
-        VIVYData_VE.debug.ldf("<< START >>")
+        VIVYData_VanAE.debug.ldf("<< START >>")
 
         # Set instance variables
         super().__init__(args, input_vocab, output_dictionary=label_vocab)
         # self.args = args
         self.src_vocab = input_vocab
         self.tgt_vocab = label_vocab
-        VIVYData_VE.debug.ldf("var dec")
-        VIVYData_VE.debug.ldf("<< END >>")
+        VIVYData_VanAE.debug.ldf("var dec")
+        VIVYData_VanAE.debug.ldf("<< END >>")
 
     def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         """Load a given dataset split"""
@@ -1147,23 +1155,23 @@ class VIVYData_VE(LanguageModelingTask):
         TARGET DATA HANDLING
         """
 
-        VIVYData_VE.debug.ldf(f"<< START (split: {split}) >>")
+        VIVYData_VanAE.debug.ldf(f"<< START (split: {split}) >>")
 
         # Split the paths to the data
         paths = utils.split_paths(self.args.data + "/labels/bin")
         assert len(paths) > 0
-        VIVYData_VE.debug.ldf("TGT - paths")
+        VIVYData_VanAE.debug.ldf("TGT - paths")
 
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
-        VIVYData_VE.debug.ldf("TGT - path split")
+        VIVYData_VanAE.debug.ldf("TGT - path split")
 
         # Read and get the information from the .bin and .idx files
         tgt_datasets = data_utils.load_indexed_dataset(
             split_path, self.tgt_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData_VE.debug.ldf("TGT - tgt_datasets")
+        VIVYData_VanAE.debug.ldf("TGT - tgt_datasets")
 
         # If no dataset instance is created, raise an error
         if tgt_datasets is None:
@@ -1180,7 +1188,7 @@ class VIVYData_VE(LanguageModelingTask):
             self.args.tokens_per_sample,
             self.args.seed,
         )
-        VIVYData_VE.debug.ldf("TGT - maybe_shorten_dataset")
+        VIVYData_VanAE.debug.ldf("TGT - maybe_shorten_dataset")
 
         tgt_datasets = TupleMultiHeadDataset(
             tgt_datasets,
@@ -1198,13 +1206,13 @@ class VIVYData_VE(LanguageModelingTask):
             evt_vocab_size=self.args.evt_voc_size,
             trk_vocab_size=self.args.trk_voc_size,
         )
-        VIVYData_VE.debug.ldf("TGT - TupleMultiHeadDataset Init")
+        VIVYData_VanAE.debug.ldf("TGT - TupleMultiHeadDataset Init")
 
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
         )
-        VIVYData_VE.debug.ldf("TGT - Add EOS for other targets")
+        VIVYData_VanAE.debug.ldf("TGT - Add EOS for other targets")
 
         final_target = MultiheadDataset(
             dataset=tgt_datasets,
@@ -1217,8 +1225,8 @@ class VIVYData_VE(LanguageModelingTask):
             targets=self.targets,
             add_bos_token=False,  # Note: it should be from args,
         )
-        VIVYData_VE.debug.ldf("TGT - MultiheadDataset Init")
-        VIVYData_VE.debug.ldf(
+        VIVYData_VanAE.debug.ldf("TGT - MultiheadDataset Init")
+        VIVYData_VanAE.debug.ldf(
             f"TGT - *FINALIZED* (size: {len(final_target.sizes)})"
         )
 
@@ -1229,18 +1237,18 @@ class VIVYData_VE(LanguageModelingTask):
         # Split the paths to the data
         paths = utils.split_paths(self.args.data + "/features")
         assert len(paths) > 0
-        VIVYData_VE.debug.ldf("SRC - paths")
+        VIVYData_VanAE.debug.ldf("SRC - paths")
 
         # Get the path splits
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
-        VIVYData_VE.debug.ldf("SRC - path split")
+        VIVYData_VanAE.debug.ldf("SRC - path split")
 
         # Create dataset instance
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData_VE.debug.ldf("SRC - loading")
+        VIVYData_VanAE.debug.ldf("SRC - loading")
 
         # Add padding to source information
         final_src_dataset = []
@@ -1265,8 +1273,8 @@ class VIVYData_VE(LanguageModelingTask):
             # Replace index with padded element
             final_src_dataset.append(padded_element)
             final_src_dataset_size.append(src_dataset.sizes[idx])
-        VIVYData_VE.debug.ldf("SRC - padding")
-        VIVYData_VE.debug.ldf(
+        VIVYData_VanAE.debug.ldf("SRC - padding")
+        VIVYData_VanAE.debug.ldf(
             f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
         )
 
@@ -1285,19 +1293,25 @@ class VIVYData_VE(LanguageModelingTask):
             tgt_dict=self.tgt_vocab,
             max_sample_size=self.args.tokens_per_sample,
         )
-        VIVYData_VE.debug.ldf("COMPILATION")
-        VIVYData_VE.debug.ldf(f"<< END (split: {split}) >>")
+        VIVYData_VanAE.debug.ldf("COMPILATION")
+        VIVYData_VanAE.debug.ldf(f"<< END (split: {split}) >>")
+
+        for i in self.datasets[split]:
+            print('enc_input', i['enc_input'].shape)
+            print('dec_input', i['dec_input'].shape)
+            print('target', i['target'].shape)
+            input()
 
     @property
     def source_dictionary(self):
         """Return the source :class:`~fairseq.data.Dictionary`."""
-        VIVYData_VE.debug.ldf("<< src_vocab >>")
+        VIVYData_VanAE.debug.ldf("<< src_vocab >>")
         return self.src_vocab
 
     @property
     def target_dictionary(self):
         """Return the target :class:`~fairseq.data.Dictionary`."""
-        VIVYData_VE.debug.ldf("<< tgt_vocab >>")
+        VIVYData_VanAE.debug.ldf("<< tgt_vocab >>")
         return self.tgt_vocab
 
     def _initialize_pair_dataset(self, **kwargs):
@@ -1310,31 +1324,31 @@ class VIVYData_VE(LanguageModelingTask):
 #
 
 
-@register_criterion("nll_loss_ve")
-class ModelCriterion_VE(CrossEntropyCriterion):
+@register_criterion("nll_loss_van_ae")
+class ModelCriterion_VanAE(CrossEntropyCriterion):
     """Model criterion class"""
 
-    debug = Debug("ModelCriterion_VE", 5)
+    debug = Debug("ModelCriterion_VanAE", 5)
 
     def forward(self, model, sample, reduce=True):
         """Forward function for the criterion"""
 
-        ModelCriterion_VE.debug.ldf("<< START >>")
+        ModelCriterion_VanAE.debug.ldf("<< START >>")
 
         # Get output of the model
         net_output = model(
             sample["net_input"]["enc_input"],
             sample["net_input"]["dec_in_tokens"],
         )
-        ModelCriterion_VE.debug.ldf("VIVYNet Output")
+        ModelCriterion_VanAE.debug.ldf("VIVYNet Output")
 
         # Compute the losses of the output
         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
-        ModelCriterion_VE.debug.ldf("Process Losses")
+        ModelCriterion_VanAE.debug.ldf("Process Losses")
 
         # Aggregate losses
         loss = torch.mean(torch.stack(losses))
-        ModelCriterion_VE.debug.ldf("Aggregate Losses")
+        ModelCriterion_VanAE.debug.ldf("Aggregate Losses")
 
         # Create logging output
         logging_output = {
@@ -1344,21 +1358,21 @@ class ModelCriterion_VE(CrossEntropyCriterion):
             "sample_size": sample["ntokens"],
             "on_sample_size": sample["ntokens"],
         }
-        ModelCriterion_VE.debug.ldf("Generate Logging")
+        ModelCriterion_VanAE.debug.ldf("Generate Logging")
 
         # Return information
-        ModelCriterion_VE.debug.ldf("<< END >>")
+        ModelCriterion_VanAE.debug.ldf("<< END >>")
         return loss, sample["ntokens"], logging_output
 
     def compute_loss(self, model, net_output, sample, reduce=True):
         """Loss computation"""
 
-        ModelCriterion_VE.debug.ldf("<< START >>")
+        ModelCriterion_VanAE.debug.ldf("<< START >>")
 
         # Get normalized probability from the net_ouput
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
         losses = []
-        ModelCriterion_VE.debug.ldf("Normalized Probability")
+        ModelCriterion_VanAE.debug.ldf("Normalized Probability")
 
         # Iterate through all normalized probability
         for idx, lprobs in enumerate(lprobs_tuple):
@@ -1376,8 +1390,8 @@ class ModelCriterion_VE(CrossEntropyCriterion):
 
             # Append the loss to the loss list
             losses.append(loss)
-        ModelCriterion_VE.debug.ldf("Losses Calculations")
+        ModelCriterion_VanAE.debug.ldf("Losses Calculations")
 
         # Return the list of losses
-        ModelCriterion_VE.debug.ldf("<< END >>")
+        ModelCriterion_VanAE.debug.ldf("<< END >>")
         return losses
