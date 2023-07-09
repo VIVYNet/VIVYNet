@@ -741,11 +741,10 @@ def midi_collate(samples, max_sample_size, pad_idx, eos_idx):
     }
 
 
-def t2m_collate(samples, max_sample_size, pad_idx, eos_idx):
+def t2m_collate(samples, max_sample_size, src_vocab, tgt_vocab):
     """Text2Music PairDataset Collate Function"""
 
-    # TODO: add a merge func for text encoder_in
-    def merge(key, is_list=False):
+    def merge_midi(key, is_list=False):
         """Merge inner function"""
 
         # Check if the the provided key's value is a list datatype
@@ -758,8 +757,8 @@ def t2m_collate(samples, max_sample_size, pad_idx, eos_idx):
                     collate_tokens(
                         [s[key][i] for s in samples],
                         max_sample_size,
-                        pad_idx,
-                        eos_idx,
+                        tgt_vocab.pad(),
+                        tgt_vocab.eos(),
                         left_pad=False,
                     )
                 )
@@ -773,34 +772,67 @@ def t2m_collate(samples, max_sample_size, pad_idx, eos_idx):
             return collate_tokens(
                 [s[key] for s in samples],
                 max_sample_size,
-                pad_idx,
-                eos_idx,
+                tgt_vocab.pad(),
+                tgt_vocab.eos(),
                 left_pad=False,
+            )
+
+    def merge_text(key, is_list=False):
+        # Check if the the provided key's value is a list datatype
+        if is_list:
+            # If so, append each iterated collated item to a resulting list
+            res = []
+            for i in range(len(samples[0][key])):
+                # Apped the collated tokens to the resulting list
+                res.append(
+                    data_utils.collate_tokens(
+                        [s[key][i] for s in samples],
+                        src_vocab.pad(),
+                        src_vocab.eos(),
+                        left_pad=False,
+                        pad_to_length=max_sample_size
+                    )
+                )
+
+            # Retun the result of the appending
+            return res
+
+        # If the given key is not a list, move here
+        else:
+            # Just return the collated tokens normally
+            return data_utils.collate_tokens(
+                [s[key] for s in samples],
+                src_vocab.pad(),
+                src_vocab.eos(),
+                left_pad=False,
+                pad_to_length=max_sample_size
             )
 
     # Return nothing if samples provided is nothing
     if len(samples) == 0:
         return {}
 
-    # Merge the source tokens
-    dec_in_tokens = merge("dec_input")
+    # Merge the source midi tokens
+    dec_in_tokens = merge_midi("dec_input")
+
+    # Merge the source text tokens
+    enc_input = merge_text("enc_input")
 
     # If the sample's target is empty, merge the target tokens
     if samples[0]["target"] is not None:
         is_target_list = isinstance(samples[0]["target"], list)
-        target = merge("target", is_target_list)
+        target = merge_midi("target", is_target_list)
     # If not, set the target equal to the source dataset
     else:
         target = dec_in_tokens
 
     # Return the resulting information
-    # TODO: add info for text data
     return {
         "id": torch.LongTensor([s["id"] for s in samples]),
         "nsentences": len(samples),
         "ntokens": sum(s["dec_input"].size(0) for s in samples),
         "net_input": {
-            "enc_input": samples[0]["enc_input"],
+            "enc_input": enc_input,
             "dec_in_tokens": dec_in_tokens,
             "dec_in_lengths": torch.LongTensor(
                 [s["dec_input"].size(0) for s in samples]
@@ -1047,6 +1079,8 @@ class MultiheadDataset(MonolingualDataset):
 
 
 class PairDataset(LanguagePairDataset):
+    """Pair text and midi information together"""
+
     def __init__(
         self,
         src,
@@ -1093,7 +1127,7 @@ class PairDataset(LanguagePairDataset):
     def collater(self, samples):
         """Token collater method"""
         # Return the collated information of the given sample
-        return t2m_collate(samples, self.max_sample_size, self.midi_dict.pad(), self.midi_dict.eos())
+        return t2m_collate(samples, self.max_sample_size, self.src_dict, self.tgt_dict)
 
 
 @register_task("text2music_van_ae")
@@ -1250,42 +1284,14 @@ class VIVYData_VanAE(LanguageModelingTask):
         )
         VIVYData_VanAE.debug.ldf("SRC - loading")
 
-        # Add padding to source information
-        final_src_dataset = []
-        final_src_dataset_size = []
-        for idx in range(len(src_dataset)):
-            # Get current element
-            element = src_dataset[idx]
-
-            # Get the shape of the element if it's a NumPy array or similar object
-            element_shape = element.shape
-
-            # Calculate the padding size
-            padding_size = max(0, self.args.tokens_per_sample - element_shape[0])
-
-            # Pad the element if necessary
-            if padding_size > 0:
-                padding = torch.zeros(padding_size, dtype=torch.long)
-                padded_element = torch.cat([element, padding])
-            else:
-                padded_element = element
-
-            # Replace index with padded element
-            final_src_dataset.append(padded_element)
-            final_src_dataset_size.append(src_dataset.sizes[idx])
-        VIVYData_VanAE.debug.ldf("SRC - padding")
-        VIVYData_VanAE.debug.ldf(
-            f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
-        )
-
         """
         DATASET COMPILATION
         """
 
         # Compile the data
         self.datasets[split] = PairDataset(
-            src=final_src_dataset,
-            src_sizes=final_src_dataset_size,
+            src=src_dataset,
+            src_sizes=src_dataset.sizes,
             src_dict=self.src_vocab,
             midi_dict=self.dictionary,
             tgt=final_target,
@@ -1295,12 +1301,6 @@ class VIVYData_VanAE(LanguageModelingTask):
         )
         VIVYData_VanAE.debug.ldf("COMPILATION")
         VIVYData_VanAE.debug.ldf(f"<< END (split: {split}) >>")
-
-        for i in self.datasets[split]:
-            print('enc_input', i['enc_input'].shape)
-            print('dec_input', i['dec_input'].shape)
-            print('target', i['target'].shape)
-            input()
 
     @property
     def source_dictionary(self):

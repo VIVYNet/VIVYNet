@@ -59,13 +59,13 @@ def main():
     """
     Model Initialization
     """
-    CKPT_DIR = "vivynet/checkpoints/checkpoint_best_1.pt"
+    CKPT_DIR = "vivynet/checkpoints/checkpoint_best.pt"
     INFERENCE_DIR = "vivynet/inference"
     vivynet = FairseqLanguageModel.from_pretrained('.',
         checkpoint_file=CKPT_DIR,
         data_name_or_path=DATA_DIR,
         user_dir=INFERENCE_DIR)
-    
+
     vivynet = vivynet.models[0]
     vivynet.cuda()
     vivynet.eval()

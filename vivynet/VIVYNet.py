@@ -848,7 +848,6 @@ def midi_collate(samples, pad_idx, eos_idx):
 def t2m_collate(samples, src_vocab, tgt_vocab):
     """Text2Music PairDataset Collate Function"""
 
-    # TODO: add a merge func for text encoder_in
     def merge_midi(key, is_list=False):
         """Merge inner function"""
 
@@ -928,7 +927,6 @@ def t2m_collate(samples, src_vocab, tgt_vocab):
         target = dec_in_tokens
 
     # Return the resulting information
-    # TODO: add info for text data
     return {
         "id": torch.LongTensor([s["id"] for s in samples]),
         "nsentences": len(samples),

@@ -22,5 +22,5 @@ echo "Showing GPU details"
 nvidia-smi -L
 nvidia-smi
 echo "Running training python script"
-bash train_ve.sh
+bash train_van_ae.sh
 echo "Finished"
