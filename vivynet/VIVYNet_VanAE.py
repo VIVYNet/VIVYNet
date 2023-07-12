@@ -53,6 +53,7 @@ from dataclasses import dataclass, field
 import inspect
 import math
 import os
+import re
 
 #
 #   CONSTANT DEFINITIONS
@@ -507,7 +508,8 @@ class VIVYNet_VanAE(FairseqEncoderDecoderModel):
         if args.freeze_enc == 1:
             # Freezing BERT
             for name, param in bert.named_parameters():
-                param.requires_grad = False
+                print(name)
+                param.requires_grad = False             # FIXME: Frezing 
         VIVYNet_VanAE.debug.ldf("Freezing pretrained Encoder layers")
 
         # Create SymphonyNet model
@@ -529,8 +531,14 @@ class VIVYNet_VanAE(FairseqEncoderDecoderModel):
             for name, param in symphony_net.named_parameters():
                 if "self_attention" in name:
                     param.requires_grad = False
+                
             VIVYNet_VanAE.debug.ldf("Freezing pretrained Decoder layers")
 
+            # Freezing linear and norm layers
+            for name, param in symphony_net.named_parameters():
+                if re.search(r'model\.layers\.\d+\.linear\d+\.(weight|bias)|model\.layers\.\d+\.norm\d+\.(weight|bias)', name):
+                    param.requires_grad = False
+            
             # Zipping two models param dicts
             pretrained_params = []
             for param in symphony_net.state_dict():
