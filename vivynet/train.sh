@@ -1,7 +1,7 @@
 VARIANT="interactive"
 
-mkdir "./results/$VARIANT"
-mkdir "./results/$VARIANT/slurm"
+# mkdir "./results/$VARIANT"
+# mkdir "./results/$VARIANT/slurm"
 
 fairseq-train ../data/final \
   --user-dir ./ \

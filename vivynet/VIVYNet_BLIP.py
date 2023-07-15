@@ -14,6 +14,7 @@ from fairseq.data import (
     plasma_utils,
     data_utils,
 )
+from fairseq.models.transformer import TransformerModel
 from fairseq.models import (
     FairseqEncoderDecoderModel,
     FairseqLanguageModel,
@@ -465,6 +466,15 @@ class SymphonyNet(FairseqDecoder):
         return 10000 #WIP: Should change later
 
 
+class QFormer(BaseFairseqModel):
+
+    def __init__(self):
+        # TODO: Implement Architecture of the QFormer model
+        pass
+
+    def foo(self):
+        return "QFORMER MODEL"
+
 #
 #   FULL MODEL DEFINITION
 #
@@ -594,6 +604,10 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         VIVYNet.debug.ldf("<< START >>")
 
+        #
+        #   BERT
+        #
+
         # Create BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
         VIVYNet.debug.ldf("Model Creation: BERT")
@@ -604,6 +618,10 @@ class VIVYNet(FairseqEncoderDecoderModel):
             VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
             for name, param in bert.named_parameters():
                 param.requires_grad = False
+
+        #
+        #   SymphonyNet
+        #
 
         # Create SymphonyNet model
         symphony_net = SymphonyNet(args=args, task=task)
@@ -648,14 +666,22 @@ class VIVYNet(FairseqEncoderDecoderModel):
                     VIVYNet.debug.ldf(f"Loading {param1}")
             VIVYNet.debug.ldf("Loading Finished!")
 
-        vivynet = VIVYNet(bert, symphony_net)
+        #
+        #   QFORMER
+        #
+
+        # Build QFormer model
+        qformer = QFormer()
+
+        # Create VIVYNet Model
+        vivynet = VIVYNet(bert, symphony_net, qformer)
         VIVYNet.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
         # Return
         VIVYNet.debug.ldf("<< END >>")
         return vivynet
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, encoder, decoder, qformer):
         """Constructor for the VIVYNet model"""
 
         VIVYNet.debug.ldf("<< START >>")
@@ -666,9 +692,13 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Create instance variables based on parameters given
         self.encoder = encoder
+        self.qformer = qformer
         self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
+
+        print(self.qformer.foo())
+        input()
 
         # Put models into train mode
         self.encoder.train()
