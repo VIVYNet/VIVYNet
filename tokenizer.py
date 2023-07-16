@@ -130,7 +130,7 @@ def tokenize(item: dict) -> None:
     text = " " + text if re.match(r"^\W", text) else text   # Add space to the front if line starts with a special character
 
     # Tokenize text
-    encoded = TOKENIZER(text, truncation=True, max_length=512)['input_ids']
+    encoded = TOKENIZER(text, truncation=True, max_length=4096)['input_ids']
 
     #
     #   MUSIC ENCODING

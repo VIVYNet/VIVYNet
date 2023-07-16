@@ -138,7 +138,7 @@ class BERT(FairseqEncoder):
         BERT.debug.ldf("<< END >>")
 
     def forward(self, src_token):
-        """Forward function to specify forward propagation"""
+        """Forward function to specify forward propogation"""
 
         BERT.debug.ldf("<< START >>")
 
@@ -372,7 +372,7 @@ class SymphonyNet(FairseqDecoder):
     def max_positions(self):
         """Return nothing for max positions"""
         SymphonyNet.debug.ldf("<< max_positions >>")
-        return None
+        return 4096
 
 
 #
@@ -478,19 +478,23 @@ class VIVYNet_VanAE(FairseqEncoderDecoderModel):
         )
         VIVYNet_VanAE.debug.ldf("dec-dropout")
 
+        # Freeze encoder
         parser.add_argument(
             "--freeze_enc",
             type=int,
             metavar="N",
             help="Freeze pretrained Encoder layers",
         )
+        VIVYNet_VanAE.debug.ldf("freeze_enc")
 
+        # Freeze decoder
         parser.add_argument(
             "--freeze_dec",
             type=int,
             metavar="N",
             help="Freeze pretrained Decoder layers",
         )
+        VIVYNet_VanAE.debug.ldf("freeze_dec")
 
         VIVYNet_VanAE.debug.ldf("<< END >>")
 
@@ -1094,11 +1098,10 @@ class PairDataset(LanguagePairDataset):
         src,
         src_sizes,
         src_dict,
-        midi_dict,
         max_sample_size,
         tgt=None,
         tgt_sizes=None,
-        tgt_dict=None,
+        tgt_dict=None
     ):
         """Text2Music Dataset classification"""
 
@@ -1108,7 +1111,6 @@ class PairDataset(LanguagePairDataset):
         # Variable definitions and initialization
         self.src = src
         self.src_dict = src_dict
-        self.midi_dict = midi_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
         self.max_sample_size = max_sample_size
@@ -1236,15 +1238,13 @@ class VIVYData_VanAE(LanguageModelingTask):
             tgt_datasets,
             tgt_datasets.sizes,
             self.args.tokens_per_sample,
-            pad=self.dictionary.pad(),
-            eos=self.dictionary.eos(),
+            pad=self.tgt_vocab.pad(),
+            eos=self.tgt_vocab.eos(),
             break_mode=self.args.sample_break_mode,
             include_targets=True,
             ratio=self.args.ratio + 1,
             sample_overlap_rate=self.args.sample_overlap_rate,
             permutation_invariant=self.args.perm_inv,
-            # trk_idx=self.args.trk_idx,
-            # spec_tok_cnt=self.args.spec_tok_cnt,
             evt_vocab_size=self.args.evt_voc_size,
             trk_vocab_size=self.args.trk_voc_size,
         )
@@ -1259,8 +1259,8 @@ class VIVYData_VanAE(LanguageModelingTask):
         final_target = MultiheadDataset(
             dataset=tgt_datasets,
             sizes=tgt_datasets.sizes,
-            src_vocab=self.dictionary,
-            tgt_vocab=self.output_dictionary,
+            src_vocab=self.tgt_vocab,
+            tgt_vocab=self.tgt_vocab,
             max_sample_size=self.args.tokens_per_sample,
             add_eos_for_other_targets=add_eos_for_other_targets,
             shuffle=True,
@@ -1290,22 +1290,33 @@ class VIVYData_VanAE(LanguageModelingTask):
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData_VanAE.debug.ldf("SRC - loading")
+        VIVYData_VanAE.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")
 
         """
         DATASET COMPILATION
         """
 
+        # Data shortening for debugging
+        short_src = []
+        short_src_vocab = []
+        short_tgt = []
+        short_tgt_vocab = []
+        # for i in range(20):
+        #     short_src.append(src_dataset[i])
+        #     short_src_vocab.append(src_dataset.sizes[i])
+        #     short_tgt.append(final_target[i])
+        #     short_tgt_vocab.append(final_target.sizes[i])
+        # VIVYData.debug.ldf("DEBUG - SHORTENING")
+
         # Compile the data
         self.datasets[split] = PairDataset(
-            src=src_dataset,
-            src_sizes=src_dataset.sizes,
+            src=short_src or src_dataset,
+            src_sizes=short_src_vocab or src_dataset.sizes,
             src_dict=self.src_vocab,
-            midi_dict=self.dictionary,
-            tgt=final_target,
-            tgt_sizes=final_target.sizes,
+            tgt=short_tgt or final_target,
+            tgt_sizes=short_tgt_vocab or final_target.sizes,
             tgt_dict=self.tgt_vocab,
-            max_sample_size=self.args.tokens_per_sample,
+            max_sample_size=self.args.tokens_per_sample
         )
         VIVYData_VanAE.debug.ldf("COMPILATION")
         VIVYData_VanAE.debug.ldf(f"<< END (split: {split}) >>")

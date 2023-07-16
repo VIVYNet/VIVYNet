@@ -462,7 +462,7 @@ class SymphonyNet(FairseqDecoder):
     def max_positions(self):
         """Return nothing for max positions"""
         SymphonyNet.debug.ldf("<< max_positions >>")
-        return 10000 #WIP: Should change later
+        return 4096
 
 
 #
@@ -1307,7 +1307,6 @@ class VIVYData(LanguageModelingTask):
                 "Dataset not found: {} ({})".format(split, split_path)
             )
 
-
         # Shorten dataset if need be
         tgt_datasets = maybe_shorten_dataset(
             tgt_datasets,
@@ -1374,9 +1373,7 @@ class VIVYData(LanguageModelingTask):
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf(
-            f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
-        )
+        VIVYData.debug.ldf(f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})")
 
         """
         DATASET COMPILATION
