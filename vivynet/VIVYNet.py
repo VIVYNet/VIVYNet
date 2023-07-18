@@ -58,7 +58,7 @@ import os
 #   CONSTANT DEFINITIONS
 #
 
-DISABLE_DEBUG = False
+DISABLE_DEBUG = True
 
 #
 #   DEBUGGING
@@ -1454,6 +1454,10 @@ class ModelCriterion(CrossEntropyCriterion):
         # Create logging output
         logging_output = {
             "loss": loss.data,
+            "evt_loss": losses[0].data,
+            "dur_loss": losses[1].data,
+            "trk_loss": losses[2].data,
+            "ins_loss": losses[3].data,
             "ntokens": sample["ntokens"],
             "nsentences": sample["target"].size(0),
             "sample_size": sample["ntokens"],
