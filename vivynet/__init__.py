@@ -2,7 +2,7 @@
 
 from .VIVYNet import train
 from .VIVYNet_dataloader import VIVYData
-from .VIVYNet import ModelCriterion
+from .VIVYNetCriterion import ModelCriterion
 
 from .VIVYNet_VanAE import train_VanAE
 from .VIVYNet_VanAE import VIVYData_VanAE

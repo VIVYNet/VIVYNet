@@ -690,78 +690,79 @@ def train(args):
 #   CRITERION SPECIFICATION
 #
 
-@register_criterion("nll_loss")
-class ModelCriterion(CrossEntropyCriterion):
-    """Model criterion class"""
 
-    debug = Debug("ModelCriterion", 5, disable=DISABLE_DEBUG)
+# @register_criterion("nll_loss")
+# class ModelCriterion(CrossEntropyCriterion):
+#     """Model criterion class"""
 
-    def forward(self, model, sample, reduce=True):
-        """Forward function for the criterion"""
+#     debug = Debug("ModelCriterion", 5)
 
-        ModelCriterion.debug.ldf("<< START >>")
+#     def forward(self, model, sample, reduce=True):
+#         """Forward function for the criterion"""
 
-        # Get output of the model
-        net_output = model(
-            sample["net_input"]["enc_input"],
-            sample["net_input"]["dec_in_tokens"],
-        )
-        ModelCriterion.debug.ldf("VIVYNet Output")
+#         ModelCriterion.debug.ldf("<< START >>")
 
-        # Compute the losses of the output
-        losses = self.compute_loss(model, net_output, sample, reduce=reduce)
-        ModelCriterion.debug.ldf("Process Losses")
+#         # Get output of the model
+#         net_output = model(
+#             sample["net_input"]["enc_input"],
+#             sample["net_input"]["dec_in_tokens"],
+#         )
+#         ModelCriterion.debug.ldf("VIVYNet Output")
 
-        # Aggregate losses
-        loss = torch.mean(torch.stack(losses))
-        ModelCriterion.debug.ldf("Aggregate Losses")
+#         # Compute the losses of the output
+#         losses = self.compute_loss(model, net_output, sample, reduce=reduce)
+#         ModelCriterion.debug.ldf("Process Losses")
 
-        # Create logging output
-        logging_output = {
-            "loss": loss.data,
-            "evt_loss": losses[0].data,
-            "dur_loss": losses[1].data,
-            "trk_loss": losses[2].data,
-            "ins_loss": losses[3].data,
-            "ntokens": sample["ntokens"],
-            "nsentences": sample["target"].size(0),
-            "sample_size": sample["ntokens"],
-            "on_sample_size": sample["ntokens"],
-        }
-        ModelCriterion.debug.ldf("Generate Logging")
+#         # Aggregate losses
+#         loss = torch.mean(torch.stack(losses))
+#         ModelCriterion.debug.ldf("Aggregate Losses")
 
-        # Return information
-        ModelCriterion.debug.ldf("<< END >>")
-        return loss, sample["ntokens"], logging_output
+#         # Create logging output
+#         logging_output = {
+#             "loss": loss.data,
+#             "evt_loss": losses[0].data,
+#             "dur_loss": losses[1].data,
+#             "trk_loss": losses[2].data,
+#             "ins_loss": losses[3].data,
+#             "ntokens": sample["ntokens"],
+#             "nsentences": sample["target"].size(0),
+#             "sample_size": sample["ntokens"],
+#             "on_sample_size": sample["ntokens"],
+#         }
+#         ModelCriterion.debug.ldf("Generate Logging")
 
-    def compute_loss(self, model, net_output, sample, reduce=True):
-        """Loss computation"""
+#         # Return information
+#         ModelCriterion.debug.ldf("<< END >>")
+#         return loss, sample["ntokens"], logging_output
 
-        ModelCriterion.debug.ldf("<< START >>")
+#     def compute_loss(self, model, net_output, sample, reduce=True):
+#         """Loss computation"""
 
-        # Get normalized probability from the net_ouput
-        lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
-        losses = []
-        ModelCriterion.debug.ldf("Normalized Probability")
+#         ModelCriterion.debug.ldf("<< START >>")
 
-        # Iterate through all normalized probability
-        for idx, lprobs in enumerate(lprobs_tuple):
-            # Change the probability dimension
-            lprobs = lprobs.view(-1, lprobs.size(-1))
-            target = model.get_targets(sample, net_output)[..., idx].view(-1)
+#         # Get normalized probability from the net_ouput
+#         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
+#         losses = []
+#         ModelCriterion.debug.ldf("Normalized Probability")
 
-            # Calculate loss
-            loss = F.nll_loss(
-                lprobs,
-                target,
-                ignore_index=self.padding_idx,
-                reduction="sum" if reduce else "none",
-            )
+#         # Iterate through all normalized probability
+#         for idx, lprobs in enumerate(lprobs_tuple):
+#             # Change the probability dimension
+#             lprobs = lprobs.view(-1, lprobs.size(-1))
+#             target = model.get_targets(sample, net_output)[..., idx].view(-1)
 
-            # Append the loss to the loss list
-            losses.append(loss)
-        ModelCriterion.debug.ldf("Losses Calculations")
+#             # Calculate loss
+#             loss = F.nll_loss(
+#                 lprobs,
+#                 target,
+#                 ignore_index=self.padding_idx,
+#                 reduction="sum" if reduce else "none",
+#             )
 
-        # Return the list of losses
-        ModelCriterion.debug.ldf("<< END >>")
-        return losses
+#             # Append the loss to the loss list
+#             losses.append(loss)
+#         ModelCriterion.debug.ldf("Losses Calculations")
+
+#         # Return the list of losses
+#         ModelCriterion.debug.ldf("<< END >>")
+#         return losses

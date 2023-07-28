@@ -1,4 +1,4 @@
-VARIANT="interactive"
+VARIANT="debug"
 
 # mkdir "./results/$VARIANT"
 # mkdir "./results/$VARIANT/slurm"
@@ -14,10 +14,10 @@ fairseq-train ../data/final \
   --optimizer adam \
   --batch-size 1 \
   --lr 0.00001 \
-  --max-tokens 256 \
+  --max-tokens 64 \
   --shorten_method none \
   --shorten_data_split_list '' \
-  --tokens_per_sample 256 \
+  --tokens_per_sample 64 \
   --seed 1998 \
   --sample_break_mode complete_doc \
   --ratio 4 \
@@ -34,4 +34,4 @@ fairseq-train ../data/final \
   --lr-scheduler reduce_lr_on_plateau \
   --save-dir ./results/$VARIANT/ckpt \
   --tensorboard-logdir ./results/$VARIANT/logs \
-  --no-epoch-checkpoints
+  --max-epoch 1
