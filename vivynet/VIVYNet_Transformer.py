@@ -1,69 +1,19 @@
-# flake8: noqa
-
 # Fairseq Imports
-from fairseq.criterions.cross_entropy import CrossEntropyCriterion
-from fairseq.criterions import register_criterion
-from fairseq.tasks.language_modeling import LanguageModelingTask
-from fairseq.tasks import register_task
-from fairseq.data.shorten_dataset import maybe_shorten_dataset
-from fairseq.data import (
-    LanguagePairDataset,
-    MonolingualDataset,
-    TokenBlockDataset,
-    Dictionary,
-    plasma_utils,
-    data_utils,
-)
 from fairseq.models import (
     FairseqEncoderDecoderModel,
-    FairseqEncoder,
-    FairseqDecoder,
     register_model_architecture,
     register_model,
 )
-from fairseq import utils
 
-# HuggingFace Imports
-from transformers import BertModel
-
-# FastTransformer Imports
-from fast_transformers.builders import (
-    TransformerDecoderBuilder,
-)
-from fast_transformers.masking import (
-    TriangularCausalMask,
-    LengthMask,
-    FullMask,
-)
-
-from .VIVYNetSubModels import BERT, SymphonyNet
+# Submodule imports
+from .VIVYNetSubModels import BERT, SymphonyNet_VanAE
 
 # Torch Imports
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch import Tensor
 
 # Debug imports
 from vivynet.debug import Debug
 
-# Miscellaneous Import
-from colorama import Fore, Style
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
-import inspect
-import math
-import os
-
-
-#
-#   MODEL SPECIFICATION
-#
-
-#
-#   FULL MODEL DEFINITION
-#
 
 @register_model("vivy")
 class VIVYNet(FairseqEncoderDecoderModel):
@@ -201,24 +151,33 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 param.requires_grad = False
 
         # Create SymphonyNet model
-        symphony_net = SymphonyNet(args=args, task=task)
+        symphony_net = SymphonyNet_VanAE(args=args, task=task)
         VIVYNet.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint
         checkpoint = torch.load(
-            "../symphonynet/ckpt/checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
+            "../symphonynet/ckpt/"
+            + "checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
         )
         VIVYNet.debug.ldf("Checkpoint loading")
 
-        # WIP: Currently unable to transfer weights since the original checkpoint has different dimension due to
-        #      being trained on a different dataset.
+        # WIP: Currently unable to transfer weights since the original
+        #      checkpoint has different dimension due to being trained on a
+        #      different dataset.
 
         # Freezing the Decoder layers and load pretrained weights
         if args.freeze_dec == 1:
             # Freezing self-attentions
             VIVYNet.debug.ldf("Freezing pretrained Decoder layers")
             for name, param in symphony_net.named_parameters():
-                if "self_attention" or "wEvte.weight" or "wTrke.weight" or "wDure.weight" or "wRpe.weight" or "wMpe.weight" in name:
+                if (
+                    "self_attention"
+                    or "wEvte.weight"
+                    or "wTrke.weight"
+                    or "wDure.weight"
+                    or "wRpe.weight"
+                    or "wMpe.weight" in name
+                ):
                     param.requires_grad = False
 
             # for name, param in symphony_net.named_parameters():
@@ -280,7 +239,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         VIVYNet.debug.ldf("<< START >>")
 
-        # Clear previously caluclated gradients
+        # Clear previously calculated gradients
         self.encoder.zero_grad()
         VIVYNet.debug.ldf("encoder.zero_grad()")
 
@@ -299,7 +258,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
             encoder_out=bert_out,
             decoder_in=prev_output_tokens,
             src_lengths=prev_output_tokens_lengths,
-            encoder_out_lengths=src_lengths,  # TODO: Pass in the Encoder Output length
+            encoder_out_lengths=src_lengths,
         )
         VIVYNet.debug.ldf("res 3")
 

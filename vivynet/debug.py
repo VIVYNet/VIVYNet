@@ -40,5 +40,7 @@ class Debug:
 
             # Litmus print
             print(
-                f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}{Style.RESET_ALL} - {func_name} {self.color}***{Fore.RESET} {iter}"
+                f"{self.color}>>>>>>{Fore.RESET} {Style.BRIGHT}{self.name}" +
+                f"{Style.RESET_ALL} - {func_name} " +
+                f"{self.color}***{Fore.RESET} {iter}"
             )
