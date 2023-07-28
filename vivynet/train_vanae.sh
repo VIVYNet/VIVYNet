@@ -2,9 +2,9 @@ VARIANT="VanAE"
 
 fairseq-train ../data/final \
   --user-dir ./ \
-  --task text2music_van_ae \
-  --criterion nll_loss_van_ae \
-  --arch vivy_train_van_ae \
+  --task text2music \
+  --criterion nll_loss \
+  --arch vivy_vanae \
   --optimizer adam \
   --adam-betas '(0.9, 0.98)' \
   --adam-eps 1e-6 \

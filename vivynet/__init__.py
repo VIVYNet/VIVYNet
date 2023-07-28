@@ -1,9 +1,7 @@
-# flake8: noqa
-
-from .VIVYNet_Transformer import train
+# Model utils
 from .utils.VIVYNetDataLoader import VIVYData
 from .utils.VIVYNetCriterion import ModelCriterion
 
+# Model architectures
+from .VIVYNet_Transformer import train_transformer
 from .VIVYNet_VanAE import train_VanAE
-from .VIVYNet_VanAE import VIVYData_VanAE
-from .VIVYNet_VanAE import ModelCriterion_VanAE

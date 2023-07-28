@@ -273,8 +273,8 @@ class VIVYNet(FairseqEncoderDecoderModel):
         return {"future"}
 
 
-@register_model_architecture("vivy", "vivy_train")
-def train(args):
+@register_model_architecture("vivy", "vivy_transformer")
+def train_transformer(args):
     """Train function"""
 
     # DEBUG

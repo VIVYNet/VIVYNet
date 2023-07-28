@@ -262,7 +262,7 @@ class VIVYNet_VanAE(FairseqEncoderDecoderModel):
         return {"future"}
 
 
-@register_model_architecture("vivy_van_ae", "vivy_train_van_ae")
+@register_model_architecture("vivy_van_ae", "vivy_vanae")
 def train_VanAE(args):
     """Train function"""
 
