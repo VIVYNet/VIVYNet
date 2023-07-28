@@ -36,6 +36,7 @@ from fast_transformers.masking import (
     FullMask,
 )
 
+# Submodels imports
 from .VIVYNetSubModels import BERT, SymphonyNet
 
 # Torch Imports
