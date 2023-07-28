@@ -2,6 +2,8 @@
 from colorama import Fore, Style
 import inspect
 
+# Set DEBUG on/off
+DISABLE_DEBUG = False
 
 class Debug:
     """Debug Class"""
@@ -18,7 +20,7 @@ class Debug:
         7: Fore.CYAN,
     }
 
-    def __init__(self, name, color, disable=False):
+    def __init__(self, name, color):
         """Constructor Method"""
 
         # Get the color
@@ -27,14 +29,11 @@ class Debug:
         # Get the class name
         self.name = name
 
-        # Get the disable flag
-        self.disable = disable
-
     def ldf(self, iter):
         """Litmus Debug Method"""
 
         # Control debugging
-        if not self.disable:
+        if not DISABLE_DEBUG:
             # Get function name
             frame = inspect.currentframe().f_back
             func_name = inspect.getframeinfo(frame).function
