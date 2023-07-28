@@ -1,11 +1,5 @@
 VARIANT="debug"
 
-# mkdir "./results/$VARIANT"
-# mkdir "./results/$VARIANT/slurm"
-
-#max-tokens 8096
-#tokens_per_sample 4096
-
 fairseq-train ../data/final \
   --user-dir ./ \
   --task text2music \

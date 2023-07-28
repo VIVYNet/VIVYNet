@@ -6,13 +6,13 @@ from fairseq.models import (
 )
 
 # Submodule imports
-from .VIVYNetSubModels import BERT, SymphonyNet_VanAE
+from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNet_VanAE
 
 # Torch Imports
 import torch
 
 # Debug imports
-from vivynet.debug import Debug
+from vivynet.utils.debug import Debug
 
 
 @register_model("vivy")

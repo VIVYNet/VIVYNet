@@ -10,7 +10,7 @@
 #SBATCH --export=NONE                                                                                 ## keep environment clean
 #SBATCH --mail-type=ALL                                                                               ## notify for any job state change
 #SBATCH --mail-user=blherre4@asu.edu                                                                  ## notify email (%u expands -> username)
-#SBATCH --job-name="VIVYNet Training (Test)"                                                         ## optional job name
+#SBATCH --job-name="VIVYNet Training (Test)"                                                          ## optional job name
 
 echo "Purging modules"
 module purge

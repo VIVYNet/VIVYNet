@@ -1,71 +1,18 @@
-# flake8: noqa
-
 # Fairseq Imports
-from fairseq.criterions.cross_entropy import CrossEntropyCriterion
-from fairseq.criterions import register_criterion
-from fairseq.tasks.language_modeling import LanguageModelingTask
-from fairseq.tasks import FairseqTask, register_task
-from fairseq.data.shorten_dataset import maybe_shorten_dataset
-from fairseq.data import (
-    LanguagePairDataset,
-    MonolingualDataset,
-    TokenBlockDataset,
-    Dictionary,
-    plasma_utils,
-    data_utils,
-)
 from fairseq.models import (
     FairseqEncoderDecoderModel,
-    FairseqLanguageModel,
-    BaseFairseqModel,
-    FairseqEncoder,
-    FairseqDecoder,
     register_model_architecture,
     register_model,
-)
-from fairseq import utils
-
-# HuggingFace Imports
-from transformers import BertModel
-
-# FastTransformer Imports
-from fast_transformers.builders import (
-    TransformerEncoderBuilder,
-    TransformerDecoderBuilder,
-    RecurrentDecoderBuilder
-)
-from fast_transformers.masking import (
-    TriangularCausalMask,
-    LengthMask,
-    FullMask,
 )
 
 # Torch Imports
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch import Tensor
 
 # Submodels imports
-from vivynet.VIVYNetSubModels import BERT, SymphonyNetInference
+from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNetInference
 
 # Debug imports
-from vivynet.debug import Debug
-
-# Miscellaneous Import
-from colorama import Fore, Style
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
-import inspect
-import math
-import os
-
-
-
-#
-#   FULL MODEL DEFINITION
-#
+from vivynet.utils.debug import Debug
 
 
 @register_model("vivy")
@@ -292,7 +239,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         VIVYNet.debug.ldf("<< START >>")
 
-        # Clear previously caluclated gradients
+        # Clear previously calculated gradients
         self.encoder.zero_grad()
         VIVYNet.debug.ldf("encoder.zero_grad()")
 
@@ -386,7 +333,7 @@ def train(args):
 #             # If so, append each iterated collated item to a resulting list
 #             res = []
 #             for i in range(len(samples[0][key])):
-#                 # Apped the collated tokens to the resulting list
+#                 # Append the collated tokens to the resulting list
 #                 res.append(
 #                     collate_tokens(
 #                         [s[key][i] for s in samples],
@@ -396,7 +343,7 @@ def train(args):
 #                     )
 #                 )
 
-#             # Retun the result of the appending
+#             # Return the result of the appending
 #             return res
 
 #         # If the given key is not a list, move here
@@ -452,7 +399,7 @@ def train(args):
 #             # If so, append each iterated collated item to a resulting list
 #             res = []
 #             for i in range(len(samples[0][key])):
-#                 # Apped the collated tokens to the resulting list
+#                 # Append the collated tokens to the resulting list
 #                 res.append(
 #                     collate_tokens(
 #                         [s[key][i] for s in samples],
@@ -462,7 +409,7 @@ def train(args):
 #                     )
 #                 )
 
-#             # Retun the result of the appending
+#             # Return the result of the appending
 #             return res
 
 #         # If the given key is not a list, move here
@@ -481,7 +428,7 @@ def train(args):
 #             # If so, append each iterated collated item to a resulting list
 #             res = []
 #             for i in range(len(samples[0][key])):
-#                 # Apped the collated tokens to the resulting list
+#                 # Append the collated tokens to the resulting list
 #                 res.append(
 #                     data_utils.collate_tokens(
 #                         [s[key][i] for s in samples],
@@ -491,7 +438,7 @@ def train(args):
 #                     )
 #                 )
 
-#             # Retun the result of the appending
+#             # Return the result of the appending
 #             return res
 
 #         # If the given key is not a list, move here
@@ -603,7 +550,7 @@ def train(args):
 #                 sizes = sizes.numpy()
 #             sizes = sizes.astype(np.int64)
 
-#         # Set valuie of break_mode
+#         # Set value of break_mode
 #         break_mode = break_mode if break_mode is not None else "complete_doc"
 #         assert break_mode == "complete_doc", break_mode
 
@@ -614,7 +561,7 @@ def train(args):
 #         slice_indices = np.zeros((totpieces, 2), dtype=int)
 #         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
 
-#         # Process slicde_indices and block_to_dataset_index arrays
+#         # Process sliced_indices and block_to_dataset_index arrays
 #         for i in range(len(piece_sep_ids)):
 #             s = piece_sep_ids[i - 1] if i > 0 else -1
 #             e = piece_sep_ids[i]
@@ -777,12 +724,12 @@ def train(args):
 #     """Main dataset structure"""
 
 #     def __init__(
-#         self, 
-#         src, 
-#         src_sizes, 
-#         src_dict, 
-#         tgt=None, 
-#         tgt_sizes=None, 
+#         self,
+#         src,
+#         src_sizes,
+#         src_dict,
+#         tgt=None,
+#         tgt_sizes=None,
 #         tgt_dict=None
 #     ):
 #         """Text2Music Dataset classification"""
@@ -1018,7 +965,7 @@ def train(args):
 #     def _initialize_dataset(self, **kwargs):
 #         """Method to Initialize the Pair Dataset (Text, Midi)"""
 #         return PairDataset(**kwargs)
-    
+
 #     def build_dataset_for_inference(self, src_tokens, prev_output_tokens, state, **kwargs):
 #         assert False, "inference not implemented"
 
@@ -1071,7 +1018,7 @@ def train(args):
 
 #         ModelCriterion.debug.ldf("<< START >>")
 
-#         # Get normalized probability from the net_ouput
+#         # Get normalized probability from the net_output
 #         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
 #         losses = []
 #         ModelCriterion.debug.ldf("Normalized Probability")

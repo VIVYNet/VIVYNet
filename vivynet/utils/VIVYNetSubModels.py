@@ -1,4 +1,3 @@
-
 # Fairseq Imports
 from fairseq.models import (
     FairseqEncoder,
@@ -29,7 +28,7 @@ from torch import Tensor
 
 
 #Debug Imports
-from vivynet.debug import Debug
+from vivynet.utils.debug import Debug
 
 
 # Miscellaneous Import
@@ -704,7 +703,7 @@ class SymphonyNetInference(FairseqDecoder):
         self.wTrke.weight.data[self.pad_idx].zero_()
         SymphonyNetInference.debug.ldf("Zero Input Embedding Layers")
 
-        # Set Zero embeddings for permuation invariance
+        # Set Zero embeddings for permutation invariance
         if self.perm_inv > 1:
             self.wRpe.weight.data[0].zero_()
             self.wMpe.weight.data[0].zero_()
@@ -777,8 +776,9 @@ class SymphonyNetInference(FairseqDecoder):
         # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
         return (evt_logits, dur_logits, trk_logits, ins_logits), memory
 
-    # TODO: Understand how SymphonyNet masks work, including LengthMask and TriangularMask
-    # TODO: Understand Permutiation Imvariant in code
+    # TODO: Understand how SymphonyNet masks work, including LengthMask
+    # TODO:   and TriangularMask
+    # TODO: Understand Permutation Invariant in code
     def extract_features(
         self,
         decoder_in,
@@ -801,7 +801,7 @@ class SymphonyNetInference(FairseqDecoder):
         evt_emb = self.wEvte(decoder_in[..., 0])
 
         SymphonyNetInference.debug.ldf("event mask")
-        # if not mapping to pad, padding idx will only occer at last
+        # if not mapping to pad, padding idx will only occur at last
         evton_mask = (
             decoder_in[..., 1]
             .ne(self.pad_idx)
@@ -834,7 +834,7 @@ class SymphonyNetInference(FairseqDecoder):
             )
 
         SymphonyNetInference.debug.ldf("Calculating LengthMask for src")
-        # Note: Calc LengthMask for endoer_out_lengths
+        # Note: Calc LengthMask for encoder_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
                 torch.tensor(encoder_out_lengths, dtype=torch.int),
@@ -887,18 +887,18 @@ class SymphonyNetInference(FairseqDecoder):
 
         SymphonyNetInference.debug.ldf("apply dropout")
         x = self.drop(x)
-        
+
         SymphonyNetInference.debug.ldf("Model Computation")
-        doutputs, state = self.decoder_model(
-            x=x.squeeze(0),  # decoder_in shape: [batch_size, embed_dim]
-            memory=encoder_out,  # encoder_out shape: [batch_size, enc_length, embed_dim]
-            memory_length_mask=None, 
+        outputs, state = self.decoder_model(
+            x=x.squeeze(0),
+            memory=encoder_out,
+            memory_length_mask=None,
             state=state
         )
         SymphonyNetInference.debug.ldf("apply layer norm")
-        doutputs = self.ln_f(doutputs)
+        outputs = self.ln_f(outputs)
         SymphonyNetInference.debug.ldf("<< END >>")
-        return doutputs, state
+        return outputs, state
 
     def get_normalized_probs(
         self,

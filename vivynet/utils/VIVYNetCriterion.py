@@ -1,61 +1,13 @@
-
-
 # Fairseq Imports
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
 from fairseq.criterions import register_criterion
-from fairseq.tasks.language_modeling import LanguageModelingTask
-from fairseq.tasks import FairseqTask, register_task
-from fairseq.data.shorten_dataset import maybe_shorten_dataset
-from fairseq.data import (
-    LanguagePairDataset,
-    MonolingualDataset,
-    TokenBlockDataset,
-    Dictionary,
-    plasma_utils,
-    data_utils,
-)
-from fairseq.models import (
-    FairseqEncoderDecoderModel,
-    FairseqLanguageModel,
-    BaseFairseqModel,
-    FairseqEncoder,
-    FairseqDecoder,
-    register_model_architecture,
-    register_model,
-)
-from fairseq import utils
-
-# HuggingFace Imports
-from transformers import BertModel
-
-# FastTransformer Imports
-from fast_transformers.builders import (
-    TransformerEncoderBuilder,
-    TransformerDecoderBuilder,
-)
-from fast_transformers.masking import (
-    TriangularCausalMask,
-    LengthMask,
-    FullMask,
-)
 
 # Torch Imports
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
 
-#Debug Imports
-from vivynet.debug import Debug
-
-# Miscellaneous Import
-from colorama import Fore, Style
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
-import inspect
-import math
-import os
+# Debug Imports
+from vivynet.utils.debug import Debug
 
 
 @register_criterion("nll_loss")
@@ -107,7 +59,7 @@ class ModelCriterion(CrossEntropyCriterion):
 
         ModelCriterion.debug.ldf("<< START >>")
 
-        # Get normalized probability from the net_ouput
+        # Get normalized probability from the net_output
         lprobs_tuple = model.get_normalized_probs(net_output, log_probs=True)
         losses = []
         ModelCriterion.debug.ldf("Normalized Probability")
