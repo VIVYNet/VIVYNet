@@ -13,6 +13,7 @@ from transformers import BertModel
 from fast_transformers.builders import (
     TransformerEncoderBuilder,
     TransformerDecoderBuilder,
+    RecurrentDecoderBuilder
 )
 from fast_transformers.masking import (
     TriangularCausalMask,
@@ -619,41 +620,41 @@ class SymphonyNetInference(FairseqDecoder):
 
     def __init__(self, args, task):
         """SymphonyNet Structure Definition"""
-        SymphonyNet.debug.ldf("<< START >>")
+        SymphonyNetInference.debug.ldf("<< START >>")
 
         # Super call for a FairseqDecoder
         # TODO: Add dictionary for encoder
         super().__init__(task.target_dictionary)
-        SymphonyNet.debug.ldf("super()")
+        SymphonyNetInference.debug.ldf("super()")
 
         # Get the embedding dimensions for the SymphonyNet model
         self.dec_embed_dim = args.dec_embed_dim
-        SymphonyNet.debug.ldf("Decoder Dimension")
+        SymphonyNetInference.debug.ldf("Decoder Dimension")
 
         # Set the EVENT, TRACK, and DURATION embedding layers
         self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
         self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
         self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
-        SymphonyNet.debug.ldf("Embedding Layers")
+        SymphonyNetInference.debug.ldf("Embedding Layers")
 
         # Get the maximum number of tokens per sample
         self.max_pos = args.tokens_per_sample
-        SymphonyNet.debug.ldf("Maximum Tokens Per Sample")
+        SymphonyNetInference.debug.ldf("Maximum Tokens Per Sample")
 
         # Set permutation invariance configurations
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
             self.wRpe = nn.Embedding(args.max_rel_pos + 1, args.dec_embed_dim)
             self.wMpe = nn.Embedding(args.max_mea_pos + 1, args.dec_embed_dim)
-            SymphonyNet.debug.ldf("perm_inv > 1")
+            SymphonyNetInference.debug.ldf("perm_inv > 1")
         else:
             self.wpe = nn.Embedding(self.max_pos + 1, args.dec_embed_dim)
-            SymphonyNet.debug.ldf("perm_inv == 0")
+            SymphonyNetInference.debug.ldf("perm_inv == 0")
 
         # Setup dropout and layer normalization layers for reuse
         self.drop = nn.Dropout(args.dec_dropout)
         self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
-        SymphonyNet.debug.ldf("Dropout & LayerNorm")
+        SymphonyNetInference.debug.ldf("Dropout & LayerNorm")
 
         # Build the recurrent decoder model
         # Note: RecurrentDecoder is able to utilize the previous context to predict the next token in order
@@ -670,11 +671,11 @@ class SymphonyNetInference(FairseqDecoder):
             self_attention_type="causal-linear",
             cross_attention_type="full",  # Fully masked so that each domain can be merged
         ).get()
-        SymphonyNet.debug.ldf("Decoder Model")
+        SymphonyNetInference.debug.ldf("Decoder Model")
 
         # Generate attention mask
         self.attn_mask = TriangularCausalMask(self.max_pos)
-        SymphonyNet.debug.ldf("Attention Mask")
+        SymphonyNetInference.debug.ldf("Attention Mask")
 
         # Define output layers for EVENT, DURATION, TRACK, and INSTRUMENT
         self.proj_evt = nn.Linear(
@@ -689,11 +690,11 @@ class SymphonyNetInference(FairseqDecoder):
         self.proj_ins = nn.Linear(
             args.dec_embed_dim, args.ins_voc_size, bias=False
         )
-        SymphonyNet.debug.ldf("Output Layers")
+        SymphonyNetInference.debug.ldf("Output Layers")
 
         # Initialize the weights for the model
         self.apply(self._init_weights)
-        SymphonyNet.debug.ldf("Init Weights")
+        SymphonyNetInference.debug.ldf("Init Weights")
 
         # Set zero embeddings for EVENT, DURATION, and TRACK for padding symbol
         # TODO: check will the pad id be trained? (as TZ RZ YZ)
@@ -701,23 +702,23 @@ class SymphonyNetInference(FairseqDecoder):
         self.wEvte.weight.data[self.pad_idx].zero_()
         self.wDure.weight.data[self.pad_idx].zero_()
         self.wTrke.weight.data[self.pad_idx].zero_()
-        SymphonyNet.debug.ldf("Zero Input Embedding Layers")
+        SymphonyNetInference.debug.ldf("Zero Input Embedding Layers")
 
         # Set Zero embeddings for permuation invariance
         if self.perm_inv > 1:
             self.wRpe.weight.data[0].zero_()
             self.wMpe.weight.data[0].zero_()
-            SymphonyNet.debug.ldf("perm_inv (zero) > 1")
+            SymphonyNetInference.debug.ldf("perm_inv (zero) > 1")
         else:
             self.wpe.weight.data[0].zero_()
-            SymphonyNet.debug.ldf("perm_inv (zero) == 1")
+            SymphonyNetInference.debug.ldf("perm_inv (zero) == 1")
 
-        SymphonyNet.debug.ldf("<< END >>")
+        SymphonyNetInference.debug.ldf("<< END >>")
 
     def _init_weights(self, module):
         """Initialization Step"""
 
-        SymphonyNet.debug.ldf(f"{type(module)} | << START >>")
+        SymphonyNetInference.debug.ldf(f"{type(module)} | << START >>")
 
         # If the the given model is a linear or an embedding layer,
         # initialize weights with a mean of zero and a set std dev
@@ -725,21 +726,21 @@ class SymphonyNetInference(FairseqDecoder):
             module.weight.data.normal_(
                 mean=0.0, std=self.dec_embed_dim**-0.5
             )
-            SymphonyNet.debug.ldf("  0 Mean and Std Dev WEIGHT Init")
+            SymphonyNetInference.debug.ldf("  0 Mean and Std Dev WEIGHT Init")
 
             # If the module is a linear layer with bias, set bias to zero
             if isinstance(module, nn.Linear) and module.bias is not None:
                 module.bias.data.zero_()
-                SymphonyNet.debug.ldf("  0 BIAS")
+                SymphonyNetInference.debug.ldf("  0 BIAS")
 
         # If the module is a LayerNorm, set bias to zero
         # and weight initialized to 1
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
-            SymphonyNet.debug.ldf("  0 BIAS and 1 WEIGHT Fill")
+            SymphonyNetInference.debug.ldf("  0 BIAS and 1 WEIGHT Fill")
 
-        SymphonyNet.debug.ldf("  << END >>")
+        SymphonyNetInference.debug.ldf("  << END >>")
 
     def forward(
         self,
@@ -751,7 +752,7 @@ class SymphonyNetInference(FairseqDecoder):
     ):
         """SymphonyNet's Forward Function"""
 
-        SymphonyNet.debug.ldf("<< START >>")
+        SymphonyNetInference.debug.ldf("<< START >>")
 
         # Extract features from the given encoder's output, and decoder_input
         features, memory = self.extract_features(
@@ -761,7 +762,7 @@ class SymphonyNetInference(FairseqDecoder):
             encoder_out_lengths=encoder_out_lengths,
             state=state
         )
-        SymphonyNet.debug.ldf("Feature Extract")
+        SymphonyNetInference.debug.ldf("Feature Extract")
 
         # Project the given features into the output layers
         # to get the logit projections of EVENT, DURATION
@@ -770,8 +771,8 @@ class SymphonyNetInference(FairseqDecoder):
         dur_logits = self.proj_dur(features)
         trk_logits = self.proj_trk(features)
         ins_logits = self.proj_ins(features)
-        SymphonyNet.debug.ldf("Final Projection")
-        SymphonyNet.debug.ldf("<< END >>")
+        SymphonyNetInference.debug.ldf("Final Projection")
+        SymphonyNetInference.debug.ldf("<< END >>")
 
         # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
         return (evt_logits, dur_logits, trk_logits, ins_logits), memory
@@ -788,18 +789,18 @@ class SymphonyNetInference(FairseqDecoder):
     ):
         """Extract feature method"""
 
-        SymphonyNet.debug.ldf("<< START >>")
+        SymphonyNetInference.debug.ldf("<< START >>")
 
-        SymphonyNet.debug.ldf("process decoder_in")
+        SymphonyNetInference.debug.ldf("process decoder_in")
         bsz, seq_len, ratio = decoder_in.size()
 
-        SymphonyNet.debug.ldf("process encoder_out")
+        SymphonyNetInference.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
 
-        SymphonyNet.debug.ldf("event embedding")
+        SymphonyNetInference.debug.ldf("event embedding")
         evt_emb = self.wEvte(decoder_in[..., 0])
 
-        SymphonyNet.debug.ldf("event mask")
+        SymphonyNetInference.debug.ldf("event mask")
         # if not mapping to pad, padding idx will only occer at last
         evton_mask = (
             decoder_in[..., 1]
@@ -808,15 +809,15 @@ class SymphonyNetInference(FairseqDecoder):
             .to(decoder_in.device)
         )  # TODO: elaborate, why the mask is on the 2nd
 
-        SymphonyNet.debug.ldf("duration embedding")
+        SymphonyNetInference.debug.ldf("duration embedding")
         tmp = self.wDure(decoder_in[..., 1])
         dur_emb = tmp * evton_mask
 
-        SymphonyNet.debug.ldf("track embedding")
+        SymphonyNetInference.debug.ldf("track embedding")
         tmp = self.wTrke(decoder_in[..., 2])
         trk_emb = tmp * evton_mask
 
-        SymphonyNet.debug.ldf("Calculating LengthMask for tgt")
+        SymphonyNetInference.debug.ldf("Calculating LengthMask for tgt")
         # Note: Calc LengthMask for src_lengths
         pad_mask = (
             decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
@@ -832,7 +833,7 @@ class SymphonyNetInference(FairseqDecoder):
                 device=decoder_in.device,
             )
 
-        SymphonyNet.debug.ldf("Calculating LengthMask for src")
+        SymphonyNetInference.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for endoer_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
@@ -849,11 +850,11 @@ class SymphonyNetInference(FairseqDecoder):
                 device=encoder_out.device,
             )
 
-        SymphonyNet.debug.ldf("full mask for cross attention layer")
+        SymphonyNetInference.debug.ldf("full mask for cross attention layer")
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(N=seq_len, M=enc_len, device=decoder_in.device)
 
-        SymphonyNet.debug.ldf("permutation invariant")
+        SymphonyNetInference.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
             rel_pos = pad_mask * decoder_in[..., 4]
@@ -879,24 +880,24 @@ class SymphonyNetInference(FairseqDecoder):
             )
             pos_emb = self.wpe(position_ids)
 
-        SymphonyNet.debug.ldf("combine all midi features")
+        SymphonyNetInference.debug.ldf("combine all midi features")
         x = (
             evt_emb + dur_emb + trk_emb + pos_emb
         )  # [bsz, seq_len, embedding_dim]
 
-        SymphonyNet.debug.ldf("apply dropout")
+        SymphonyNetInference.debug.ldf("apply dropout")
         x = self.drop(x)
         
-        SymphonyNet.debug.ldf("Model Computation")
+        SymphonyNetInference.debug.ldf("Model Computation")
         doutputs, state = self.decoder_model(
             x=x.squeeze(0),  # decoder_in shape: [batch_size, embed_dim]
             memory=encoder_out,  # encoder_out shape: [batch_size, enc_length, embed_dim]
             memory_length_mask=None, 
             state=state
         )
-        SymphonyNet.debug.ldf("apply layer norm")
+        SymphonyNetInference.debug.ldf("apply layer norm")
         doutputs = self.ln_f(doutputs)
-        SymphonyNet.debug.ldf("<< END >>")
+        SymphonyNetInference.debug.ldf("<< END >>")
         return doutputs, state
 
     def get_normalized_probs(
@@ -920,5 +921,5 @@ class SymphonyNetInference(FairseqDecoder):
 
     def max_positions(self):
         """Return nothing for max positions"""
-        SymphonyNet.debug.ldf("<< max_positions >>")
+        SymphonyNetInference.debug.ldf("<< max_positions >>")
         return 10000 #WIP: Should change later
