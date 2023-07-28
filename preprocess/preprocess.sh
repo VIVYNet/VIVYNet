@@ -1,5 +1,5 @@
-TEXT=/home/blherre4/VIVY/VIVYNet/data/tokens
+TEXT=../data/tokens
 fairseq-preprocess --source-lang x --only-source \
     --trainpref $TEXT/data \
-    --destdir data/tokens/final \
+    --destdir $TEXT/final \
     --workers 20
