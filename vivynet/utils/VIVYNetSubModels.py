@@ -1,8 +1,5 @@
 # Fairseq Imports
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqDecoder
-)
+from fairseq.models import FairseqEncoder, FairseqDecoder
 from fairseq import utils
 
 # HuggingFace Imports
@@ -12,7 +9,7 @@ from transformers import BertModel
 from fast_transformers.builders import (
     TransformerEncoderBuilder,
     TransformerDecoderBuilder,
-    RecurrentDecoderBuilder
+    RecurrentDecoderBuilder,
 )
 from fast_transformers.masking import (
     TriangularCausalMask,
@@ -27,7 +24,7 @@ import torch.nn.functional as F
 from torch import Tensor
 
 
-#Debug Imports
+# Debug Imports
 from vivynet.utils.debug import Debug
 
 
@@ -80,68 +77,66 @@ class BERT(FairseqEncoder):
         return output
 
 
-class SymphonyNet_VanAE(FairseqDecoder):
+class SymphonyNet_VANAE(FairseqDecoder):
     """SymphonyNet Model Specification"""
 
     debug = Debug("SymphonyNet", 2)
 
     def __init__(self, args, task):
         """SymphonyNet Structure Definition"""
-        SymphonyNet_VanAE.debug.ldf("<< START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< START >>")
 
         # Super call for a FairseqDecoder
         # TODO: Add dictionary for encoder
         super().__init__(task.target_dictionary)
-        SymphonyNet_VanAE.debug.ldf("super()")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("super()")
 
         # Get the embedding dimensions for the SymphonyNet model
         self.dec_embed_dim = args.dec_embed_dim
-        SymphonyNet_VanAE.debug.ldf("Decoder Dimension")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Decoder Dimension")
 
         # Set the EVENT, TRACK, and DURATION embedding layers
         self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
         self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
         self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
-        SymphonyNet_VanAE.debug.ldf("Embedding Layers")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Embedding Layers")
 
         # Get the maximum number of tokens per sample
         self.max_pos = args.tokens_per_sample
-        SymphonyNet_VanAE.debug.ldf("Maximum Tokens Per Sample")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Maximum Tokens Per Sample")
 
         # Set permutation invariance configurations
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
             self.wRpe = nn.Embedding(args.max_rel_pos + 1, args.dec_embed_dim)
             self.wMpe = nn.Embedding(args.max_mea_pos + 1, args.dec_embed_dim)
-            SymphonyNet_VanAE.debug.ldf("perm_inv > 1")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv > 1")
         else:
             self.wpe = nn.Embedding(self.max_pos + 1, args.dec_embed_dim)
-            SymphonyNet_VanAE.debug.ldf("perm_inv == 0")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv == 0")
 
         # Setup dropout and layer normalization layers for reuse
         self.drop = nn.Dropout(args.dec_dropout)
         self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
-        SymphonyNet_VanAE.debug.ldf("Dropout & LayerNorm")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Dropout & LayerNorm")
 
         # Build the decoder model
         self.decoder_model = TransformerDecoderBuilder.from_kwargs(
             n_layers=args.dec_num_layers,
             n_heads=args.dec_num_attention_heads,
-            query_dimensions=args.dec_embed_dim
-            // args.dec_num_attention_heads,
-            value_dimensions=args.dec_embed_dim
-            // args.dec_num_attention_heads,
+            query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+            value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
             feed_forward_dimensions=4 * args.dec_embed_dim,
             activation="gelu",
             dropout=args.dec_dropout,
             self_attention_type="causal-linear",
             cross_attention_type="full",
         ).get()
-        SymphonyNet_VanAE.debug.ldf("Decoder Model")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Decoder Model")
 
         # Generate attention mask
         self.attn_mask = TriangularCausalMask(self.max_pos)
-        SymphonyNet_VanAE.debug.ldf("Attention Mask")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Attention Mask")
 
         # Define output layers for EVENT, DURATION, TRACK, and INSTRUMENT
         self.proj_evt = nn.Linear(
@@ -156,11 +151,11 @@ class SymphonyNet_VanAE(FairseqDecoder):
         self.proj_ins = nn.Linear(
             args.dec_embed_dim, args.ins_voc_size, bias=False
         )
-        SymphonyNet_VanAE.debug.ldf("Output Layers")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Output Layers")
 
         # Initialize the weights for the model
         self.apply(self._init_weights)
-        SymphonyNet_VanAE.debug.ldf("Init Weights")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Init Weights")
 
         # Set zero embeddings for EVENT, DURATION, and TRACK for padding symbol
         # TODO: check will the pad id be trained? (as TZ RZ YZ)
@@ -168,45 +163,47 @@ class SymphonyNet_VanAE(FairseqDecoder):
         self.wEvte.weight.data[self.pad_idx].zero_()
         self.wDure.weight.data[self.pad_idx].zero_()
         self.wTrke.weight.data[self.pad_idx].zero_()
-        SymphonyNet_VanAE.debug.ldf("Zero Input Embedding Layers")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Zero Input Embedding Layers")
 
         # Set Zero embeddings for permutation invariance
         if self.perm_inv > 1:
             self.wRpe.weight.data[0].zero_()
             self.wMpe.weight.data[0].zero_()
-            SymphonyNet_VanAE.debug.ldf("perm_inv (zero) > 1")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv (zero) > 1")
         else:
             self.wpe.weight.data[0].zero_()
-            SymphonyNet_VanAE.debug.ldf("perm_inv (zero) == 1")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv (zero) == 1")
 
-        SymphonyNet_VanAE.debug.ldf("<< END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< END >>")
 
     def _init_weights(self, module):
         """Initialization Step"""
 
-        SymphonyNet_VanAE.debug.ldf(f"{type(module)} | << START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf(f"{type(module)} | << START >>")
 
         # If the the given model is a linear or an embedding layer,
         # initialize weights with a mean of zero and a set std dev
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            module.weight.data.normal_(
-                mean=0.0, std=self.dec_embed_dim**-0.5
+            module.weight.data.normal_(mean=0.0, std=self.dec_embed_dim**-0.5)
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+                "  0 Mean and Std Dev WEIGHT Init"
             )
-            SymphonyNet_VanAE.debug.ldf("  0 Mean and Std Dev WEIGHT Init")
 
             # If the module is a linear layer with bias, set bias to zero
             if isinstance(module, nn.Linear) and module.bias is not None:
                 module.bias.data.zero_()
-                SymphonyNet_VanAE.debug.ldf("  0 BIAS")
+                SymphonyNet_VANAE_NoTokenCalc.debug.ldf("  0 BIAS")
 
         # If the module is a LayerNorm, set bias to zero
         # and weight initialized to 1
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
-            SymphonyNet_VanAE.debug.ldf("  0 BIAS and 1 WEIGHT Fill")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+                "  0 BIAS and 1 WEIGHT Fill"
+            )
 
-        SymphonyNet_VanAE.debug.ldf("  << END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("  << END >>")
 
     def forward(
         self,
@@ -217,7 +214,7 @@ class SymphonyNet_VanAE(FairseqDecoder):
     ):
         """SymphonyNet's Forward Function"""
 
-        SymphonyNet_VanAE.debug.ldf("<< START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< START >>")
 
         # Extract features from the given encoder's output, and decoder_input
         features = self.extract_features(
@@ -226,7 +223,7 @@ class SymphonyNet_VanAE(FairseqDecoder):
             src_lengths=src_lengths,
             encoder_out_lengths=encoder_out_lengths,
         )
-        SymphonyNet_VanAE.debug.ldf("Feature Extract")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Feature Extract")
 
         # Project the given features into the output layers
         # to get the logit projections of EVENT, DURATION
@@ -235,8 +232,8 @@ class SymphonyNet_VanAE(FairseqDecoder):
         dur_logits = self.proj_dur(features)
         trk_logits = self.proj_trk(features)
         ins_logits = self.proj_ins(features)
-        SymphonyNet_VanAE.debug.ldf("Final Projection")
-        SymphonyNet_VanAE.debug.ldf("<< END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Final Projection")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< END >>")
 
         # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
         return (evt_logits, dur_logits, trk_logits, ins_logits)
@@ -253,18 +250,18 @@ class SymphonyNet_VanAE(FairseqDecoder):
     ):
         """Extract feature method"""
 
-        SymphonyNet_VanAE.debug.ldf("<< START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< START >>")
 
-        SymphonyNet_VanAE.debug.ldf("process decoder_in")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("process decoder_in")
         bsz, seq_len, ratio = decoder_in.size()
 
-        SymphonyNet_VanAE.debug.ldf("process encoder_out")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("process encoder_out")
         enc_len, enc_bsz, embed_dim = encoder_out.size()
 
-        SymphonyNet_VanAE.debug.ldf("event embedding")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("event embedding")
         evt_emb = self.wEvte(decoder_in[..., 0])
 
-        SymphonyNet_VanAE.debug.ldf("event mask")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("event mask")
         # if not mapping to pad, padding idx will only occur at last
         evton_mask = (
             decoder_in[..., 1]
@@ -273,15 +270,17 @@ class SymphonyNet_VanAE(FairseqDecoder):
             .to(decoder_in.device)
         )  # TODO: elaborate, why the mask is on the 2nd
 
-        SymphonyNet_VanAE.debug.ldf("duration embedding")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("duration embedding")
         tmp = self.wDure(decoder_in[..., 1])
         dur_emb = tmp * evton_mask
 
-        SymphonyNet_VanAE.debug.ldf("track embedding")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("track embedding")
         tmp = self.wTrke(decoder_in[..., 2])
         trk_emb = tmp * evton_mask
 
-        SymphonyNet_VanAE.debug.ldf("Calculating LengthMask for tgt")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+            "Calculating LengthMask for tgt"
+        )
         # Note: Calc LengthMask for src_lengths
         pad_mask = (
             decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
@@ -297,7 +296,9 @@ class SymphonyNet_VanAE(FairseqDecoder):
                 device=decoder_in.device,
             )
 
-        SymphonyNet_VanAE.debug.ldf("Calculating LengthMask for src")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+            "Calculating LengthMask for src"
+        )
         # Note: Calc LengthMask for encoder_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
@@ -314,11 +315,13 @@ class SymphonyNet_VanAE(FairseqDecoder):
                 device=encoder_out.device,
             )
 
-        SymphonyNet_VanAE.debug.ldf("full mask for cross attention layer")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+            "full mask for cross attention layer"
+        )
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(N=seq_len, M=enc_len, device=decoder_in.device)
 
-        SymphonyNet_VanAE.debug.ldf("permutation invariant")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("permutation invariant")
         # Note: Perform Permutation Invariant
         if self.perm_inv > 1:
             rel_pos = pad_mask * decoder_in[..., 4]
@@ -344,15 +347,15 @@ class SymphonyNet_VanAE(FairseqDecoder):
             )
             pos_emb = self.wpe(position_ids)
 
-        SymphonyNet_VanAE.debug.ldf("combine all midi features")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("combine all midi features")
         x = (
             evt_emb + dur_emb + trk_emb + pos_emb
         )  # [bsz, seq_len, embedding_dim]
 
-        SymphonyNet_VanAE.debug.ldf("apply dropout")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("apply dropout")
         x = self.drop(x)
 
-        SymphonyNet_VanAE.debug.ldf("Model Computation")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Model Computation")
         outputs = self.decoder_model(
             x=x,  # decoder_in shape: [batch_size, dec_length, embed_dim]
             memory=encoder_out,  # encoder_out shape: [batch_size, enc_length, embed_dim]
@@ -361,10 +364,10 @@ class SymphonyNet_VanAE(FairseqDecoder):
             memory_mask=full_mask,  # WIP
             memory_length_mask=enc_len_mask,  # WIP
         )
-        SymphonyNet_VanAE.debug.ldf("apply layer norm")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("apply layer norm")
         outputs = self.ln_f(outputs)
 
-        SymphonyNet_VanAE.debug.ldf("<< END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< END >>")
         return outputs
 
     def get_normalized_probs(
@@ -388,52 +391,52 @@ class SymphonyNet_VanAE(FairseqDecoder):
 
     def max_positions(self):
         """Return nothing for max positions"""
-        SymphonyNet_VanAE.debug.ldf("<< max_positions >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< max_positions >>")
         return 4096
 
 
-class SymphonyNet_VANAE(FairseqDecoder):
+class SymphonyNet_VANAE_NoTokenCalc(FairseqDecoder):
     """SymphonyNet Model Specification"""
 
     debug = Debug("SymphonyNet", 2)
 
     def __init__(self, args, task):
         """SymphonyNet Structure Definition"""
-        SymphonyNet_VanAE.debug.ldf("<< START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< START >>")
 
         # Super call for a FairseqDecoder
         # TODO: Add dictionary for encoder
         super().__init__(task.target_dictionary)
-        SymphonyNet_VanAE.debug.ldf("super()")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("super()")
 
         # Get the embedding dimensions for the SymphonyNet model
         self.dec_embed_dim = args.dec_embed_dim
-        SymphonyNet_VanAE.debug.ldf("Decoder Dimension")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Decoder Dimension")
 
         # Set the EVENT, TRACK, and DURATION embedding layers
         self.wEvte = nn.Embedding(args.evt_voc_size, args.dec_embed_dim)
         self.wTrke = nn.Embedding(args.trk_voc_size, args.dec_embed_dim)
         self.wDure = nn.Embedding(args.dur_voc_size, args.dec_embed_dim)
-        SymphonyNet_VanAE.debug.ldf("Embedding Layers")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Embedding Layers")
 
         # Get the maximum number of tokens per sample
         self.max_pos = args.tokens_per_sample
-        SymphonyNet_VanAE.debug.ldf("Maximum Tokens Per Sample")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Maximum Tokens Per Sample")
 
         # Set permutation invariance configurations
         self.perm_inv = args.perm_inv
         if self.perm_inv > 1:
             self.wRpe = nn.Embedding(args.max_rel_pos + 1, args.dec_embed_dim)
             self.wMpe = nn.Embedding(args.max_mea_pos + 1, args.dec_embed_dim)
-            SymphonyNet_VanAE.debug.ldf("perm_inv > 1")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv > 1")
         else:
             self.wpe = nn.Embedding(self.max_pos + 1, args.dec_embed_dim)
-            SymphonyNet_VanAE.debug.ldf("perm_inv == 0")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv == 0")
 
         # Setup dropout and layer normalization layers for reuse
         self.drop = nn.Dropout(args.dec_dropout)
         self.ln_f = nn.LayerNorm(args.dec_embed_dim, eps=1e-6)
-        SymphonyNet_VanAE.debug.ldf("Dropout & LayerNorm")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Dropout & LayerNorm")
 
         # Build the decoder model
         self.model = TransformerEncoderBuilder.from_kwargs(
@@ -442,15 +445,15 @@ class SymphonyNet_VANAE(FairseqDecoder):
             query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
             value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
             feed_forward_dimensions=4 * args.dec_embed_dim,
-            activation='gelu',
+            activation="gelu",
             dropout=args.dec_dropout,
             attention_type="causal-linear",
         ).get()
-        SymphonyNet_VanAE.debug.ldf("Decoder Model")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Decoder Model")
 
         # Generate attention mask
         self.attn_mask = TriangularCausalMask(self.max_pos)
-        SymphonyNet_VanAE.debug.ldf("Attention Mask")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Attention Mask")
 
         # Define output layers for EVENT, DURATION, TRACK, and INSTRUMENT
         self.proj_evt = nn.Linear(
@@ -465,11 +468,11 @@ class SymphonyNet_VANAE(FairseqDecoder):
         self.proj_ins = nn.Linear(
             args.dec_embed_dim, args.ins_voc_size, bias=False
         )
-        SymphonyNet_VanAE.debug.ldf("Output Layers")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Output Layers")
 
         # Initialize the weights for the model
         self.apply(self._init_weights)
-        SymphonyNet_VanAE.debug.ldf("Init Weights")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Init Weights")
 
         # Set zero embeddings for EVENT, DURATION, and TRACK for padding symbol
         # TODO: check will the pad id be trained? (as TZ RZ YZ)
@@ -477,45 +480,47 @@ class SymphonyNet_VANAE(FairseqDecoder):
         self.wEvte.weight.data[self.pad_idx].zero_()
         self.wDure.weight.data[self.pad_idx].zero_()
         self.wTrke.weight.data[self.pad_idx].zero_()
-        SymphonyNet_VanAE.debug.ldf("Zero Input Embedding Layers")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Zero Input Embedding Layers")
 
         # Set Zero embeddings for permutation invariance
         if self.perm_inv > 1:
             self.wRpe.weight.data[0].zero_()
             self.wMpe.weight.data[0].zero_()
-            SymphonyNet_VanAE.debug.ldf("perm_inv (zero) > 1")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv (zero) > 1")
         else:
             self.wpe.weight.data[0].zero_()
-            SymphonyNet_VanAE.debug.ldf("perm_inv (zero) == 1")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("perm_inv (zero) == 1")
 
-        SymphonyNet_VanAE.debug.ldf("<< END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< END >>")
 
     def _init_weights(self, module):
         """Initialization Step"""
 
-        SymphonyNet_VanAE.debug.ldf(f"{type(module)} | << START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf(f"{type(module)} | << START >>")
 
         # If the the given model is a linear or an embedding layer,
         # initialize weights with a mean of zero and a set std dev
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            module.weight.data.normal_(
-                mean=0.0, std=self.dec_embed_dim**-0.5
+            module.weight.data.normal_(mean=0.0, std=self.dec_embed_dim**-0.5)
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+                "  0 Mean and Std Dev WEIGHT Init"
             )
-            SymphonyNet_VanAE.debug.ldf("  0 Mean and Std Dev WEIGHT Init")
 
             # If the module is a linear layer with bias, set bias to zero
             if isinstance(module, nn.Linear) and module.bias is not None:
                 module.bias.data.zero_()
-                SymphonyNet_VanAE.debug.ldf("  0 BIAS")
+                SymphonyNet_VANAE_NoTokenCalc.debug.ldf("  0 BIAS")
 
         # If the module is a LayerNorm, set bias to zero
         # and weight initialized to 1
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
-            SymphonyNet_VanAE.debug.ldf("  0 BIAS and 1 WEIGHT Fill")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+                "  0 BIAS and 1 WEIGHT Fill"
+            )
 
-        SymphonyNet_VanAE.debug.ldf("  << END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("  << END >>")
 
     def forward(
         self,
@@ -524,14 +529,14 @@ class SymphonyNet_VANAE(FairseqDecoder):
     ):
         """SymphonyNet's Forward Function"""
 
-        SymphonyNet_VanAE.debug.ldf("<< START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< START >>")
 
         # Extract features from the given encoder's output, and decoder_input
         features = self.extract_features(
             x=decoder_in,
             src_lengths=src_lengths,
         )
-        SymphonyNet_VanAE.debug.ldf("Feature Extract")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Feature Extract")
 
         # Project the given features into the output layers
         # to get the logit projections of EVENT, DURATION
@@ -540,8 +545,8 @@ class SymphonyNet_VANAE(FairseqDecoder):
         dur_logits = self.proj_dur(features)
         trk_logits = self.proj_trk(features)
         ins_logits = self.proj_ins(features)
-        SymphonyNet_VanAE.debug.ldf("Final Projection")
-        SymphonyNet_VanAE.debug.ldf("<< END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Final Projection")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< END >>")
 
         # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
         return (evt_logits, dur_logits, trk_logits, ins_logits)
@@ -549,42 +554,42 @@ class SymphonyNet_VANAE(FairseqDecoder):
     def extract_features(self, x, src_lengths=None):
         """Extract feature method"""
 
-        SymphonyNet_VanAE.debug.ldf("<< START >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< START >>")
 
         # Permutate the tensor
         x = x.permute(1, 0, 2)
-        SymphonyNet_VanAE.debug.ldf("Input Permute")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Input Permute")
 
         # Breaking down the dimensions of the input seq
         bsz, seq_len, dim = x.size()
-        SymphonyNet_VanAE.debug.ldf("Dimension Breakdown")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Dimension Breakdown")
 
         # Create pad masking
         pad_mask = x[..., 0].ne(self.pad_idx).long().to(x.device)
-        SymphonyNet_VanAE.debug.ldf("Create Pad Masking")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Create Pad Masking")
 
         # Fill masking with length in mind
         if src_lengths is not None:
-            len_mask = LengthMask(
-                src_lengths, max_len=seq_len, device=x.device
-            )
-            SymphonyNet_VanAE.debug.ldf("SRC LENGTH Filled Mask")
+            len_mask = LengthMask(src_lengths, max_len=seq_len, device=x.device)
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf("SRC LENGTH Filled Mask")
         else:
             len_mask = LengthMask(
                 torch.sum(pad_mask, axis=1), max_len=seq_len, device=x.device
             )
-            SymphonyNet_VanAE.debug.ldf("PAD_MASK Length Filled Mask")
+            SymphonyNet_VANAE_NoTokenCalc.debug.ldf(
+                "PAD_MASK Length Filled Mask"
+            )
 
         # Pass to model
         outputs = self.model(x, self.attn_mask, len_mask)
-        SymphonyNet_VanAE.debug.ldf("Model Transformer Processing")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Model Transformer Processing")
 
         # Pass to linear layer
         outputs = self.ln_f(outputs)
-        SymphonyNet_VanAE.debug.ldf("Linear Processing")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("Linear Processing")
 
         # Return output
-        SymphonyNet_VanAE.debug.ldf("<< END >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< END >>")
         return outputs
 
     def get_normalized_probs(
@@ -608,7 +613,7 @@ class SymphonyNet_VANAE(FairseqDecoder):
 
     def max_positions(self):
         """Return nothing for max positions"""
-        SymphonyNet_VanAE.debug.ldf("<< max_positions >>")
+        SymphonyNet_VANAE_NoTokenCalc.debug.ldf("<< max_positions >>")
         return 4096
 
 
@@ -660,10 +665,8 @@ class SymphonyNetInference(FairseqDecoder):
         self.decoder_model = RecurrentDecoderBuilder.from_kwargs(
             n_layers=args.dec_num_layers,
             n_heads=args.dec_num_attention_heads,
-            query_dimensions=args.dec_embed_dim
-            // args.dec_num_attention_heads,
-            value_dimensions=args.dec_embed_dim
-            // args.dec_num_attention_heads,
+            query_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
+            value_dimensions=args.dec_embed_dim // args.dec_num_attention_heads,
             feed_forward_dimensions=4 * args.dec_embed_dim,
             activation="gelu",
             dropout=args.dec_dropout,
@@ -722,9 +725,7 @@ class SymphonyNetInference(FairseqDecoder):
         # If the the given model is a linear or an embedding layer,
         # initialize weights with a mean of zero and a set std dev
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            module.weight.data.normal_(
-                mean=0.0, std=self.dec_embed_dim**-0.5
-            )
+            module.weight.data.normal_(mean=0.0, std=self.dec_embed_dim**-0.5)
             SymphonyNetInference.debug.ldf("  0 Mean and Std Dev WEIGHT Init")
 
             # If the module is a linear layer with bias, set bias to zero
@@ -759,7 +760,7 @@ class SymphonyNetInference(FairseqDecoder):
             encoder_out=encoder_out,
             src_lengths=src_lengths,
             encoder_out_lengths=encoder_out_lengths,
-            state=state
+            state=state,
         )
         SymphonyNetInference.debug.ldf("Feature Extract")
 
@@ -785,7 +786,7 @@ class SymphonyNetInference(FairseqDecoder):
         encoder_out=None,
         src_lengths=None,
         encoder_out_lengths=None,
-        state = None,
+        state=None,
     ):
         """Extract feature method"""
 
@@ -893,7 +894,7 @@ class SymphonyNetInference(FairseqDecoder):
             x=x.squeeze(0),
             memory=encoder_out,
             memory_length_mask=None,
-            state=state
+            state=state,
         )
         SymphonyNetInference.debug.ldf("apply layer norm")
         outputs = self.ln_f(outputs)
@@ -922,4 +923,4 @@ class SymphonyNetInference(FairseqDecoder):
     def max_positions(self):
         """Return nothing for max positions"""
         SymphonyNetInference.debug.ldf("<< max_positions >>")
-        return 10000 #WIP: Should change later
+        return 10000  # WIP: Should change later

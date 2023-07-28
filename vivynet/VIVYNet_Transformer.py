@@ -6,7 +6,7 @@ from fairseq.models import (
 )
 
 # Submodule imports
-from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNet_VanAE
+from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNet_VANAE
 
 # Torch Imports
 import torch
@@ -151,7 +151,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 param.requires_grad = False
 
         # Create SymphonyNet model
-        symphony_net = SymphonyNet_VanAE(args=args, task=task)
+        symphony_net = SymphonyNet_VANAE(args=args, task=task)
         VIVYNet.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint

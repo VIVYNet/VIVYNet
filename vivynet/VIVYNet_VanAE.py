@@ -6,7 +6,7 @@ from fairseq.models import (
 )
 
 # Submodule imports
-from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNet_VanAE
+from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNet_VANAE_NoTokenCalc
 
 # Torch Imports
 import torch
@@ -151,7 +151,7 @@ class VIVYNet_VanAE(FairseqEncoderDecoderModel):
         VIVYNet_VanAE.debug.ldf("Freezing pretrained Encoder layers")
 
         # Create SymphonyNet model
-        symphony_net = SymphonyNet_VanAE(args=args, task=task)
+        symphony_net = SymphonyNet_VANAE_NoTokenCalc(args=args, task=task)
         VIVYNet_VanAE.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint
