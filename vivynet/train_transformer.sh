@@ -1,4 +1,4 @@
-VARIANT="interactive"
+VARIANT="run1"
 
 fairseq-train ../data/final \
   --user-dir ./ \
@@ -32,4 +32,4 @@ fairseq-train ../data/final \
   --lr-scheduler polynomial_decay \
   --save-dir ./results/$VARIANT/ckpt \
   --tensorboard-logdir ./results/$VARIANT/logs \
-  --no-epoch-checkpoints-
+  --no-epoch-checkpoints

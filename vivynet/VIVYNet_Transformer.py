@@ -6,7 +6,11 @@ from fairseq.models import (
 )
 
 # Submodule imports
-from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNet_VANAE
+from vivynet.utils.VIVYNetSubModels import (
+    BERT,
+    SymphonyNetVanillaAE,
+    IntermediarySection,
+)
 
 # Torch Imports
 import torch
@@ -139,6 +143,11 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         VIVYNet.debug.ldf("<< START >>")
 
+        #
+        #   BERT BUILDING
+        #   region
+        #
+
         # Create BERT model
         bert = BERT(args=args, dictionary=task.source_dictionary)
         VIVYNet.debug.ldf("Model Creation: BERT")
@@ -150,8 +159,15 @@ class VIVYNet(FairseqEncoderDecoderModel):
             for name, param in bert.named_parameters():
                 param.requires_grad = False
 
+        #   endregion
+
+        #
+        #   SymphonyNet BUILDING
+        #   region
+        #
+
         # Create SymphonyNet model
-        symphony_net = SymphonyNet_VANAE(args=args, task=task)
+        symphony_net = SymphonyNetVanillaAE(args=args, task=task)
         VIVYNet.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint
@@ -202,14 +218,24 @@ class VIVYNet(FairseqEncoderDecoderModel):
                     VIVYNet.debug.ldf(f"Loading {param1}")
             VIVYNet.debug.ldf("Loading Finished!")
 
-        vivynet = VIVYNet(bert, symphony_net)
-        VIVYNet.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
+        #   endregion
+
+        #
+        #   Intermediary BUILDING
+        #   region
+        #
+
+        # Create intermediary layer
+        intermediary = IntermediarySection(args)
+        VIVYNet.debug.ldf("Model Creation: Intermediary Layer")
+
+        #   endregion
 
         # Return
         VIVYNet.debug.ldf("<< END >>")
-        return vivynet
+        return VIVYNet(bert, symphony_net, intermediary)
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, encoder, decoder, intermediary):
         """Constructor for the VIVYNet model"""
 
         VIVYNet.debug.ldf("<< START >>")
@@ -220,9 +246,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Create instance variables based on parameters given
         self.encoder = encoder
-        self.linear = torch.nn.Linear(768, 512)
         self.decoder = decoder
-        VIVYNet.debug.ldf("var dec")
+        self.intermediary = intermediary
+        VIVYNet.debug.ldf("models")
 
         # Put models into train mode
         self.encoder.train()
@@ -247,15 +273,14 @@ class VIVYNet(FairseqEncoderDecoderModel):
         enc_output = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
 
-        bert_out = self.linear(enc_output[0])
+        # Intermediary layer pass
+        intermediate = self.intermediary(enc_output[0])
         src_lengths = len(src_tokens)
-        VIVYNet.debug.ldf(
-            "res 2 : " + str(bert_out.shape) + " : " + str(src_lengths)
-        )
+        VIVYNet.debug.ldf(f"res 2 : {intermediate.shape} : {src_lengths}")
 
         # Get overall features from decoder
         features = self.decoder(
-            encoder_out=bert_out,
+            encoder_out=intermediate,
             decoder_in=prev_output_tokens,
             src_lengths=prev_output_tokens_lengths,
             encoder_out_lengths=src_lengths,

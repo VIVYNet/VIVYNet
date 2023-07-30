@@ -5,8 +5,8 @@
 #SBATCH --time=4320                                                                                   ## 3 days of compute
 #SBATCH --gres=gpu:V100:1                                                                             ## 1 of GTX1080 GPU
 #SBATCH --mem 64G                                                                                     ## 64 GB of RAM
-#SBATCH --output=results/VanAE/slurm/out_%j.txt                                                       ## job /dev/stdout record
-#SBATCH --error=results/VanAE/slurm/err_%j.txt                                                        ## job /dev/stderr record
+#SBATCH --output=results/run1/slurm/out_%j.txt                                                        ## job /dev/stdout record
+#SBATCH --error=results/run1/slurm/err_%j.txt                                                         ## job /dev/stderr record
 #SBATCH --export=NONE                                                                                 ## keep environment clean
 #SBATCH --mail-type=ALL                                                                               ## notify for any job state change
 #SBATCH --mail-user=blherre4@asu.edu                                                                  ## notify email (%u expands -> username)
@@ -22,5 +22,5 @@ echo "Showing GPU details"
 nvidia-smi -L
 nvidia-smi
 echo "Running training python script"
-bash train_van_ae.sh
+bash train_transformer.sh
 echo "Finished"
