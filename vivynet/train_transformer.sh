@@ -6,7 +6,7 @@ VARIANT="debug"
 
 ### Shorten batch configs for debug
 MAX_TOKENS=128
-TOKENS_PER_SAMPLE=32
+TOKENS_PER_SAMPLE=16
 
 
 fairseq-train ../data/final \
@@ -40,4 +40,6 @@ fairseq-train ../data/final \
   --lr-scheduler polynomial_decay \
   --save-dir ./results/$VARIANT/ckpt \
   --tensorboard-logdir ./results/$VARIANT/logs \
-  --no-epoch-checkpoints
+  --no-epoch-checkpoints \
+  --log-format simple \
+  --log-interval 8

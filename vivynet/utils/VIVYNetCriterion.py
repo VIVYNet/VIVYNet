@@ -1,6 +1,7 @@
 # Fairseq Imports
 from fairseq.criterions.cross_entropy import CrossEntropyCriterion
 from fairseq.criterions import register_criterion
+from fairseq import utils, metrics
 
 # Torch Imports
 import torch
@@ -8,6 +9,9 @@ import torch.nn.functional as F
 
 # Debug Imports
 from vivynet.utils.debug import Debug
+
+# Miscellaneous Imports
+import math
 
 
 @register_criterion("nll_loss")
@@ -85,3 +89,66 @@ class ModelCriterion(CrossEntropyCriterion):
         # Return the list of losses
         ModelCriterion.debug.ldf("<< END >>")
         return losses
+
+    @staticmethod
+    def reduce_metrics(logging_outputs) -> None:
+        """Aggregate logging outputs from data parallel training."""
+        loss_sum = sum(log.get("loss", 0) for log in logging_outputs)
+        loss_evt = sum(log.get("evt_loss", 0) for log in logging_outputs)
+        loss_dur = sum(log.get("dur_loss", 0) for log in logging_outputs)
+        loss_trk = sum(log.get("trk_loss", 0) for log in logging_outputs)
+        loss_ins = sum(log.get("ins_loss", 0) for log in logging_outputs)
+        ntokens = sum(log.get("ntokens", 0) for log in logging_outputs)
+        sample_size = sum(log.get("sample_size", 0) for log in logging_outputs)
+        on_sample_size = sum(log.get("on_sample_size", 0) for log in logging_outputs)
+        # we divide by log(2) to convert the loss from base e to base 2
+        # total_losses = 4
+        # weighted_size = (sample_size + on_sample_size*(total_losses-1)) / total_losses
+        metrics.log_scalar(
+            "loss", loss_sum / sample_size / math.log(2), sample_size, round=3
+        )
+        metrics.log_scalar(
+            "evt_loss", loss_evt / sample_size / math.log(2), sample_size, round=3
+        )
+        metrics.log_scalar(
+            "dur_loss", loss_dur / on_sample_size / math.log(2), on_sample_size, round=3
+        )
+        metrics.log_scalar(
+            "trk_loss", loss_trk / on_sample_size / math.log(2), on_sample_size, round=3
+        )
+        metrics.log_scalar(
+            "ins_loss", loss_ins / on_sample_size / math.log(2), on_sample_size, round=3
+        )
+
+        if sample_size != ntokens:
+            metrics.log_scalar(
+                "nll_loss", loss_sum / ntokens / math.log(2), ntokens, round=3
+            )
+            metrics.log_derived(
+                "ppl", lambda meters: utils.get_perplexity(meters["nll_loss"].avg)
+            )
+        else:
+            metrics.log_derived(
+                "ppl", lambda meters: utils.get_perplexity(meters["loss"].avg)
+            )
+            metrics.log_derived(
+                "evt_ppl", lambda meters: utils.get_perplexity(meters["evt_loss"].avg)
+            )
+            metrics.log_derived(
+                "dur_ppl", lambda meters: utils.get_perplexity(meters["dur_loss"].avg)
+            )
+            metrics.log_derived(
+                "trk_ppl", lambda meters: utils.get_perplexity(meters["trk_loss"].avg)
+            )
+            metrics.log_derived(
+                "ins_ppl", lambda meters: utils.get_perplexity(meters["ins_loss"].avg)
+            )
+
+    @staticmethod
+    def logging_outputs_can_be_summed() -> bool:
+        """
+        Whether the logging outputs returned by `forward` can be summed
+        across workers prior to calling `reduce_metrics`. Setting this
+        to True will improves distributed training speed.
+        """
+        return True

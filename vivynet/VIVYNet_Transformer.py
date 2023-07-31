@@ -192,10 +192,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 ):
                     param.requires_grad = False
 
-            for name, param in symphony_net.named_parameters():
-                print(name, " ", param)
-            input()
-
             # Zipping two models param dicts
             pretrained_params = []
             for param in symphony_net.state_dict():
@@ -209,12 +205,11 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 for param1, param2 in zip(
                     pretrained_params, checkpoint["model"]
                 ):
-                    print(param1 + " " + param2)
+                    # print(param1 + " " + param2)
                     symphony_net.state_dict()[param1].copy_(
                         checkpoint["model"][param2]
                     )
                     VIVYNet.debug.ldf(f"Loading {param1}")
-                input()
             VIVYNet.debug.ldf("Loading Finished!")
 
         #   endregion
