@@ -103,20 +103,30 @@ def mp_handler(raw_data, str2int, output_file, ratio, sample_len_max, num_worker
     mea_len_dis = Counter()
     max_rel_pos = 0
     maxl = 0
-    with multiprocessing.Pool(num_workers) as p:
-        for sentences, len_cnter, pos, l, index_num in \
-            p.imap_unordered(
-                partial(process_single_piece, 
-                    ratio=ratio, 
-                    sample_len_max=sample_len_max), 
-                [(x, str2int, idx) for idx, x in enumerate(raw_data)]
-            ):
-            merged_sentences[index_num] = sentences
-            mea_len_dis += len_cnter
-            max_rel_pos = max(max_rel_pos, pos)
-            maxl = max(maxl, l)
+    # print('with multiprocessing.Pool(num_workers) as p')
+    # with multiprocessing.Pool(num_workers) as p:
+    #     for sentences, len_cnter, pos, l, index_num in \
+    #         p.imap_unordered(
+    #             partial(process_single_piece, 
+    #                 ratio=ratio, 
+    #                 sample_len_max=sample_len_max), 
+    #             [(x, str2int, idx) for idx, x in enumerate(raw_data)]
+    #         ):
+    #         merged_sentences[index_num] = sentences
+    #         mea_len_dis += len_cnter
+    #         max_rel_pos = max(max_rel_pos, pos)
+    #         maxl = max(maxl, l)
     
-    
+    for idx, x in tqdm(enumerate(raw_data), desc='processing...'):
+        sentences, len_cnter, pos, l, index_num = process_single_piece((x, str2int, idx), 
+                        ratio=ratio, 
+                        sample_len_max=sample_len_max)
+        merged_sentences[index_num] = sentences
+        mea_len_dis += len_cnter
+        max_rel_pos = max(max_rel_pos, pos)
+        maxl = max(maxl, l)
+
+    # input('input')
     print(f'measure collection finished, total {sum(len(x) for x in merged_sentences)} measures, time elapsed: {time.time()-begin_time} s')
     print(f'max cnt in a sample (rel_pos, measure): {max_rel_pos}, {maxl}')
     
@@ -133,15 +143,16 @@ def mp_handler(raw_data, str2int, output_file, ratio, sample_len_max, num_worker
         with open('./data/temp/mea_len_dis.txt', 'w') as f:
             for k, v in sorted(mea_len_dis.items()):
                 f.write(f'{k*10} {v}\n')
-
+    print('merged_sentences:\t', len(merged_sentences))
+    count = 0
     ds =  MMapIndexedDatasetBuilder(output_file+'.bin', dtype=np.uint16)
     for doc in tqdm(merged_sentences, desc='writing bin file'):
         for sentence in doc:
             ds.add_item(torch.IntTensor(sentence))
         ds.add_item(torch.IntTensor([EOS]))
-
+        count += len(doc)
     ds.finalize(output_file+'.idx')
-
+    print('total count:', count)
     print("write binary finished, write time elapsed {:.2f} s".format(time.time() - begin_time))
 
 def makevocabs(line, ratio):
@@ -179,7 +190,7 @@ def midi_binarize(train_ratio: float) -> None:
             line = line.strip()
             if len(line) == 0:
                 break
-            print(line)
+                
             line = line.split('=')
             assert len(line) == 2, f'invalid config {line}'
             if line[0] == 'SEED':
@@ -218,19 +229,20 @@ def midi_binarize(train_ratio: float) -> None:
     with open(raw_data_path, 'r') as f:
         for line in tqdm(f, desc='reading...'):
             raw_data.append(line.strip())
-            if len(raw_data) >= totpiece:
-                break
+            # if len(raw_data) >= totpiece:
+            #     break
+            # print(line)
+    print('raw length:', len(raw_data))
     
     # Create a component vocab list
     sub_vocabs = dict()
     for i in range(RATIO):
         sub_vocabs[i] = set()
-        
     # Create the vocabs from the MIDI files
     for ret_sets in p_uimap(partial(makevocabs, ratio=RATIO), raw_data, num_cpus=32, desc='setting up vocabs'):
         for i in range(RATIO):
             sub_vocabs[i] |= ret_sets[i]
-            
+    
     # Create the integers from the vocabularies
     voc_to_int = dict()
     for type in range(RATIO):
@@ -280,7 +292,7 @@ def midi_binarize(train_ratio: float) -> None:
     
     # Update the vocabularies to int dictionary
     voc_to_int.update({x:(PAD if map_meta_to_pad == 1 else BOS) for x in ('RZ', 'TZ', 'YZ')}) 
-    
+
     # Binzarize data
     for mode in splits:
         print(mode)

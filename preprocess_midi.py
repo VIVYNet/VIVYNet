@@ -17,7 +17,8 @@ from encoding import pit2str, pos2str, bom2str, dur2str, trk2str, ins2str, pit2a
 WORKERS = 32
 
 # CONSTANTS
-MAIN_PATH = "/home/blherre4/VIVY/VIVYNet"
+# MAIN_PATH = "/home/blherre4/VIVY/VIVYNet"
+MAIN_PATH = '.'
 
 def measure_calc_chord(evt_seq):
     assert evt_seq[0][1] == 'BOM', "wrong measure for chord"
@@ -480,16 +481,27 @@ def mp_handler(file_paths):
     chord_cnter = Counter()
     print(f'starts processing {len(file_paths)} midis with {WORKERS} processes')
     
-    with multiprocessing.Pool(WORKERS) as p:
-        for res in list(tqdm(p.imap(mp_worker, file_paths))):
-            if isinstance(res[0], str):
-                broken_counter += 1
-            elif len(res[0]) > 0:
-                event_seq_res.append(res[0])
-                file_ptr.append(res[1])
-                good_counter += 1
-            else:
-                broken_counter += 1
+    # with multiprocessing.Pool(WORKERS) as p:
+    #     for res in list(tqdm(p.imap(mp_worker, file_paths))):
+    #         if isinstance(res[0], str):
+    #             broken_counter += 1
+    #         elif len(res[0]) > 0:
+    #             event_seq_res.append(res[0])
+    #             file_ptr.append(res[1])
+    #             good_counter += 1
+    #         else:
+    #             broken_counter += 1
+
+    for file_path in tqdm(file_paths):
+        res = mp_worker(file_path)
+        if isinstance(res[0], str):
+            broken_counter += 1
+        elif len(res[0]) > 0:
+            event_seq_res.append(res[0])
+            file_ptr.append(res[1])
+            good_counter += 1
+        else:
+            broken_counter += 1
 
     print(f"MIDI data preprocessing takes: {time.time() - start}s, {good_counter} samples collected, {broken_counter} broken.")
 
