@@ -12,21 +12,33 @@ from tqdm import tqdm
 import sys, os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from encoding import pit2str, pos2str, bom2str, dur2str, trk2str, ins2str, pit2alphabet
+from encoding import (
+    pit2str,
+    pos2str,
+    bom2str,
+    dur2str,
+    trk2str,
+    ins2str,
+    pit2alphabet,
+)
 
 WORKERS = 32
 
 # CONSTANTS
-MAIN_PATH = "/home/blherre4/VIVY/VIVYNet"
+# MAIN_PATH = "/home/blherre4/VIVY/VIVYNet"
+MAIN_PATH = "."
+
 
 def measure_calc_chord(evt_seq):
-    assert evt_seq[0][1] == 'BOM', "wrong measure for chord"
+    assert evt_seq[0][1] == "BOM", "wrong measure for chord"
     bom_tick = evt_seq[0][0]
     ts = min(evt_seq[0][-1], 8)
     chroma = Counter()
     mtknotes = []
     for evt in evt_seq[1:-1]:
-        assert evt[1] == 'ON', "wrong measure for chord: " + evt[1] + evt_seq[-1][1]
+        assert evt[1] == "ON", (
+            "wrong measure for chord: " + evt[1] + evt_seq[-1][1]
+        )
         if evt[3] == 128:  # exclude drums
             continue
         o, p, d = evt[0] - bom_tick, evt[2], evt[-1]
@@ -40,9 +52,17 @@ def measure_calc_chord(evt_seq):
 
     chord, score = Dechorder.get_chord_quality(mtknotes, start=0, end=ts)
     if score < 0:
-        return [bom_tick, 'CHR', None, None, None, None, 'NA']
-    return [bom_tick, 'CHR', None, None, None, None,
-            pit2alphabet[chord.root_pc] + (chord.quality if chord.quality != '7' else 'D7')]
+        return [bom_tick, "CHR", None, None, None, None, "NA"]
+    return [
+        bom_tick,
+        "CHR",
+        None,
+        None,
+        None,
+        None,
+        pit2alphabet[chord.root_pc]
+        + (chord.quality if chord.quality != "7" else "D7"),
+    ]
 
 
 def merge_drums(p_midi):  # merge all percussions
@@ -68,7 +88,9 @@ def merge_drums(p_midi):  # merge all percussions
     p_midi.instruments = new_instruments
 
 
-def merge_sparse_track(p_midi, CANDI_THRES=50, MIN_THRES=5):  # merge track has too less notes
+def merge_sparse_track(
+    p_midi, CANDI_THRES=50, MIN_THRES=5
+):  # merge track has too less notes
     good_instruments = []
     bad_instruments = []
     good_instruments_idx = []
@@ -77,14 +99,21 @@ def merge_sparse_track(p_midi, CANDI_THRES=50, MIN_THRES=5):  # merge track has 
             bad_instruments.append(instrument)
         else:
             good_instruments.append(instrument)
-            good_instruments_idx.append((instrument.program, instrument.is_drum))
+            good_instruments_idx.append(
+                (instrument.program, instrument.is_drum)
+            )
 
     for bad_instrument in bad_instruments:
-        if (bad_instrument.program, bad_instrument.is_drum) in good_instruments_idx:
+        if (
+            bad_instrument.program,
+            bad_instrument.is_drum,
+        ) in good_instruments_idx:
             # find one track to merge
             for instrument in good_instruments:
-                if bad_instrument.program == instrument.program and \
-                        bad_instrument.is_drum == instrument.is_drum:
+                if (
+                    bad_instrument.program == instrument.program
+                    and bad_instrument.is_drum == instrument.is_drum
+                ):
                     instrument.notes.extend(bad_instrument.notes)
                     break
         # no track to merge
@@ -94,13 +123,15 @@ def merge_sparse_track(p_midi, CANDI_THRES=50, MIN_THRES=5):  # merge track has 
     p_midi.instruments = good_instruments
 
 
-def limit_max_track(p_midi, MAX_TRACK=40):  # merge track with least notes and limit the maximum amount of track to 40
-
+def limit_max_track(
+    p_midi, MAX_TRACK=40
+):  # merge track with least notes and limit the maximum amount of track to 40
     good_instruments = p_midi.instruments
-    
+
     good_instruments.sort(
-        key=lambda x: (not x.is_drum, -len(x.notes)))  # place drum track or the most note track at first
-    
+        key=lambda x: (not x.is_drum, -len(x.notes))
+    )  # place drum track or the most note track at first
+
     # for k,i in enumerate(good_instruments):
     #     print(str(k) + "/LOG: " + str(i))
 
@@ -118,7 +149,10 @@ def limit_max_track(p_midi, MAX_TRACK=40):  # merge track with least notes and l
             merged = False
             new_good_instruments.sort(key=lambda x: len(x.notes))
             for nid, ins in enumerate(new_good_instruments):
-                if cur_ins.program == ins.program and cur_ins.is_drum == ins.is_drum:
+                if (
+                    cur_ins.program == ins.program
+                    and cur_ins.is_drum == ins.is_drum
+                ):
                     new_good_instruments[nid].notes.extend(cur_ins.notes)
                     merged = True
                     break
@@ -137,7 +171,6 @@ def limit_max_track(p_midi, MAX_TRACK=40):  # merge track with least notes and l
 
 
 def get_init_note_events(p_midi):  # extract all notes in midi file
-
     note_events, note_on_ticks, note_dur_lst = [], [], []
     for track_idx, instrument in enumerate(p_midi.instruments):
         # track_idx_lst.append(track_idx)
@@ -147,13 +180,23 @@ def get_init_note_events(p_midi):  # extract all notes in midi file
             # special case: note_dur too long
             max_dur = 4 * p_midi.ticks_per_beat
             if note_dur / max_dur > 1:
-
                 total_dur = note_dur
                 start = note.start
                 while total_dur != 0:
                     if total_dur > max_dur:
-                        note_events.extend([[start, "ON", note.pitch, instrument.program,
-                                             instrument.is_drum, track_idx, max_dur]])
+                        note_events.extend(
+                            [
+                                [
+                                    start,
+                                    "ON",
+                                    note.pitch,
+                                    instrument.program,
+                                    instrument.is_drum,
+                                    track_idx,
+                                    max_dur,
+                                ]
+                            ]
+                        )
 
                         note_on_ticks.append(start)
                         note_dur_lst.append(max_dur)
@@ -161,8 +204,19 @@ def get_init_note_events(p_midi):  # extract all notes in midi file
                         start += max_dur
                         total_dur -= max_dur
                     else:
-                        note_events.extend([[start, "ON", note.pitch, instrument.program,
-                                             instrument.is_drum, track_idx, total_dur]])
+                        note_events.extend(
+                            [
+                                [
+                                    start,
+                                    "ON",
+                                    note.pitch,
+                                    instrument.program,
+                                    instrument.is_drum,
+                                    track_idx,
+                                    total_dur,
+                                ]
+                            ]
+                        )
                         note_on_ticks.append(start)
                         note_dur_lst.append(total_dur)
 
@@ -170,29 +224,46 @@ def get_init_note_events(p_midi):  # extract all notes in midi file
 
             else:
                 note_events.extend(
-                    [[note.start, "ON", note.pitch, instrument.program, instrument.is_drum, track_idx, note_dur]])
+                    [
+                        [
+                            note.start,
+                            "ON",
+                            note.pitch,
+                            instrument.program,
+                            instrument.is_drum,
+                            track_idx,
+                            note_dur,
+                        ]
+                    ]
+                )
 
                 # for score analysis and beat estimating when score has no time signature
                 note_on_ticks.append(note.start)
                 note_dur_lst.append(note.end - note.start)
 
-    note_events.sort(key=lambda x: (x[0], x[1] == "ON", x[5], x[4], x[3], x[2], x[-1]))
+    note_events.sort(
+        key=lambda x: (x[0], x[1] == "ON", x[5], x[4], x[3], x[2], x[-1])
+    )
     note_events = list(k for k, _ in itertools.groupby(note_events))
     return note_events, note_on_ticks, note_dur_lst
 
 
-def calculate_measure(p_midi, first_event_tick,
-                      last_event_tick):  # calculate measures and append measure symbol to event_seq
-
+def calculate_measure(
+    p_midi, first_event_tick, last_event_tick
+):  # calculate measures and append measure symbol to event_seq
     measure_events = []
     time_signature_changes = p_midi.time_signature_changes
 
     if not time_signature_changes:  # no time_signature_changes, estimate it
         raise AssertionError("No time_signature_changes")
     else:
-        if time_signature_changes[0].time != 0 and \
-                time_signature_changes[0].time > first_event_tick:
-            raise AssertionError("First time signature start with None zero tick")
+        if (
+            time_signature_changes[0].time != 0
+            and time_signature_changes[0].time > first_event_tick
+        ):
+            raise AssertionError(
+                "First time signature start with None zero tick"
+            )
 
         # clean duplicate time_signature_changes
         temp_sig = []
@@ -201,8 +272,10 @@ def calculate_measure(p_midi, first_event_tick,
                 temp_sig.append(time_sig)
             else:
                 previous_timg_sig = time_signature_changes[idx - 1]
-                if not (previous_timg_sig.numerator == time_sig.numerator
-                        and previous_timg_sig.denominator == time_sig.denominator):
+                if not (
+                    previous_timg_sig.numerator == time_sig.numerator
+                    and previous_timg_sig.denominator == time_sig.denominator
+                ):
                     temp_sig.append(time_sig)
         time_signature_changes = temp_sig
         # print("time_signature_changes", time_signature_changes)
@@ -210,7 +283,9 @@ def calculate_measure(p_midi, first_event_tick,
             # calculate measures, eg: how many ticks per measure
             numerator = time_signature_changes[idx].numerator
             denominator = time_signature_changes[idx].denominator
-            ticks_per_measure = p_midi.ticks_per_beat * (4 / denominator) * numerator
+            ticks_per_measure = (
+                p_midi.ticks_per_beat * (4 / denominator) * numerator
+            )
 
             cur_tick = time_signature_changes[idx].time
 
@@ -220,14 +295,47 @@ def calculate_measure(p_midi, first_event_tick,
                 next_tick = last_event_tick + int(ticks_per_measure)
 
             if ticks_per_measure.is_integer():
-                for measure_start_tick in range(cur_tick, next_tick, int(ticks_per_measure)):
+                for measure_start_tick in range(
+                    cur_tick, next_tick, int(ticks_per_measure)
+                ):
                     if measure_start_tick + int(ticks_per_measure) > next_tick:
-                        measure_events.append([measure_start_tick, "BOM", None, None, None, None, 0])
-                        measure_events.append([next_tick, "EOM", None, None, None, None, 0])
-                    else:
-                        measure_events.append([measure_start_tick, "BOM", None, None, None, None, 0])
                         measure_events.append(
-                            [measure_start_tick + int(ticks_per_measure), "EOM", None, None, None, None, 0])
+                            [
+                                measure_start_tick,
+                                "BOM",
+                                None,
+                                None,
+                                None,
+                                None,
+                                0,
+                            ]
+                        )
+                        measure_events.append(
+                            [next_tick, "EOM", None, None, None, None, 0]
+                        )
+                    else:
+                        measure_events.append(
+                            [
+                                measure_start_tick,
+                                "BOM",
+                                None,
+                                None,
+                                None,
+                                None,
+                                0,
+                            ]
+                        )
+                        measure_events.append(
+                            [
+                                measure_start_tick + int(ticks_per_measure),
+                                "EOM",
+                                None,
+                                None,
+                                None,
+                                None,
+                                0,
+                            ]
+                        )
             else:
                 assert False, "ticks_per_measure Error"
     return measure_events
@@ -242,7 +350,7 @@ def quantize_by_nth(nth_tick, note_events):
     eom_tick = 0
     for measure_id, measure in enumerate(split_score):
         bom_tick = measure[0][0]
-        assert bom_tick == eom_tick, 'measure time error {bom_tick} {eom_tick}'
+        assert bom_tick == eom_tick, "measure time error {bom_tick} {eom_tick}"
         eom_tick = measure[-1][0]
         mea_dur = eom_tick - bom_tick
         if mea_dur < nth_tick:  # measure duration need to be quantized
@@ -254,7 +362,7 @@ def quantize_by_nth(nth_tick, note_events):
                 measure_durs.append(mea_dur // nth_tick + 1)
 
         for evt in measure[1:-1]:
-            assert evt[1] == 'ON', f'measure structure error {evt[1]}'
+            assert evt[1] == "ON", f"measure structure error {evt[1]}"
             rel_tick = evt[0] - bom_tick
             if rel_tick % nth_tick <= half:
                 rel_tick = min(rel_tick // nth_tick, measure_durs[-1] - 1)
@@ -285,14 +393,20 @@ def quantize_by_nth(nth_tick, note_events):
 
 
 def prettify(note_events, ticks_per_beat):
-    fist_event_idx = next(i for i in (range(len(note_events))) if note_events[i][1] == "ON")
-    last_event_idx = next(i for i in reversed(range(len(note_events))) if note_events[i][1] == "ON")
+    fist_event_idx = next(
+        i for i in (range(len(note_events))) if note_events[i][1] == "ON"
+    )
+    last_event_idx = next(
+        i
+        for i in reversed(range(len(note_events)))
+        if note_events[i][1] == "ON"
+    )
 
     assert note_events[fist_event_idx - 1][1] == "BOM", "measure_start Error"
     assert note_events[last_event_idx + 1][1] == "EOM", "measure_end Error"
 
     # remove invalid measures on both sides
-    note_events = note_events[fist_event_idx - 1: last_event_idx + 2]
+    note_events = note_events[fist_event_idx - 1 : last_event_idx + 2]
 
     # check again
     assert note_events[0][1] == "BOM", "measure_start Error"
@@ -305,17 +419,40 @@ def prettify(note_events, ticks_per_beat):
             event[0] -= start_tick
 
     from fractions import Fraction
+
     ticks_32th = Fraction(ticks_per_beat, 8)
 
     note_events = quantize_by_nth(ticks_32th, note_events)
 
-    note_events.sort(key=lambda x: (x[0], x[1] == "ON", x[1] == "BOM", x[1] == "EOM",
-                                    x[5], x[4], x[3], x[2], x[-1]))
+    note_events.sort(
+        key=lambda x: (
+            x[0],
+            x[1] == "ON",
+            x[1] == "BOM",
+            x[1] == "EOM",
+            x[5],
+            x[4],
+            x[3],
+            x[2],
+            x[-1],
+        )
+    )
     note_events = list(k for k, _ in itertools.groupby(note_events))
 
     # -------------------------check measure duration----------------------------------------------
-    note_events.sort(key=lambda x: (x[0], x[1] == "ON", x[1] == "BOM", x[1] == "EOM",
-                                    x[5], x[4], x[3], x[2], x[-1]))
+    note_events.sort(
+        key=lambda x: (
+            x[0],
+            x[1] == "ON",
+            x[1] == "BOM",
+            x[1] == "EOM",
+            x[5],
+            x[4],
+            x[3],
+            x[2],
+            x[-1],
+        )
+    )
     split_score = list(split_before(note_events, lambda x: x[1] == "BOM"))
 
     check_measure_dur = [0]
@@ -337,7 +474,15 @@ def prettify(note_events, ticks_per_beat):
 def get_pos_and_cc(split_score):
     new_event_seq = []
     for measure_idx, measure in enumerate(split_score):
-        measure.sort(key=lambda x: (x[1] == "EOM", x[1] == "ON", x[1] == 'CHR', x[1] == "BOM", x[-2]))
+        measure.sort(
+            key=lambda x: (
+                x[1] == "EOM",
+                x[1] == "ON",
+                x[1] == "CHR",
+                x[1] == "BOM",
+                x[-2],
+            )
+        )
         bom_tick = measure[0][0]
 
         # split measure by track
@@ -351,18 +496,33 @@ def get_pos_and_cc(split_score):
             trk_abs_num = -1
             for event in track:
                 if event[1] == "ON":
-                    assert trk_abs_num == -1 or trk_abs_num == event[
-                        -2], "Error: found inconsistent trackid within same track"
+                    assert (
+                        trk_abs_num == -1 or trk_abs_num == event[-2]
+                    ), "Error: found inconsistent trackid within same track"
                     trk_abs_num = event[-2]
                     mypos = event[0] - bom_tick
                     pos_lst.append(mypos)
                     pos_lst = list(set(pos_lst))
 
             for pos in pos_lst:
-                tracks[track_idx].append([pos + bom_tick, "POS", None, None, None, None, pos])
-            tracks[track_idx].insert(0, [bom_tick, "CC", None, None, None, None, trk_abs_num])
+                tracks[track_idx].append(
+                    [pos + bom_tick, "POS", None, None, None, None, pos]
+                )
+            tracks[track_idx].insert(
+                0, [bom_tick, "CC", None, None, None, None, trk_abs_num]
+            )
             tracks[track_idx].sort(
-                key=lambda x: (x[0], x[1] == "ON", x[1] == "POS", x[1] == "CC", x[5], x[4], x[3], x[2]))
+                key=lambda x: (
+                    x[0],
+                    x[1] == "ON",
+                    x[1] == "POS",
+                    x[1] == "CC",
+                    x[5],
+                    x[4],
+                    x[3],
+                    x[2],
+                )
+            )
 
         new_measure.append(measure[0])
         new_measure.append(measure[1])
@@ -379,31 +539,31 @@ def event_seq_to_str(new_event_seq):
     char_events = []
 
     for evt in new_event_seq:
-        if evt[1] == 'ON':
+        if evt[1] == "ON":
             char_events.append(pit2str(evt[2]))  # pitch
             char_events.append(dur2str(evt[-1]))  # duration
             char_events.append(trk2str(evt[-2]))  # track
             char_events.append(ins2str(evt[3]))  # instrument
-        elif evt[1] == 'POS':
+        elif evt[1] == "POS":
             char_events.append(pos2str(evt[-1]))  # type (time position)
-            char_events.append('RZ')
-            char_events.append('TZ')
-            char_events.append('YZ')
-        elif evt[1] == 'BOM':
+            char_events.append("RZ")
+            char_events.append("TZ")
+            char_events.append("YZ")
+        elif evt[1] == "BOM":
             char_events.append(bom2str(evt[-1]))
-            char_events.append('RZ')
-            char_events.append('TZ')
-            char_events.append('YZ')
-        elif evt[1] == 'CC':
-            char_events.append('NT')
-            char_events.append('RZ')
-            char_events.append('TZ')
-            char_events.append('YZ')
-        elif evt[1] == 'CHR':
-            char_events.append('H' + evt[-1])
-            char_events.append('RZ')
-            char_events.append('TZ')
-            char_events.append('YZ')
+            char_events.append("RZ")
+            char_events.append("TZ")
+            char_events.append("YZ")
+        elif evt[1] == "CC":
+            char_events.append("NT")
+            char_events.append("RZ")
+            char_events.append("TZ")
+            char_events.append("YZ")
+        elif evt[1] == "CHR":
+            char_events.append("H" + evt[-1])
+            char_events.append("RZ")
+            char_events.append("TZ")
+            char_events.append("YZ")
         else:
             assert False, ("evt type error", evt[1])
     return char_events
@@ -424,14 +584,28 @@ def midi_to_event_seq_str(midi_file_path, readonly=False):
 
     note_events, note_on_ticks, _ = get_init_note_events(p_midi)
 
-    measure_events = calculate_measure(p_midi, min(note_on_ticks), max(note_on_ticks))
+    measure_events = calculate_measure(
+        p_midi, min(note_on_ticks), max(note_on_ticks)
+    )
     note_events.extend(measure_events)
-    note_events.sort(key=lambda x: (x[0], x[1] == "ON", x[1] == "BOM", x[1] == "EOM",
-                                    x[5], x[4], x[3], x[2]))
+    note_events.sort(
+        key=lambda x: (
+            x[0],
+            x[1] == "ON",
+            x[1] == "BOM",
+            x[1] == "EOM",
+            x[5],
+            x[4],
+            x[3],
+            x[2],
+        )
+    )
 
     split_score = prettify(note_events, p_midi.ticks_per_beat)
 
-    for measure_idx, measure in enumerate(split_score):  # calculate chord for every measure
+    for measure_idx, measure in enumerate(
+        split_score
+    ):  # calculate chord for every measure
         chord_evt = measure_calc_chord(measure)
         split_score[measure_idx].insert(1, chord_evt)
 
@@ -478,32 +652,50 @@ def mp_handler(file_paths):
     event_seq_res = []
     file_ptr = []
     chord_cnter = Counter()
-    print(f'starts processing {len(file_paths)} midis with {WORKERS} processes')
-    
-    with multiprocessing.Pool(WORKERS) as p:
-        for res in list(tqdm(p.imap(mp_worker, file_paths))):
-            if isinstance(res[0], str):
-                broken_counter += 1
-            elif len(res[0]) > 0:
-                event_seq_res.append(res[0])
-                file_ptr.append(res[1])
-                good_counter += 1
-            else:
-                broken_counter += 1
+    print(f"starts processing {len(file_paths)} midis with {WORKERS} processes")
 
-    print(f"MIDI data preprocessing takes: {time.time() - start}s, {good_counter} samples collected, {broken_counter} broken.")
+    # with multiprocessing.Pool(WORKERS) as p:
+    #     for res in list(tqdm(p.imap(mp_worker, file_paths))):
+    #         if isinstance(res[0], str):
+    #             broken_counter += 1
+    #         elif len(res[0]) > 0:
+    #             event_seq_res.append(res[0])
+    #             file_ptr.append(res[1])
+    #             good_counter += 1
+    #         else:
+    #             broken_counter += 1
+
+    for file_path in tqdm(file_paths):
+        res = mp_worker(file_path)
+        if isinstance(res[0], str):
+            broken_counter += 1
+        elif len(res[0]) > 0:
+            event_seq_res.append(res[0])
+            file_ptr.append(res[1])
+            good_counter += 1
+        else:
+            broken_counter += 1
+
+    print(
+        f"MIDI data preprocessing takes: {time.time() - start}s, " +
+        f"{good_counter} samples collected, {broken_counter} broken."
+    )
 
     # ----------------------------------------------------------------------------------
     txt_start = time.time()
-    if not os.path.exists(f'{MAIN_PATH}/data/tokens/'):
-        os.makedirs(f'{MAIN_PATH}/data/tokens/')
+    if not os.path.exists(f"{MAIN_PATH}/data/tokens/"):
+        os.makedirs(f"{MAIN_PATH}/data/tokens/")
 
-    with open(f"{MAIN_PATH}/data/tokens/temp.data.y", "w", encoding="utf-8") as f:
+    with open(
+        f"{MAIN_PATH}/data/tokens/temp.data.y", "w", encoding="utf-8"
+    ) as f:
         for idx, piece in enumerate(event_seq_res):
             # print(event_seq_res)
-            f.write(' '.join(piece) + '\n')
-    
-    with open(f"{MAIN_PATH}/data/tokens/data_pointer.info", "w", encoding="utf-8") as f:
+            f.write(" ".join(piece) + "\n")
+
+    with open(
+        f"{MAIN_PATH}/data/tokens/data_pointer.info", "w", encoding="utf-8"
+    ) as f:
         for idx, piece in enumerate(file_ptr):
             # print(event_seq_res)
             f.write(piece + "\n")
@@ -511,31 +703,34 @@ def mp_handler(file_paths):
     print("Create txt file takes: ", time.time() - txt_start)
     # ----------------------------------------------------------------------------------
 
+
 def preprocess_midi_run() -> None:
     """Main Run Script Method
-    
+
     Description:
         Runs the main processes of this script
-        
+
     Information:
         :return: None
         :rtype: None
     """
-    
-    warnings.filterwarnings('ignore')   # Filter out warnings
+
+    warnings.filterwarnings("ignore")  # Filter out warnings
 
     # Prep list of file paths for processing
     folder_path = f"{MAIN_PATH}/data/midis"
     file_paths = []
     for path, directories, files in os.walk(folder_path):
         for file in files:
-            if file.endswith(".mid") \
-            or file.endswith(".Mid") \
-            or file.endswith(".MID") \
-            or file.endswith(".midi") \
-            or file.endswith(".Midi") \
-            or file.endswith(".MIDI"):
+            if (
+                file.endswith(".mid")
+                or file.endswith(".Mid")
+                or file.endswith(".MID")
+                or file.endswith(".midi")
+                or file.endswith(".Midi")
+                or file.endswith(".MIDI")
+            ):
                 file_path = path + "/" + file
                 file_paths.append(file_path)
-   
+
     mp_handler(file_paths)  # run multi-processing midi extractor
