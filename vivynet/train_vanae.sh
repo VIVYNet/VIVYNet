@@ -1,4 +1,4 @@
-VARIANT="VanAE"
+VARIANT="run2"
 
 fairseq-train ../data/final \
   --user-dir ./ \
