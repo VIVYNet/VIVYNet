@@ -12,7 +12,7 @@ from tqdm import tqdm
 import sys, os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from encoding import (
+from .encoding import (
     pit2str,
     pos2str,
     bom2str,

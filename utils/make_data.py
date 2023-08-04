@@ -10,7 +10,7 @@ from pprint import pprint
 from fairseq.data.indexed_dataset import MMapIndexedDatasetBuilder
 from functools import partial
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from encoding import sort_tok_str
+from .encoding import sort_tok_str
 import subprocess
 
 PAD = 1
@@ -146,13 +146,13 @@ def mp_handler(
     begin_time = time.time()
 
     if "train" in output_file:
-        with open("./data/temp/vocab.sh", "a") as f:
+        with open("../data/temp/vocab.sh", "a") as f:
             f.write(f"MAX_REL_POS={max_rel_pos+5}\n")
             f.write(f"MAX_MEA_POS={maxl*3+5}\n")
-        with open("./data/temp/mea_cnt_dis.txt", "w") as f:
+        with open("../data/temp/mea_cnt_dis.txt", "w") as f:
             for k, v in sorted(mea_cnt_dis.items()):
                 f.write(f"{k*10} {v}\n")
-        with open("./data/temp/mea_len_dis.txt", "w") as f:
+        with open("../data/temp/mea_len_dis.txt", "w") as f:
             for k, v in sorted(mea_len_dis.items()):
                 f.write(f"{k*10} {v}\n")
     print("merged_sentences:\t", len(merged_sentences))
@@ -236,8 +236,8 @@ def midi_binarize(train_ratio: float) -> None:
     # Set the values for the parameters
     bpe = "" if bpe == 0 else "_bpe"
     raw_corpus = f"data.y"
-    raw_data_path = f"./data/tokens/{raw_corpus}"
-    output_dir = f"./data/final/labels/"
+    raw_data_path = f"../data/tokens/{raw_corpus}"
+    output_dir = f"../data/final/labels/"
 
     # Start the timer clock and create a raw_data list
     start_time = time.time()
@@ -297,7 +297,7 @@ def midi_binarize(train_ratio: float) -> None:
     for type in range(RATIO):
         print(len(sub_vocabs[type]), end=" ")
     print()
-    with open(f"./data/temp/vocab.sh", "w") as f:
+    with open(f"../data/temp/vocab.sh", "w") as f:
         for type in range(RATIO):
             f.write(f"SIZE_{type}={len(sub_vocabs[type])}\n")
 
