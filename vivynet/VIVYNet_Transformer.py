@@ -7,8 +7,9 @@ from fairseq.models import (
 
 # Submodule imports
 from vivynet.utils.VIVYNetSubModels import (
-    BERT,
-    SymphonyNetVanillaAE,
+    BERTBaseMulti,
+    BERTBaseEN,
+    SymphonyNetVanilla,
     IntermediarySection,
 )
 
@@ -148,13 +149,24 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #   region
         #
 
-        # Create BERT model
-        bert = BERT(args=args, dictionary=task.source_dictionary)
-        VIVYNet.debug.ldf("Model Creation: BERT")
+        # # Create BERTBaseMulti model
+        # bert = BERTBaseMulti(args=args, dictionary=task.source_dictionary)
+        # VIVYNet.debug.ldf("Model Creation: BERTBaseMulti")
+
+        # # Freezing the Encoder layers and load pretrained weights
+        # if args.freeze_enc == 1:
+        #     # Freezing BERTBaseMulti
+        #     VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
+        #     for name, param in bert.named_parameters():
+        #         param.requires_grad = False
+
+        # Create BERTBaseEN model
+        bert = BERTBaseEN(args=args, dictionary=task.source_dictionary)
+        VIVYNet.debug.ldf("Model Creation: BERTBaseEN")
 
         # Freezing the Encoder layers and load pretrained weights
         if args.freeze_enc == 1:
-            # Freezing BERT
+            # Freezing BERTBaseEN
             VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
             for name, param in bert.named_parameters():
                 param.requires_grad = False
@@ -167,7 +179,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #
 
         # Create SymphonyNet model
-        symphony_net = SymphonyNetVanillaAE(args=args, task=task)
+        symphony_net = SymphonyNetVanilla(args=args, task=task)
         VIVYNet.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint

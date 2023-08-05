@@ -1,4 +1,4 @@
-# BERT Imports
+# BERTBaseMulti Imports
 from transformers import BertTokenizer
 
 # Fairseq and SymphonyNet Imports

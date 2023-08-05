@@ -9,7 +9,7 @@ from fairseq.models import (
 import torch
 
 # Submodels imports
-from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNetInference
+from vivynet.utils.VIVYNetSubModels import BERTBaseMulti, SymphonyNetInference
 
 # Debug imports
 from vivynet.utils.debug import Debug
@@ -139,13 +139,13 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         VIVYNet.debug.ldf("<< START >>")
 
-        # Create BERT model
-        bert = BERT(args=args, dictionary=task.source_dictionary)
-        VIVYNet.debug.ldf("Model Creation: BERT")
+        # Create BERTBaseMulti model
+        bert = BERTBaseMulti(args=args, dictionary=task.source_dictionary)
+        VIVYNet.debug.ldf("Model Creation: BERTBaseMulti")
 
         # Freezing the Encoder layers and load pretrained weights
         if args.freeze_enc == 1:
-            # Freezing BERT
+            # Freezing BERTBaseMulti
             VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
             for name, param in bert.named_parameters():
                 param.requires_grad = False

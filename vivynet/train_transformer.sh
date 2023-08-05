@@ -1,4 +1,4 @@
-VARIANT="run1"
+VARIANT="run4"
 
 fairseq-train ../data/final \
   --user-dir ./ \
