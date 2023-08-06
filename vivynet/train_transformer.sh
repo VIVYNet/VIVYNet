@@ -19,7 +19,7 @@ fairseq-train ../data/final \
   --adam-eps 1e-6 \
   --clip-norm 0.0 \
   --weight-decay 0.01 \
-  --batch-size 8 \
+  --batch-size 4 \
   --lr 0.00001 \
   --shorten_method none \
   --shorten_data_split_list '' \

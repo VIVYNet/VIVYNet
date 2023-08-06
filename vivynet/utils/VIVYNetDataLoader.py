@@ -21,6 +21,7 @@ from vivynet.utils.debug import Debug
 # Miscellaneous Import
 import numpy as np
 import os
+import math
 
 
 def copy_tensor(src, dst):
@@ -294,6 +295,14 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         slice_indices = np.zeros((totpieces, 2), dtype=int)
         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
 
+
+        print("Piece sep ids: ", piece_sep_ids[:10])
+        print("Totpieces: ", totpieces)
+        print("sizes: ", sizes[:10])
+        print(len(sizes))
+        print(totpieces)
+        input()
+
         # Process sliced_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
             s = piece_sep_ids[i - 1] if i > 0 else -1
@@ -303,6 +312,19 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                 sizes_cs[e - 1],
             )
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
+
+        # # Apply data augmentation by creating multiple samples for each data block
+        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
+        # new_slice_indices = []
+        # new_block_to_dataset_index = []
+        # for line, line_piece in zip(slice_indices, block_to_dataset_index):
+        #     l_piece_tot = line[1] - line[0]
+        #     assert l_piece_tot % self.ratio == 0, (line[0], line[1])
+        #     l_toks = l_piece_tot // self.ratio
+        #     chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
+        #     #chosen_cnt = sum(1 for _ in range(0 - np.random.randint(sample_step), l_toks, sample_step))
+        #     new_slice_indices.append(np.stack([line]*chosen_cnt))
+        #     new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
 
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
