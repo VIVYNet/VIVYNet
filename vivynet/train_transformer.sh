@@ -1,4 +1,4 @@
-VARIANT="run4"
+VARIANT="run6"
 
 fairseq-train ../data/final \
   --user-dir ./ \
@@ -12,7 +12,7 @@ fairseq-train ../data/final \
   --weight-decay 0.01 \
   --batch-size 1 \
   --lr 0.00001 \
-  --max-tokens 8192 \
+  --max-tokens 4096 \
   --shorten_method none \
   --shorten_data_split_list '' \
   --tokens_per_sample 4096 \
@@ -27,9 +27,9 @@ fairseq-train ../data/final \
   --ins_voc_size 133 \
   --max_rel_pos  198 \
   --max_mea_pos  5360 \
-  --freeze_enc 1 \
-  --freeze_dec 1 \
+  --freeze_enc 0 \
+  --freeze_dec 0 \
   --lr-scheduler polynomial_decay \
   --save-dir ./results/$VARIANT/ckpt \
   --tensorboard-logdir ./results/$VARIANT/logs \
-  --no-epoch-checkpoints
+  --no-epoch-checkpoints \
