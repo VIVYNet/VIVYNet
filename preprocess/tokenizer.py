@@ -1,5 +1,3 @@
-# flake8: noqa
-
 """
 File Name:      tokenizer.py
 
@@ -12,25 +10,29 @@ Description:    Script to sort and filter out a downloaded dataset of digital
 """
 
 # Imports
-from fairseq.data.indexed_dataset import MMapIndexedDatasetBuilder
+from fairseq.data.indexed_dataset import (
+    MMapIndexedDatasetBuilder,
+    MMapIndexedDataset,
+)
 from utils.preprocess_midi import preprocess_midi_run
 from utils.make_data import midi_binarize
 from transformers import AutoTokenizer
 from collections import Counter
 from tqdm import tqdm
 import numpy as np
-import concurrent
 import shutil
 import torch
 import json
 import re
 import os
+import concurrent
 
 # Constants
-DATASET_LOC = "/mnt/d/Projects/VIVY/Data/Good"
-DATASET_INDEX = json.load(open(f"{DATASET_LOC}/index.json"))
-DATA_TOK_LOC = "./data"
-FINAL_LOC = "./data/final/features"
+# DATASET_LOC = "/mnt/d/Projects/VIVY/Data/Good"
+DATASET_LOC = "./data/Raw"
+DATASET_INDEX = json.load(open(f"{DATASET_LOC}/index_en.json"))
+DATA_TOK_LOC = "../data"
+FINAL_LOC = "../data/final/features"
 
 MIDI_TOK_LOC = f"{DATA_TOK_LOC}/midis"
 TEXT_TOKEN_FILE = f"{DATA_TOK_LOC}/tokens/data.x"
@@ -80,10 +82,15 @@ def transfer(item: str) -> None:
 
     # Get the absolute path of the midi file
     path = DATASET_LOC + "/" + item["directory"].split("./")[-1]
+    if not os.path.isdir(path):
+        return
     mid_files = os.listdir(path)
 
+    if len(mid_files) == 0:
+        return
     # Copy file
-    shutil.copy(path + mid_files[0], f"{MIDI_TOK_LOC}/{mid_files[0]}")
+    for i in range(len(mid_files)):
+        shutil.copy(path + mid_files[i], f"{MIDI_TOK_LOC}/{mid_files[i]}")
 
 
 def tokenize(item: dict) -> None:
@@ -103,7 +110,7 @@ def tokenize(item: dict) -> None:
     #
     #   TEXT ENCODING
     #
-
+    # print(item["title"])
     # Extract text and path to the data
     text = item["text"]
     path = DATASET_LOC + item["directory"].split(".")[-1]
@@ -139,7 +146,7 @@ def tokenize(item: dict) -> None:
     )  # Add space to the front if line starts with a special character
 
     # Tokenize text
-    encoded = TOKENIZER(text, truncation=True, max_length=4096)["input_ids"]
+    encoded = TOKENIZER(text, truncation=True, max_length=512)["input_ids"]
 
     #
     #   MUSIC ENCODING
@@ -147,10 +154,15 @@ def tokenize(item: dict) -> None:
 
     # Get the absolute path of the item's respective midi file
     path = DATASET_LOC + "/" + item["directory"].split("./")[-1]
-    filepath = MIDI_TOK_LOC + "/" + os.listdir(path)[0]
+    if not os.path.isdir(path):
+        return
+    if len(os.listdir(path)) == 0:
+        return
+    filepath = "./data/midis" + "/" + os.listdir(path)[0]
 
     # Exit if the tokenized MIDI file is not there
     if filepath not in MIDI_FILE_TO_TOKEN_MAP:
+        print("not exist in db: " + item["title"])
         return
 
     line_num = MIDI_FILE_TO_TOKEN_MAP[filepath]  # Get line number of the file
@@ -162,13 +174,13 @@ def tokenize(item: dict) -> None:
     #
 
     # Append tokenized text into a line in the targeted data directory
-    with open(f"{TEXT_TOKEN_FILE}", "a") as f:
+    with open(f"{TEXT_TOKEN_FILE}", "a+") as f:
         for i in encoded:
             f.write(str(i) + " ")
         f.write("\n")
 
     # Append content to the finalized MIDI token file
-    with open(f"{MIDI_TOKEN_FILE}", "a") as f:
+    with open(f"{MIDI_TOKEN_FILE}", "a+") as f:
         f.write(f"{content}")
 
 
@@ -257,6 +269,9 @@ if __name__ == "__main__":
     file = open(MIDI_TOKEN_TEMP_FILE)
     MIDI_TOKEN_FILE_DATA = file.readlines()
 
+    # print(list(MIDI_FILE_TO_TOKEN_MAP.keys())[:100])
+    # exit()
+
     # MultiThreading process to tokenize data
     print("Synchronizing feature data to the label data...")
     with concurrent.futures.ProcessPoolExecutor() as executor:
@@ -270,3 +285,28 @@ if __name__ == "__main__":
     print("Binarization of the data")
     midi_binarize(TRAIN_SPLIT)
     text_binarize(TRAIN_SPLIT)
+
+    # TEST The Dataset - Features
+    feature_train_data = MMapIndexedDataset("../data/final/features/train")
+    print("Feature Train Data Size:", len(feature_train_data))
+    feature_valid_data = MMapIndexedDataset("../data/final/features/valid")
+    print("Feature Valid Data Size:", len(feature_valid_data))
+    print(
+        "TOTAL FEATURE SIZE:", len(feature_train_data) + len(feature_valid_data)
+    )
+
+    # TEST The Dataset - Labels
+    print()
+    labels_train_data = MMapIndexedDataset("../data/final/labels/bin/train")
+    a_count = 0
+    for i in labels_train_data:
+        if len(i) == 1:
+            a_count += 1
+    print("Label Valid Data Size:", a_count)
+    labels_valid_data = MMapIndexedDataset("../data/final/labels/bin/valid")
+    b_count = 0
+    for i in labels_valid_data:
+        if len(i) == 1:
+            b_count += 1
+    print("Label Valid Data Size:", b_count)
+    print("TOTAL LABEL SIZE:", a_count + b_count)

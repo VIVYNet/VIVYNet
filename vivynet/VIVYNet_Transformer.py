@@ -261,6 +261,8 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Clear previously calculated gradients
         self.encoder.zero_grad()
+        self.decoder.zero_grad()
+        self.intermediary.zero_grad()
         VIVYNet.debug.ldf("encoder.zero_grad()")
 
         # Get loss and the logits from the model
