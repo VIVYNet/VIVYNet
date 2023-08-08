@@ -1,12 +1,9 @@
+### Specify model run name
 VARIANT="debug"
 
-### Training batch configs
-# MAX_TOKENS=8192
-# TOKENS_PER_SAMPLE=4096
-
 ### Shorten batch configs for debug
-MAX_TOKENS=128
-TOKENS_PER_SAMPLE=16
+MAX_TOKENS=8192
+TOKENS_PER_SAMPLE=4096
 
 
 fairseq-train ../data/final \
