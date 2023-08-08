@@ -189,10 +189,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
         VIVYNet.debug.ldf("Checkpoint loading")
 
-        # WIP: Currently unable to transfer weights since the original
-        #      checkpoint has different dimension due to being trained on a
-        #      different dataset.
-
         # Freezing the Decoder layers and load pretrained weights
         if args.freeze_dec == 1:
             # Freezing self-attentions
@@ -208,9 +204,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 ):
                     param.requires_grad = False
 
-            # for name, param in symphony_net.named_parameters():
-            #     print(name, " ", param)
-
             # Zipping two models param dicts
             pretrained_params = []
             for param in symphony_net.state_dict():
@@ -224,6 +217,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 for param1, param2 in zip(
                     pretrained_params, checkpoint["model"]
                 ):
+                    # print(param1 + " " + param2)
                     symphony_net.state_dict()[param1].copy_(
                         checkpoint["model"][param2]
                     )

@@ -1,4 +1,13 @@
-VARIANT="run6"
+VARIANT="debug"
+
+### Training batch configs
+# MAX_TOKENS=8192
+# TOKENS_PER_SAMPLE=4096
+
+### Shorten batch configs for debug
+MAX_TOKENS=128
+TOKENS_PER_SAMPLE=16
+
 
 fairseq-train ../data/final \
   --user-dir ./ \
@@ -10,12 +19,11 @@ fairseq-train ../data/final \
   --adam-eps 1e-6 \
   --clip-norm 0.0 \
   --weight-decay 0.01 \
-  --batch-size 1 \
+  --batch-size 4 \
   --lr 0.00001 \
-  --max-tokens 4096 \
   --shorten_method none \
   --shorten_data_split_list '' \
-  --tokens_per_sample 4096 \
+  --tokens_per_sample ${TOKENS_PER_SAMPLE} \
   --seed 1998 \
   --sample_break_mode complete_doc \
   --ratio 4 \
@@ -33,3 +41,5 @@ fairseq-train ../data/final \
   --save-dir ./results/$VARIANT/ckpt \
   --tensorboard-logdir ./results/$VARIANT/logs \
   --no-epoch-checkpoints \
+  --log-format simple \
+  --log-interval 8
