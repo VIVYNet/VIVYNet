@@ -95,7 +95,7 @@ class BERTInference(FairseqEncoder):
         BERT.debug.ldf("var dev")
 
         # Initialize model
-        self.model = BertModel.from_pretrained("bert-base-multilingual-cased")
+        self.model = BertModel.from_pretrained("bert-base-cased")
         BERT.debug.ldf("pretrained model")
 
         # Run model of CUDA

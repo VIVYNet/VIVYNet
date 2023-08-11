@@ -5,6 +5,8 @@ from fairseq.models import (
     register_model,
 )
 
+from utils.VIVYNetSubModels import IntermediarySection
+
 # Torch Imports
 import torch
 
@@ -187,14 +189,17 @@ class VIVYNet(FairseqEncoderDecoderModel):
                     VIVYNet.debug.ldf(f"Loading {param1}")
             VIVYNet.debug.ldf("Loading Finished!")
 
-        vivynet = VIVYNet(bert, symphony_net)
+        intermediary = IntermediarySection(args)
+        VIVYNet.debug.ldf("Model Creation: Intermediary Layer")
+
+        vivynet = VIVYNet(bert, symphony_net, intermediary)
         VIVYNet.debug.ldf("COMPLETE MODEL COMPILATION: VIVYNet")
 
         # Return
         VIVYNet.debug.ldf("<< END >>")
         return vivynet
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, encoder, decoder, intermediary):
         """Constructor for the VIVYNet model"""
 
         VIVYNet.debug.ldf("<< START >>")
@@ -205,7 +210,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Create instance variables based on parameters given
         self.encoder = encoder
-        self.linear = torch.nn.Linear(768, 512)
+        self.intermediary = intermediary
         self.decoder = decoder
         VIVYNet.debug.ldf("var dec")
 
@@ -235,21 +240,23 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Clear previously calculated gradients
         self.encoder.zero_grad()
+        self.decoder.zero_grad()
+        self.intermediary.zero_grad()
         VIVYNet.debug.ldf("encoder.zero_grad()")
 
         # Get loss and the logits from the model
         enc_output = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
 
-        bert_out = self.linear(enc_output[0])
+        # Intermediary layer pass
+        intermediate = self.intermediary(enc_output[0])
+
         src_lengths = len(src_tokens)
-        VIVYNet.debug.ldf(
-            "res 2 : " + str(bert_out.shape) + " : " + str(src_lengths)
-        )
+        VIVYNet.debug.ldf(f"res 2 : {intermediate.shape} : {src_lengths}")
 
         # Get overall features from decoder
         features, state = self.decoder(
-            encoder_out=bert_out,
+            encoder_out=intermediate,
             decoder_in=prev_output_tokens,
             src_lengths=prev_output_tokens_lengths,
             encoder_out_lengths=src_lengths,  # TODO: Pass in the Encoder Output length
@@ -268,7 +275,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         return {"future"}
 
 
-@register_model_architecture("vivy", "vivy_train")
+@register_model_architecture("vivy", "vivy_transformer")
 def train(args):
     """Train function"""
 
