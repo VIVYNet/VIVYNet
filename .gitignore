@@ -12,3 +12,4 @@ __pycache__/
 # VIVYNet folders
 vivynet/results/
 vivynet/checkpoints/
+vivynet/inference_ckpt

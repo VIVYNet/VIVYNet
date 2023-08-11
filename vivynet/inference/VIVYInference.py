@@ -9,7 +9,7 @@ from fairseq.models import (
 import torch
 
 # Submodels imports
-from vivynet.utils.VIVYNetSubModels import BERT, SymphonyNetInference
+from vivynet.utils.VIVYNetSubModels import BERTInference, SymphonyNetInference
 
 # Debug imports
 from vivynet.utils.debug import Debug
@@ -140,7 +140,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("<< START >>")
 
         # Create BERT model
-        bert = BERT(args=args, dictionary=task.source_dictionary)
+        bert = BERTInference(args=args, dictionary=task.source_dictionary)
         VIVYNet.debug.ldf("Model Creation: BERT")
 
         # Freezing the Encoder layers and load pretrained weights
@@ -160,9 +160,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
         VIVYNet.debug.ldf("Checkpoint loading")
 
-        # WIP: Currently unable to transfer weights since the original checkpoint has different dimension due to
-        #      being trained on a different dataset.
-
         # Freezing the Decoder layers and load pretrained weights
         if args.freeze_dec == 1:
             # Freezing self-attentions
@@ -170,9 +167,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
             for name, param in symphony_net.named_parameters():
                 if "self_attention" in name:
                     param.requires_grad = False
-
-            # for name, param in symphony_net.named_parameters():
-            #     print(name, " ", param)
 
             # Zipping two models param dicts
             pretrained_params = []

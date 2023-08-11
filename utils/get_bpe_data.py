@@ -12,7 +12,7 @@ WORKERS = 32
 
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from encoding import pit2str, str2pit, ispitch
+from .encoding import pit2str, str2pit, ispitch
 
 def resort(voc: str) -> str:
     assert(len(voc) % 2 == 0), voc

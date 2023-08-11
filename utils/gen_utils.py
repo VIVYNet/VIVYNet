@@ -12,8 +12,8 @@ from miditoolkit.midi.parser import MidiFile
 from miditoolkit.midi.containers import Instrument
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from encoding import ison, char2int, str2pit, ispitch
-from preprocess_midi import midi_to_event_seq_str
+from .encoding import ison, char2int, str2pit, ispitch
+from .preprocess_midi import midi_to_event_seq_str
 from utils.get_bpe_data import apply_bpe_for_sentence, load_before_apply_bpe
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from make_data import process_single_piece

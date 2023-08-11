@@ -2,6 +2,8 @@
 from transformers import BertTokenizer
 
 # Fairseq and SymphonyNet Imports
+
+
 from utils.gen_utils import (
     gen_one,
     get_trk_ins_map,
@@ -13,7 +15,6 @@ from fairseq.models import FairseqLanguageModel
 
 # Miscellaneous Import
 import time
-
 
 def main():
     src_input = input("Enter Text: ")
@@ -47,7 +48,7 @@ def main():
     """
     Model Initialization
     """
-    CKPT_DIR = "vivynet/checkpoints/checkpoint_best.pt"
+    CKPT_DIR = "vivynet/checkpoints/checkpoint_best_1.pt"
     INFERENCE_DIR = "vivynet/inference"
     vivynet = FairseqLanguageModel.from_pretrained(
         ".",
@@ -63,6 +64,9 @@ def main():
     """
     Generation
     """
+    generated, ins_logits = gen_one(
+        vivynet, encoded, tgt_input, MIN_LEN=256, MAX_LEN=600
+    )
     while True:
         try:
             generated, ins_logits = gen_one(

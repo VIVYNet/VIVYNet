@@ -76,6 +76,51 @@ class BERT(FairseqEncoder):
         return output
 
 
+class BERTInference(FairseqEncoder):
+    """BERT Model Declaration"""
+
+    debug = Debug("BERT", 6)
+
+    def __init__(self, args, dictionary):
+        """Constructor for BERT specifications"""
+
+        BERT.debug.ldf("<< START >>")
+
+        # Super module call
+        super().__init__(dictionary)
+        BERT.debug.ldf("super()")
+
+        # Instance variables
+        self.args = args
+        BERT.debug.ldf("var dev")
+
+        # Initialize model
+        self.model = BertModel.from_pretrained("bert-base-multilingual-cased")
+        BERT.debug.ldf("pretrained model")
+
+        # Run model of CUDA
+        self.model.cuda()
+        BERT.debug.ldf("model CUDA")
+        BERT.debug.ldf("<< END >>")
+
+    def forward(self, src_token):
+        """Forward function to specify forward propogation"""
+
+        BERT.debug.ldf("<< START >>")
+
+        # Send data to device
+        src_token = src_token.to(src_token.device).long().unsqueeze(0)
+        BERT.debug.ldf("src_token")
+
+        # Return logits from BERT << BROKEN >>
+        output = self.model(src_token)
+        BERT.debug.ldf("output")
+
+        # Return result
+        BERT.debug.ldf("<< END >>")
+        return output
+
+
 class SymphonyNetVanillaAE(FairseqDecoder):
     """SymphonyNet Model Specification"""
 

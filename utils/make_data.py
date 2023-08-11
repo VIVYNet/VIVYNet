@@ -10,7 +10,7 @@ from pprint import pprint
 from fairseq.data.indexed_dataset import MMapIndexedDatasetBuilder
 from functools import partial
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from .encoding import sort_tok_str
+from encoding import sort_tok_str
 import subprocess
 
 PAD = 1
