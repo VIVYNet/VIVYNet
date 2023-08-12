@@ -22,11 +22,11 @@ class ModelCriterion(CrossEntropyCriterion):
 
     def forward(self, model, sample, reduce=True):
         """Forward function for the criterion"""
-        
+
         ModelCriterion.debug.ldf("<< START >>")
 
-        print(sample)
-        input()
+        # print(sample)
+        # input()
 
         # Get output of the model
         net_output = model(

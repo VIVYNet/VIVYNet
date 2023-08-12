@@ -296,12 +296,12 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
 
 
-        print("Piece sep ids: ", piece_sep_ids[:10])
-        print("Totpieces: ", totpieces)
-        print("sizes: ", sizes[:10])
-        print(len(sizes))
-        print(totpieces)
-        input()
+        # print("Piece sep ids: ", piece_sep_ids[:10])
+        # print("Totpieces: ", totpieces)
+        # print("sizes: ", sizes[:10])
+        # print(len(sizes))
+        # print(totpieces)
+        # input()
 
         # Process sliced_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
@@ -314,7 +314,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
 
         # # Apply data augmentation by creating multiple samples for each data block
-        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
+        # sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)
         # new_slice_indices = []
         # new_block_to_dataset_index = []
         # for line, line_piece in zip(slice_indices, block_to_dataset_index):
