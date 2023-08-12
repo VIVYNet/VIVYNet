@@ -147,7 +147,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Freezing the Encoder layers and load pretrained weights
         if args.freeze_enc == 1:
-            # Freezing BERT
+            # Freezing BERTBaseMulti
             VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
             for name, param in bert.named_parameters():
                 param.requires_grad = False

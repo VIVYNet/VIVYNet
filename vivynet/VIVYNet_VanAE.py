@@ -7,8 +7,8 @@ from fairseq.models import (
 
 # Submodule imports
 from vivynet.utils.VIVYNetSubModels import (
-    BERT,
-    SymphonyNetVanillaAENoTokenCalc,
+    BERTBaseMulti,
+    SymphonyNetVanillaNoTokenCalc,
     IntermediarySection,
 )
 
@@ -144,17 +144,17 @@ class VIVYNetVanAE(FairseqEncoderDecoderModel):
         VIVYNetVanAE.debug.ldf("<< START >>")
 
         #
-        #   BERT BUILDING
+        #   BERTBaseMulti BUILDING
         #   region
         #
 
-        # Create BERT model
-        bert = BERT(args=args, dictionary=task.source_dictionary)
-        VIVYNetVanAE.debug.ldf("Model Creation: BERT")
+        # Create BERTBaseMulti model
+        bert = BERTBaseMulti(args=args, dictionary=task.source_dictionary)
+        VIVYNetVanAE.debug.ldf("Model Creation: BERTBaseMulti")
 
         # Freezing the Encoder layers and load pretrained weights
         if args.freeze_enc == 1:
-            # Freezing BERT
+            # Freezing BERTBaseMulti
             for name, param in bert.named_parameters():
                 param.requires_grad = False
         VIVYNetVanAE.debug.ldf("Freezing pretrained Encoder layers")
@@ -167,7 +167,7 @@ class VIVYNetVanAE(FairseqEncoderDecoderModel):
         #
 
         # Create SymphonyNet model
-        symphony_net = SymphonyNetVanillaAENoTokenCalc(args=args, task=task)
+        symphony_net = SymphonyNetVanillaNoTokenCalc(args=args, task=task)
         VIVYNetVanAE.debug.ldf("Model Creation: SymphonyNet")
 
         # Get the checkpoint
@@ -195,9 +195,7 @@ class VIVYNetVanAE(FairseqEncoderDecoderModel):
             VIVYNetVanAE.debug.ldf("Weight targeting copy")
 
             # Weight copying
-            VIVYNetVanAE.debug.ldf(
-                "Proceed loading Decoder pretrained weights"
-            )
+            VIVYNetVanAE.debug.ldf("Proceed loading Decoder pretrained weights")
             with torch.no_grad():
                 for param1, param2 in zip(
                     pretrained_params, checkpoint["model"]
@@ -265,7 +263,7 @@ class VIVYNetVanAE(FairseqEncoderDecoderModel):
         enc_output = self.encoder(src_tokens.reshape(-1, 1))
         VIVYNetVanAE.debug.ldf("res 1")
 
-        # Process BERT out from 768 dimension to 512 dimension
+        # Process BERTBaseMulti out from 768 dimension to 512 dimension
         intermediate = self.intermediary(enc_output[0])
         src_lengths = len(src_tokens)
         VIVYNetVanAE.debug.ldf(f"res 2 : {intermediate.shape} : {src_lengths}")

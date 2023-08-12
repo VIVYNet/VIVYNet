@@ -1,12 +1,9 @@
+### Specify model run name
 VARIANT="debug"
 
-### Training batch configs
-# MAX_TOKENS=8192
-# TOKENS_PER_SAMPLE=4096
-
 ### Shorten batch configs for debug
-MAX_TOKENS=128
-TOKENS_PER_SAMPLE=16
+MAX_TOKENS=8192
+TOKENS_PER_SAMPLE=4096
 
 
 fairseq-train ../data/final \
@@ -35,8 +32,8 @@ fairseq-train ../data/final \
   --ins_voc_size 133 \
   --max_rel_pos  198 \
   --max_mea_pos  5360 \
-  --freeze_enc 1 \
-  --freeze_dec 1 \
+  --freeze_enc 0 \
+  --freeze_dec 0 \
   --lr-scheduler polynomial_decay \
   --save-dir ./results/$VARIANT/ckpt \
   --tensorboard-logdir ./results/$VARIANT/logs \
