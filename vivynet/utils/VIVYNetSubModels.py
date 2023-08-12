@@ -76,6 +76,9 @@ class BERTBaseMulti(FairseqEncoder):
         return output
 
 
+class BERTBaseEN(FairseqEncoder):
+    """BERTBaseEN Model Declaration"""
+
     debug = Debug("BERTBaseEN", 6)
 
     def __init__(self, args, dictionary):
