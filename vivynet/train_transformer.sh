@@ -1,5 +1,5 @@
 ### Specify model run name
-VARIANT="debug"
+VARIANT="run10"
 
 ### Shorten batch configs for debug
 MAX_TOKENS=8192
@@ -16,7 +16,7 @@ fairseq-train ../data/final \
   --adam-eps 1e-6 \
   --clip-norm 0.0 \
   --weight-decay 0.01 \
-  --batch-size 4 \
+  --batch-size 1 \
   --lr 0.00001 \
   --shorten_method none \
   --shorten_data_split_list '' \
@@ -25,14 +25,14 @@ fairseq-train ../data/final \
   --sample_break_mode complete_doc \
   --ratio 4 \
   --sample_overlap_rate 4 \
-  --perm_inv 2 \
+  --perm_inv 3 \
   --evt_voc_size 1125 \
   --trk_voc_size 44 \
   --dur_voc_size 36 \
   --ins_voc_size 133 \
   --max_rel_pos  198 \
   --max_mea_pos  5360 \
-  --freeze_enc 0 \
+  --freeze_enc 1 \
   --freeze_dec 0 \
   --lr-scheduler polynomial_decay \
   --save-dir ./results/$VARIANT/ckpt \
