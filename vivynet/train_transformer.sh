@@ -1,42 +1,41 @@
-### Specify model run name
-VARIANT="run10"
+# Source the file config file to run
+source ./configs/default.sh
 
-### Shorten batch configs for debug
-MAX_TOKENS=8192
-TOKENS_PER_SAMPLE=4096
+# Make directories
+mkdir ./results/$VARIANT
 
-
+# Run model train
 fairseq-train ../data/final \
-  --user-dir ./ \
-  --task text2music \
-  --criterion nll_loss \
-  --arch vivy_transformer \
-  --optimizer adam \
-  --adam-betas '(0.9, 0.98)' \
-  --adam-eps 1e-6 \
-  --clip-norm 0.0 \
-  --weight-decay 0.01 \
-  --batch-size 1 \
-  --lr 0.00001 \
-  --shorten_method none \
-  --shorten_data_split_list '' \
-  --tokens_per_sample ${TOKENS_PER_SAMPLE} \
-  --seed 1998 \
-  --sample_break_mode complete_doc \
-  --ratio 4 \
-  --sample_overlap_rate 4 \
-  --perm_inv 3 \
-  --evt_voc_size 1125 \
-  --trk_voc_size 44 \
-  --dur_voc_size 36 \
-  --ins_voc_size 133 \
-  --max_rel_pos  198 \
-  --max_mea_pos  5360 \
-  --freeze_enc 1 \
-  --freeze_dec 0 \
-  --lr-scheduler polynomial_decay \
-  --save-dir ./results/$VARIANT/ckpt \
-  --tensorboard-logdir ./results/$VARIANT/logs \
+  --user-dir $USER_DIR \
+  --task $TASK \
+  --criterion $CRITERION \
+  --arch $ARCH \
+  --optimizer $OPTIMIZER \
+  --adam-betas "$ADAM_BETAS" \
+  --adam-eps $ADAM_EPS \
+  --clip-norm $CLIP_NORM \
+  --weight-decay $WEIGHT_DECAY \
+  --batch-size $BATCH_SIZE \
+  --lr $LR \
+  --shorten_method $SHORTEN \
+  --shorten_data_split_list "$SHORTEN_DATA_SPLIT_LIST" \
+  --tokens_per_sample $TOKENS_PER_SAMPLE \
+  --seed $SEED \
+  --sample_break_mode $SAMPLE_BREAK_MODE \
+  --ratio $RATIO \
+  --sample_overlap_rate $SAMPLE_OVERLAP_RATE \
+  --perm_inv $PERM_INV \
+  --evt_voc_size $EVT_VOC_SIZE \
+  --trk_voc_size $TRK_VOC_SIZE \
+  --dur_voc_size $DUR_VOC_SIZE \
+  --ins_voc_size $INS_VOC_SIZE \
+  --max_rel_pos $MAX_REL_POS \
+  --max_mea_pos $MAX_MEA_POS \
+  --freeze_enc $FREEZE_ENC \
+  --freeze_dec $FREEZE_DEC \
+  --lr-scheduler $LR_SCHEDULER \
+  --save-dir $SAVE_DIR \
+  --tensorboard-logdir $TENSORBOARD_LOGDIR \
   --no-epoch-checkpoints \
-  --log-format simple \
-  --log-interval 8
+  --log-format $LOG_FORMAT \
+  --log-interval $LOG_INTERVAL
