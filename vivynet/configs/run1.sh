@@ -1,8 +1,5 @@
-# WANDB API KEY
-WANDB_API_KEY="7773ca50f1f4adc95e743e19c8cf1e7b864b8dba"
-
 # Variant name definition
-VARIANT="default"
+VARIANT="run1"
 
 # Fairseq model specification
 USER_DIR=./
@@ -43,7 +40,7 @@ WEIGHT_DECAY=0.01
 
 # Training options
 BATCH_SIZE=1
-LR=0.00001
+LR=0.0001
 LR_SCHEDULER=polynomial_decay
 
 # Logging and checkpoing saving

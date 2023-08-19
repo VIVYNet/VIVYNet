@@ -1,7 +1,8 @@
 #!/bin/sh
 
-# Source the file config file to run
-source ./configs/default.sh
+# Source the wandb api key file and config file to run
+source ./configs/run1.sh
+source ./wandb_api.sh
 
 # Print config settings
 echo -e "\n\n\nVARIANT:  ${VARIANT}"

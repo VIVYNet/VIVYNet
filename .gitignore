@@ -12,3 +12,6 @@ __pycache__/
 # VIVYNet folders
 vivynet/results/
 vivynet/checkpoints/
+
+# API keys
+vivynet/wandb_api.sh

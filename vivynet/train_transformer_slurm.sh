@@ -14,8 +14,9 @@
 #   region
 #
 
-# Source the file config file to run
-source ./configs/default.sh
+# Source the wandb api key file and config file to run
+source ./configs/run1.sh
+source ./wandb_api.sh
 
 # # Extract from given argument values
 # VARIANT=$1
