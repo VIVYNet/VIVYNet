@@ -14,4 +14,4 @@ vivynet/results/
 vivynet/checkpoints/
 
 # API keys
-vivynet/wandb_api.sh
+vivynet/personal.sh

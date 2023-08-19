@@ -116,48 +116,34 @@ class ModelCriterion(CrossEntropyCriterion):
         # weighted_size =
         #   (sample_size + on_sample_size*(total_losses-1)) / total_losses
 
-        # Track loss
-        loss = loss_sum / sample_size / math.log(2)
-        metrics.log_scalar("loss", loss, sample_size, round=3)
-
-        # Track event loss
-        event_loss = loss_evt / sample_size / math.log(2)
+        # Track metrics
+        metrics.log_scalar(
+            "loss", loss_sum / sample_size / math.log(2), sample_size, round=3
+        )
         metrics.log_scalar(
             "evt_loss",
-            event_loss,
+            loss_evt / sample_size / math.log(2),
             sample_size,
             round=3,
         )
-
-        # Track duration loss
-        duration_loss = loss_dur / on_sample_size / math.log(2)
         metrics.log_scalar(
             "dur_loss",
-            duration_loss,
+            loss_dur / on_sample_size / math.log(2),
             on_sample_size,
             round=3,
         )
-
-        # Track track loss
-        track_loss = loss_trk / on_sample_size / math.log(2)
         metrics.log_scalar(
             "trk_loss",
-            track_loss,
+            loss_trk / on_sample_size / math.log(2),
             on_sample_size,
             round=3,
         )
-
-        # Track instrument loss
-        instrument_loss = loss_ins / on_sample_size / math.log(2)
         metrics.log_scalar(
             "ins_loss",
-            instrument_loss,
+            loss_ins / on_sample_size / math.log(2),
             on_sample_size,
             round=3,
         )
-
-        # Track different metrics if the number of tokens is not equal to sample
-        # size
         if sample_size != ntokens:
             metrics.log_scalar(
                 "nll_loss", loss_sum / ntokens / math.log(2), ntokens, round=3

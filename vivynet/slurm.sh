@@ -1,8 +1,39 @@
 #!/bin/sh
 
+# Initialize the config variable to an empty value
+CONFIG_FILE=""
+
+# Iterate through the command-line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --config)
+            CONFIG_FILE="$2"
+            shift # Remove --config from args
+            shift # Remove its value from args
+            ;;
+        *)
+            # Other flags or arguments can be processed here
+            shift # Remove generic arg
+            ;;
+    esac
+done
+
+# If --config wasn't set, prompt the user for the config file name
+if [[ -z "$CONFIG_FILE" ]]; then
+    read -p "Please type the name of the config file (from ./configs/) you want to use: " CONFIG_FILE
+fi
+
+# Check if the config file exists and is a regular file
+if [[ ! -f "./configs/$CONFIG_FILE.sh" ]]; then
+    echo "Error: Config file '$CONFIG_FILE' does not exist"
+    exit 1
+fi
+
 # Source the wandb api key file and config file to run
-source ./configs/run1.sh
-source ./wandb_api.sh
+echo
+echo "Using config file: $CONFIG_FILE"
+source ./configs/$CONFIG_FILE.sh
+source ./personal.sh
 
 # Print config settings
 echo -e "\n\n\nVARIANT:  ${VARIANT}"
@@ -70,4 +101,7 @@ sbatch \
   --job-name="VIVYNET Training - ${VARIANT}" \
   --output="$OUTPUT_DIR/slurm/out_%j.txt" \
   --error="$OUTPUT_DIR/slurm/err_%j.txt"  \
+  --gres=gpu:A100:1 \
+  --mail-user=$EMAIL \
   ./train_transformer_slurm.sh \
+  $VARIANT

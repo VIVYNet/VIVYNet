@@ -40,8 +40,8 @@ WEIGHT_DECAY=0.01
 
 # Training options
 BATCH_SIZE=1
-LR=0.0001
-LR_SCHEDULER=polynomial_decay
+LR=0.00001
+LR_SCHEDULER=reduce_lr_on_plateau
 
 # Logging and checkpoing saving
 OUTPUT_DIR=./results/$VARIANT

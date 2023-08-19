@@ -4,10 +4,8 @@
 #SBATCH -q wildfire                         ## QOS
 #SBATCH -c 1                                ## Number of Cores
 #SBATCH --time=1440                         ## 1 day of compute
-#SBATCH --gres=gpu:V100:1                   ## 1 of V100 GPU
 #SBATCH --mem 48G                           ## 48 GB of RAM
 #SBATCH --mail-type=ALL                     ## notify for any job state change
-#SBATCH --mail-user=blherre4@asu.edu        ## notify email
 
 #
 #   VARIABLE EXTRACT
@@ -15,43 +13,8 @@
 #
 
 # Source the wandb api key file and config file to run
-source ./configs/run1.sh
-source ./wandb_api.sh
-
-# # Extract from given argument values
-# VARIANT=$1
-# USER_DIR=$2
-# TASK=$3
-# CRITERION=$4
-# ARCH=$5
-# SEED=$6
-# FREEZE_ENC=$7
-# FREEZE_DEC=$8
-# EVT_VOC_SIZE=$9
-# TRK_VOC_SIZE=$10
-# DUR_VOC_SIZE=$11
-# INS_VOC_SIZE=$12
-# MAX_REL_POS=$13
-# MAX_MEA_POS=$14
-# TOKENS_PER_SAMPLE=$15
-# SHORTEN=$16
-# SHORTEN_DATA_SPLIT_LIST=$17
-# SAMPLE_BREAK_MODE=$18
-# RATIO=$19
-# SAMPLE_OVERLAP_RATE=$20
-# PERM_INV=$21
-# OPTIMIZER=$22
-# ADAM_BETAS=$23
-# ADAM_EPS=$24
-# CLIP_NORM=$25
-# WEIGHT_DECAY=$26
-# BATCH_SIZE=$27
-# LR=$28
-# LR_SCHEDULER=$29
-# SAVE_DIR=$30
-# TENSORBOARD_LOGDIR=$31
-# LOG_FORMAT=$32
-# LOG_INTERVAL=$33
+source ./configs/$1.sh
+source ./personal.sh
 
 # endregion
 
@@ -69,7 +32,7 @@ echo "Loading Python 3 from Anaconda Module"
 module load anaconda/py3
 
 echo "Loading VIVYNET Conda Environment"
-source activate vivyenv #-pytorch-1.13.1
+source activate $CONDA_ENVIRONMENT
 
 echo "Showing GPU Details"
 nvidia-smi -L
