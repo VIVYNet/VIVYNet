@@ -47,6 +47,10 @@ echo "PT_ENC:  ${PT_ENC}"
 echo "FREEZE_ENC:  ${FREEZE_ENC}"
 echo "PT_DEC:  ${PT_DEC}"
 echo "FREEZE_DEC:  ${FREEZE_DEC}"
+echo "DEC_EMBED_DIM:  ${DEC_EMBED_DIM}"
+echo "DEC_NUM_ATTN_HEADS:  ${DEC_NUM_ATTN_HEADS}"
+echo "DEC_NUM_LAYERS:  ${DEC_NUM_LAYERS}"
+echo "DEC_DROPOUT:  ${DEC_DROPOUT}"
 echo "EVT_VOC_SIZE:  ${EVT_VOC_SIZE}"
 echo "TRK_VOC_SIZE:  ${TRK_VOC_SIZE}"
 echo "DUR_VOC_SIZE:  ${DUR_VOC_SIZE}"
@@ -103,5 +107,5 @@ sbatch \
   --error="$OUTPUT_DIR/slurm/err_%j.txt"  \
   --gres=gpu:A100:1 \
   --mail-user=$EMAIL \
-  ./train_transformer_slurm.sh \
+  ./train_transformer.sh \
   $VARIANT

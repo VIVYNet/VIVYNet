@@ -325,12 +325,4 @@ class VIVYNet(FairseqEncoderDecoderModel):
 @register_model_architecture("vivy", "vivy_transformer")
 def train_transformer(args):
     """Train function"""
-
-    # DEBUG
-    debug = Debug("train", 4)
-    debug.ldf("<< train >>")
-
-    args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
-    args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 64)
-    args.dec_num_layers = getattr(args, "dec_num_layers", 12)
-    args.dec_dropout = getattr(args, "dec_dropout", 0.1)
+    pass
