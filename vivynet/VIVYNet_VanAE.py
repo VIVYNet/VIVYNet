@@ -117,14 +117,32 @@ class VIVYNetVanAE(FairseqEncoderDecoderModel):
         )
         VIVYNetVanAE.debug.ldf("dec-dropout")
 
+        # Load pretrained weights encoder
+        parser.add_argument(
+            "--pt_enc",
+            type=int,
+            metavar="N",
+            help="Load pretrained encoder layers",
+        )
+        VIVYNetVanAE.debug.ldf("pt_enc")
+
         # Freeze encoder
         parser.add_argument(
             "--freeze_enc",
             type=int,
             metavar="N",
-            help="Freeze pretrained Encoder layers",
+            help="Freeze Encoder layers",
         )
         VIVYNetVanAE.debug.ldf("freeze_enc")
+
+        # Load pretrained weights decoder
+        parser.add_argument(
+            "--pt_dec",
+            type=int,
+            metavar="N",
+            help="Load pretrained decoder layers",
+        )
+        VIVYNetVanAE.debug.ldf("pt_dec")
 
         # Freeze decoder
         parser.add_argument(

@@ -25,9 +25,6 @@ class ModelCriterion(CrossEntropyCriterion):
 
         ModelCriterion.debug.ldf("<< START >>")
 
-        # print(sample)
-        # input()
-
         # Get output of the model
         net_output = model(
             sample["net_input"]["enc_input"],

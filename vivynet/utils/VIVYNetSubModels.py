@@ -3,7 +3,7 @@ from fairseq.models import FairseqEncoder, FairseqDecoder
 from fairseq import utils
 
 # HuggingFace Imports
-from transformers import BertModel
+from transformers import BertModel, BertConfig
 
 # FastTransformer Imports
 from fast_transformers.builders import (
@@ -75,6 +75,7 @@ class BERTBaseMulti(FairseqEncoder):
         BERTBaseMulti.debug.ldf("<< END >>")
         return output
 
+
 class BERTBaseEN(FairseqEncoder):
     """BERTBaseEN Model Declaration"""
 
@@ -94,7 +95,11 @@ class BERTBaseEN(FairseqEncoder):
         BERTBaseEN.debug.ldf("var dev")
 
         # Initialize model
-        self.model = BertModel.from_pretrained("bert-base-cased")
+        if args.pt_enc:
+            self.model = BertModel.from_pretrained("bert-base-cased")
+        else:
+            config = BertConfig.from_pretrained("bert-base-cased")
+            self.model = BertModel(config)
         BERTBaseEN.debug.ldf("pretrained model")
 
         # Run model of CUDA
@@ -323,9 +328,7 @@ class SymphonyNetVanilla(FairseqDecoder):
         tmp = self.wTrke(decoder_in[..., 2])
         trk_emb = tmp * evton_mask
 
-        SymphonyNetVanilla.debug.ldf(
-            "Calculating LengthMask for tgt"
-        )
+        SymphonyNetVanilla.debug.ldf("Calculating LengthMask for tgt")
         # Note: Calc LengthMask for src_lengths
         pad_mask = (
             decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
@@ -341,9 +344,7 @@ class SymphonyNetVanilla(FairseqDecoder):
                 device=decoder_in.device,
             )
 
-        SymphonyNetVanilla.debug.ldf(
-            "Calculating LengthMask for src"
-        )
+        SymphonyNetVanilla.debug.ldf("Calculating LengthMask for src")
         # Note: Calc LengthMask for encoder_out_lengths
         if encoder_out_lengths is not None:
             enc_len_mask = LengthMask(
@@ -360,9 +361,7 @@ class SymphonyNetVanilla(FairseqDecoder):
                 device=encoder_out.device,
             )
 
-        SymphonyNetVanilla.debug.ldf(
-            "full mask for cross attention layer"
-        )
+        SymphonyNetVanilla.debug.ldf("full mask for cross attention layer")
         # WIP: Implement FullMask for Cross Attention layer
         full_mask = FullMask(N=seq_len, M=enc_len, device=decoder_in.device)
 
@@ -629,9 +628,7 @@ class SymphonyNetVanillaNoTokenCalc(FairseqDecoder):
 
         # Pass to model
         outputs = self.model(x, self.attn_mask, len_mask)
-        SymphonyNetVanillaNoTokenCalc.debug.ldf(
-            "Model Transformer Processing"
-        )
+        SymphonyNetVanillaNoTokenCalc.debug.ldf("Model Transformer Processing")
 
         # Pass to linear layer
         outputs = self.ln_f(outputs)

@@ -9,7 +9,9 @@ ARCH=vivy_transformer
 SEED=1998
 
 # Model behavior specifications
-FREEZE_ENC=0
+PT_ENC=0
+FREEZE_ENC=1
+PT_DEC=0
 FREEZE_DEC=0
 
 # Embedding layer information

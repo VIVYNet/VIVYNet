@@ -294,15 +294,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         totpieces = len(piece_sep_ids)
         slice_indices = np.zeros((totpieces, 2), dtype=int)
         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
-
-
-        # print("Piece sep ids: ", piece_sep_ids[:10])
-        # print("Totpieces: ", totpieces)
-        # print("sizes: ", sizes[:10])
-        # print(len(sizes))
-        # print(totpieces)
-        # input()
-
+        
         # Process sliced_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
             s = piece_sep_ids[i - 1] if i > 0 else -1
