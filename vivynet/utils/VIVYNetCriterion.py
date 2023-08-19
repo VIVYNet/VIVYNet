@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from vivynet.utils.debug import Debug
 
 # Miscellaneous Imports
+import wandb
 import math
 
 
@@ -53,6 +54,10 @@ class ModelCriterion(CrossEntropyCriterion):
             "on_sample_size": sample["ntokens"],
         }
         ModelCriterion.debug.ldf("Generate Logging")
+
+        # Log with WandB
+        wandb.log(logging_output)
+        ModelCriterion.debug.ldf("WANDB Logged")
 
         # Return information
         ModelCriterion.debug.ldf("<< END >>")

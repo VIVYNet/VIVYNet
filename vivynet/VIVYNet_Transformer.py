@@ -7,7 +7,6 @@ from fairseq.models import (
 
 # Submodule imports
 from vivynet.utils.VIVYNetSubModels import (
-    BERTBaseMulti,
     BERTBaseEN,
     SymphonyNetVanilla,
     IntermediarySection,
@@ -18,6 +17,7 @@ import torch
 
 # Debug imports
 from vivynet.utils.debug import Debug
+import wandb
 
 
 @register_model("vivy")
@@ -26,6 +26,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
     # DEBUG
     debug = Debug("VIVYNet", 3)
+
+    # Variable declaration
+    WANDB = None
 
     @staticmethod
     def add_args(parser):
@@ -161,6 +164,10 @@ class VIVYNet(FairseqEncoderDecoderModel):
         """Build model function"""
 
         VIVYNet.debug.ldf("<< START >>")
+
+        # WandB Integration
+        VIVYNet.WANDB = wandb.init(project="VIVYNet", config=vars(args))
+        VIVYNet.debug.ldf("WANDB Initialization")
 
         #
         #   BERT BUILDING

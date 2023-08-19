@@ -1,0 +1,471 @@
+wandb_version: 1
+
+no_progress_bar:
+  desc: null
+  value: false
+log_interval:
+  desc: null
+  value: 10
+log_format:
+  desc: null
+  value: simple
+tensorboard_logdir:
+  desc: null
+  value: ./results/default/logs
+seed:
+  desc: null
+  value: 1998
+cpu:
+  desc: null
+  value: false
+tpu:
+  desc: null
+  value: false
+bf16:
+  desc: null
+  value: false
+memory_efficient_bf16:
+  desc: null
+  value: false
+fp16:
+  desc: null
+  value: false
+memory_efficient_fp16:
+  desc: null
+  value: false
+fp16_no_flatten_grads:
+  desc: null
+  value: false
+fp16_init_scale:
+  desc: null
+  value: 128
+fp16_scale_window:
+  desc: null
+  value: null
+fp16_scale_tolerance:
+  desc: null
+  value: 0.0
+min_loss_scale:
+  desc: null
+  value: 0.0001
+threshold_loss_scale:
+  desc: null
+  value: null
+user_dir:
+  desc: null
+  value: ./
+empty_cache_freq:
+  desc: null
+  value: 0
+all_gather_list_size:
+  desc: null
+  value: 16384
+model_parallel_size:
+  desc: null
+  value: 1
+checkpoint_suffix:
+  desc: null
+  value: ''
+checkpoint_shard_count:
+  desc: null
+  value: 1
+quantization_config_path:
+  desc: null
+  value: null
+profile:
+  desc: null
+  value: false
+criterion:
+  desc: null
+  value: nll_loss
+tokenizer:
+  desc: null
+  value: null
+bpe:
+  desc: null
+  value: null
+optimizer:
+  desc: null
+  value: adam
+lr_scheduler:
+  desc: null
+  value: polynomial_decay
+scoring:
+  desc: null
+  value: bleu
+task:
+  desc: null
+  value: text2music
+num_workers:
+  desc: null
+  value: 1
+skip_invalid_size_inputs_valid_test:
+  desc: null
+  value: false
+max_tokens:
+  desc: null
+  value: null
+batch_size:
+  desc: null
+  value: 1
+required_batch_size_multiple:
+  desc: null
+  value: 8
+required_seq_len_multiple:
+  desc: null
+  value: 1
+dataset_impl:
+  desc: null
+  value: null
+data_buffer_size:
+  desc: null
+  value: 10
+train_subset:
+  desc: null
+  value: train
+valid_subset:
+  desc: null
+  value: valid
+validate_interval:
+  desc: null
+  value: 1
+validate_interval_updates:
+  desc: null
+  value: 0
+validate_after_updates:
+  desc: null
+  value: 0
+fixed_validation_seed:
+  desc: null
+  value: null
+disable_validation:
+  desc: null
+  value: false
+max_tokens_valid:
+  desc: null
+  value: null
+batch_size_valid:
+  desc: null
+  value: 1
+curriculum:
+  desc: null
+  value: 0
+gen_subset:
+  desc: null
+  value: test
+num_shards:
+  desc: null
+  value: 1
+shard_id:
+  desc: null
+  value: 0
+distributed_world_size:
+  desc: null
+  value: 1
+distributed_rank:
+  desc: null
+  value: 0
+distributed_backend:
+  desc: null
+  value: nccl
+distributed_init_method:
+  desc: null
+  value: null
+distributed_port:
+  desc: null
+  value: -1
+device_id:
+  desc: null
+  value: 0
+distributed_no_spawn:
+  desc: null
+  value: false
+ddp_backend:
+  desc: null
+  value: c10d
+bucket_cap_mb:
+  desc: null
+  value: 25
+fix_batches_to_gpus:
+  desc: null
+  value: false
+find_unused_parameters:
+  desc: null
+  value: false
+fast_stat_sync:
+  desc: null
+  value: false
+broadcast_buffers:
+  desc: null
+  value: false
+distributed_wrapper:
+  desc: null
+  value: DDP
+slowmo_momentum:
+  desc: null
+  value: null
+slowmo_algorithm:
+  desc: null
+  value: LocalSGD
+localsgd_frequency:
+  desc: null
+  value: 3
+nprocs_per_node:
+  desc: null
+  value: 1
+pipeline_model_parallel:
+  desc: null
+  value: false
+pipeline_balance:
+  desc: null
+  value: null
+pipeline_devices:
+  desc: null
+  value: null
+pipeline_chunks:
+  desc: null
+  value: 0
+pipeline_encoder_balance:
+  desc: null
+  value: null
+pipeline_encoder_devices:
+  desc: null
+  value: null
+pipeline_decoder_balance:
+  desc: null
+  value: null
+pipeline_decoder_devices:
+  desc: null
+  value: null
+pipeline_checkpoint:
+  desc: null
+  value: never
+zero_sharding:
+  desc: null
+  value: none
+arch:
+  desc: null
+  value: vivy_transformer
+max_epoch:
+  desc: null
+  value: 0
+max_update:
+  desc: null
+  value: 0
+stop_time_hours:
+  desc: null
+  value: 0
+clip_norm:
+  desc: null
+  value: 0.0
+sentence_avg:
+  desc: null
+  value: false
+update_freq:
+  desc: null
+  value:
+  - 1
+lr:
+  desc: null
+  value:
+  - 1.0e-05
+min_lr:
+  desc: null
+  value: -1.0
+use_bmuf:
+  desc: null
+  value: false
+save_dir:
+  desc: null
+  value: ./results/default/ckpt
+restore_file:
+  desc: null
+  value: checkpoint_last.pt
+finetune_from_model:
+  desc: null
+  value: null
+reset_dataloader:
+  desc: null
+  value: false
+reset_lr_scheduler:
+  desc: null
+  value: false
+reset_meters:
+  desc: null
+  value: false
+reset_optimizer:
+  desc: null
+  value: false
+optimizer_overrides:
+  desc: null
+  value: '{}'
+save_interval:
+  desc: null
+  value: 1
+save_interval_updates:
+  desc: null
+  value: 0
+keep_interval_updates:
+  desc: null
+  value: -1
+keep_last_epochs:
+  desc: null
+  value: -1
+keep_best_checkpoints:
+  desc: null
+  value: -1
+no_save:
+  desc: null
+  value: false
+no_epoch_checkpoints:
+  desc: null
+  value: true
+no_last_checkpoints:
+  desc: null
+  value: false
+no_save_optimizer_state:
+  desc: null
+  value: false
+best_checkpoint_metric:
+  desc: null
+  value: loss
+maximize_best_checkpoint_metric:
+  desc: null
+  value: false
+patience:
+  desc: null
+  value: -1
+adam_betas:
+  desc: null
+  value: (0.9, 0.98)
+adam_eps:
+  desc: null
+  value: 1.0e-06
+weight_decay:
+  desc: null
+  value: 0.01
+use_old_adam:
+  desc: null
+  value: false
+force_anneal:
+  desc: null
+  value: null
+warmup_updates:
+  desc: null
+  value: 0
+end_learning_rate:
+  desc: null
+  value: 0.0
+power:
+  desc: null
+  value: 1.0
+total_num_update:
+  desc: null
+  value: 1000000
+data:
+  desc: null
+  value: ../data/final
+shorten_method:
+  desc: null
+  value: none
+shorten_data_split_list:
+  desc: null
+  value: ''
+tokens_per_sample:
+  desc: null
+  value: 4096
+sample_break_mode:
+  desc: null
+  value: complete_doc
+ratio:
+  desc: null
+  value: 4
+sample_overlap_rate:
+  desc: null
+  value: 4
+perm_inv:
+  desc: null
+  value: 3
+evt_voc_size:
+  desc: null
+  value: 1125
+trk_voc_size:
+  desc: null
+  value: 44
+dur_voc_size:
+  desc: null
+  value: 36
+ins_voc_size:
+  desc: null
+  value: 133
+max_rel_pos:
+  desc: null
+  value: 198
+max_mea_pos:
+  desc: null
+  value: 5360
+pt_enc:
+  desc: null
+  value: 0
+freeze_enc:
+  desc: null
+  value: 1
+pt_dec:
+  desc: null
+  value: 0
+freeze_dec:
+  desc: null
+  value: 0
+no_seed_provided:
+  desc: null
+  value: false
+dec_embed_dim:
+  desc: null
+  value: 512
+dec_num_attention_heads:
+  desc: null
+  value: 32
+dec_num_layers:
+  desc: null
+  value: 12
+dec_dropout:
+  desc: null
+  value: 0.1
+distributed_num_procs:
+  desc: null
+  value: 1
+_wandb:
+  desc: null
+  value:
+    python_version: 3.8.13
+    cli_version: 0.15.8
+    framework: huggingface
+    huggingface_version: 4.30.2
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1692433015.536345
+    t:
+      1:
+      - 1
+      - 11
+      - 49
+      - 50
+      - 55
+      - 64
+      - 71
+      2:
+      - 1
+      - 11
+      - 49
+      - 50
+      - 55
+      - 64
+      - 71
+      3:
+      - 16
+      - 23
+      4: 3.8.13
+      5: 0.15.8
+      6: 4.30.2
+      8:
+      - 5

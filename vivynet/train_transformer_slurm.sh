@@ -122,6 +122,9 @@ echo "LOG_FORMAT:  ${LOG_FORMAT}"
 echo "LOG_INTERVAL:  ${LOG_INTERVAL}"
 echo
 
+# Log into wandb
+wandb login $WANDB_API_KEY
+
 # Run model train
 fairseq-train ../data/final \
   --user-dir $USER_DIR \

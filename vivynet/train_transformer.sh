@@ -4,6 +4,9 @@ source ./configs/default.sh
 # Make directories
 mkdir ./results/$VARIANT
 
+# Log into wandb
+wandb login $WANDB_API_KEY
+
 # Run model train
 fairseq-train ../data/final \
   --user-dir $USER_DIR \
@@ -31,7 +34,9 @@ fairseq-train ../data/final \
   --ins_voc_size $INS_VOC_SIZE \
   --max_rel_pos $MAX_REL_POS \
   --max_mea_pos $MAX_MEA_POS \
+  --pt_enc $PT_ENC \
   --freeze_enc $FREEZE_ENC \
+  --pt_dec $PT_DEC \
   --freeze_dec $FREEZE_DEC \
   --lr-scheduler $LR_SCHEDULER \
   --save-dir $SAVE_DIR \

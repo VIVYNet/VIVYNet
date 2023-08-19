@@ -1,3 +1,6 @@
+# WANDB API KEY
+WANDB_API_KEY="7773ca50f1f4adc95e743e19c8cf1e7b864b8dba"
+
 # Variant name definition
 VARIANT="default"
 
