@@ -55,9 +55,9 @@ class ModelCriterion(CrossEntropyCriterion):
         }
         ModelCriterion.debug.ldf("Generate Logging")
 
-        # Log with WandB
-        wandb.log(logging_output)
-        ModelCriterion.debug.ldf("WANDB Logged")
+        # # Log with WandB
+        # wandb.log(logging_output)
+        # ModelCriterion.debug.ldf("WANDB Logged")
 
         # Return information
         ModelCriterion.debug.ldf("<< END >>")
@@ -98,6 +98,8 @@ class ModelCriterion(CrossEntropyCriterion):
     @staticmethod
     def reduce_metrics(logging_outputs) -> None:
         """Aggregate logging outputs from data parallel training."""
+
+        # Preprocess logged metrics
         loss_sum = sum(log.get("loss", 0) for log in logging_outputs)
         loss_evt = sum(log.get("evt_loss", 0) for log in logging_outputs)
         loss_dur = sum(log.get("dur_loss", 0) for log in logging_outputs)
@@ -105,49 +107,96 @@ class ModelCriterion(CrossEntropyCriterion):
         loss_ins = sum(log.get("ins_loss", 0) for log in logging_outputs)
         ntokens = sum(log.get("ntokens", 0) for log in logging_outputs)
         sample_size = sum(log.get("sample_size", 0) for log in logging_outputs)
-        on_sample_size = sum(log.get("on_sample_size", 0) for log in logging_outputs)
-        # we divide by log(2) to convert the loss from base e to base 2
-        # total_losses = 4
-        # weighted_size = (sample_size + on_sample_size*(total_losses-1)) / total_losses
-        metrics.log_scalar(
-            "loss", loss_sum / sample_size / math.log(2), sample_size, round=3
-        )
-        metrics.log_scalar(
-            "evt_loss", loss_evt / sample_size / math.log(2), sample_size, round=3
-        )
-        metrics.log_scalar(
-            "dur_loss", loss_dur / on_sample_size / math.log(2), on_sample_size, round=3
-        )
-        metrics.log_scalar(
-            "trk_loss", loss_trk / on_sample_size / math.log(2), on_sample_size, round=3
-        )
-        metrics.log_scalar(
-            "ins_loss", loss_ins / on_sample_size / math.log(2), on_sample_size, round=3
+        on_sample_size = sum(
+            log.get("on_sample_size", 0) for log in logging_outputs
         )
 
+        # we divide by log(2) to convert the loss from base e to base 2
+        # total_losses = 4
+        # weighted_size =
+        #   (sample_size + on_sample_size*(total_losses-1)) / total_losses
+
+        # Track loss
+        loss = loss_sum / sample_size / math.log(2)
+        metrics.log_scalar("loss", loss, sample_size, round=3)
+
+        # Track event loss
+        event_loss = loss_evt / sample_size / math.log(2)
+        metrics.log_scalar(
+            "evt_loss",
+            event_loss,
+            sample_size,
+            round=3,
+        )
+
+        # Track duration loss
+        duration_loss = loss_dur / on_sample_size / math.log(2)
+        metrics.log_scalar(
+            "dur_loss",
+            duration_loss,
+            on_sample_size,
+            round=3,
+        )
+
+        # Track track loss
+        track_loss = loss_trk / on_sample_size / math.log(2)
+        metrics.log_scalar(
+            "trk_loss",
+            track_loss,
+            on_sample_size,
+            round=3,
+        )
+
+        # Track instrument loss
+        instrument_loss = loss_ins / on_sample_size / math.log(2)
+        metrics.log_scalar(
+            "ins_loss",
+            instrument_loss,
+            on_sample_size,
+            round=3,
+        )
+
+        # Track different metrics if the number of tokens is not equal to sample
+        # size
         if sample_size != ntokens:
             metrics.log_scalar(
                 "nll_loss", loss_sum / ntokens / math.log(2), ntokens, round=3
             )
             metrics.log_derived(
-                "ppl", lambda meters: utils.get_perplexity(meters["nll_loss"].avg)
+                "ppl",
+                lambda meters: utils.get_perplexity(meters["nll_loss"].avg),
             )
         else:
             metrics.log_derived(
                 "ppl", lambda meters: utils.get_perplexity(meters["loss"].avg)
             )
             metrics.log_derived(
-                "evt_ppl", lambda meters: utils.get_perplexity(meters["evt_loss"].avg)
+                "evt_ppl",
+                lambda meters: utils.get_perplexity(meters["evt_loss"].avg),
             )
             metrics.log_derived(
-                "dur_ppl", lambda meters: utils.get_perplexity(meters["dur_loss"].avg)
+                "dur_ppl",
+                lambda meters: utils.get_perplexity(meters["dur_loss"].avg),
             )
             metrics.log_derived(
-                "trk_ppl", lambda meters: utils.get_perplexity(meters["trk_loss"].avg)
+                "trk_ppl",
+                lambda meters: utils.get_perplexity(meters["trk_loss"].avg),
             )
             metrics.log_derived(
-                "ins_ppl", lambda meters: utils.get_perplexity(meters["ins_loss"].avg)
+                "ins_ppl",
+                lambda meters: utils.get_perplexity(meters["ins_loss"].avg),
             )
+
+        # Track metrics with WANDB
+        out = metrics.get_active_aggregators()[0]
+        track = {}
+        for k in out:
+            iter = out[k]
+            if hasattr(iter, "avg"):
+                track[k] = out[k].avg
+            else:
+                track[k] = out[k].fn(out)
+        wandb.log(track)
 
     @staticmethod
     def logging_outputs_can_be_summed() -> bool:

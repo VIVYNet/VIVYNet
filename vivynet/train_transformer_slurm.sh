@@ -5,7 +5,7 @@
 #SBATCH -c 1                                ## Number of Cores
 #SBATCH --time=1440                         ## 1 day of compute
 #SBATCH --gres=gpu:V100:1                   ## 1 of V100 GPU
-#SBATCH --mem 32G                           ## 32 GB of RAM
+#SBATCH --mem 48G                           ## 48 GB of RAM
 #SBATCH --mail-type=ALL                     ## notify for any job state change
 #SBATCH --mail-user=blherre4@asu.edu        ## notify email
 

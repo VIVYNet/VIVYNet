@@ -9,7 +9,7 @@ ARCH=vivy_transformer
 SEED=1998
 
 # Model behavior specifications
-PT_ENC=0
+PT_ENC=1
 FREEZE_ENC=1
 PT_DEC=0
 FREEZE_DEC=0
