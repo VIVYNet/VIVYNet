@@ -1,12 +1,14 @@
 # Source the wandb api key file and config file to run
-source ./configs/run1.sh
+source ./configs/test.sh
 source ./personal.sh
 
 # Make directories
 mkdir ./results/$VARIANT
 
-# Log into wandb
+# Setup wandb
 wandb login $WANDB_API_KEY
+export WANDB_NAME="$RUN_NAME - $VARIANT"
+export WANDB_DIR=$OUTPUT_DIR
 
 # Run model train
 fairseq-train ../data/final \
@@ -45,4 +47,5 @@ fairseq-train ../data/final \
   --tensorboard-logdir $TENSORBOARD_LOGDIR \
   --no-epoch-checkpoints \
   --log-format $LOG_FORMAT \
-  --log-interval $LOG_INTERVAL
+  --log-interval $LOG_INTERVAL \
+  --wandb-project $WANDB_PROJECT

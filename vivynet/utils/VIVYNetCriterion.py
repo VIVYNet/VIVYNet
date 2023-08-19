@@ -11,7 +11,6 @@ import torch.nn.functional as F
 from vivynet.utils.debug import Debug
 
 # Miscellaneous Imports
-import wandb
 import math
 
 
@@ -54,10 +53,6 @@ class ModelCriterion(CrossEntropyCriterion):
             "on_sample_size": sample["ntokens"],
         }
         ModelCriterion.debug.ldf("Generate Logging")
-
-        # # Log with WandB
-        # wandb.log(logging_output)
-        # ModelCriterion.debug.ldf("WANDB Logged")
 
         # Return information
         ModelCriterion.debug.ldf("<< END >>")
@@ -172,17 +167,6 @@ class ModelCriterion(CrossEntropyCriterion):
                 "ins_ppl",
                 lambda meters: utils.get_perplexity(meters["ins_loss"].avg),
             )
-
-        # Track metrics with WANDB
-        out = metrics.get_active_aggregators()[0]
-        track = {}
-        for k in out:
-            iter = out[k]
-            if hasattr(iter, "avg"):
-                track[k] = out[k].avg
-            else:
-                track[k] = out[k].fn(out)
-        wandb.log(track)
 
     @staticmethod
     def logging_outputs_can_be_summed() -> bool:
