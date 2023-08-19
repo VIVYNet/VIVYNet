@@ -39,6 +39,7 @@ fairseq-train ../data/final \
   --pt_dec $PT_DEC \
   --freeze_dec $FREEZE_DEC \
   --lr-scheduler $LR_SCHEDULER \
+  --output_dir $OUTPUT_DIR \
   --save-dir $SAVE_DIR \
   --tensorboard-logdir $TENSORBOARD_LOGDIR \
   --no-epoch-checkpoints \

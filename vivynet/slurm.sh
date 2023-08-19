@@ -36,6 +36,7 @@ echo "WEIGHT_DECAY:  ${WEIGHT_DECAY}"
 echo "BATCH_SIZE:  ${BATCH_SIZE}"
 echo "LR:  ${LR}"
 echo "LR_SCHEDULER:  ${LR_SCHEDULER}"
+echo "OUTPUT_DIR:  ${OUTPUT_DIR}"
 echo "SAVE_DIR:  ${SAVE_DIR}"
 echo "TENSORBOARD_LOGDIR:  ${TENSORBOARD_LOGDIR}"
 echo "LOG_FORMAT:  ${LOG_FORMAT}"
@@ -56,8 +57,8 @@ fi
 
 # Make directories
 echo "Making directories..."
-mkdir ./results/$VARIANT
-mkdir ./results/$VARIANT/slurm
+mkdir $OUTPUT_DIR
+mkdir $OUTPUT_DIR/slurm
 echo "Directories made"
 echo
 
@@ -66,6 +67,6 @@ echo
 echo "Dispatching train run..."
 sbatch \
   --job-name="VIVYNET Training - ${VARIANT}" \
-  --output="./results/${VARIANT}/slurm/out_%j.txt" \
-  --error="./results/${VARIANT}/slurm/err_%j.txt"  \
+  --output="$OUTPUT_DIR/slurm/out_%j.txt" \
+  --error="$OUTPUT_DIR/slurm/err_%j.txt"  \
   ./train_transformer_slurm.sh \

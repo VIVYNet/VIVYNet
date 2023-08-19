@@ -116,6 +116,7 @@ echo "WEIGHT_DECAY:  ${WEIGHT_DECAY}"
 echo "BATCH_SIZE:  ${BATCH_SIZE}"
 echo "LR:  ${LR}"
 echo "LR_SCHEDULER:  ${LR_SCHEDULER}"
+echo "OUTPUT_DIR:  ${OUTPUT_DIR}"
 echo "SAVE_DIR:  ${SAVE_DIR}"
 echo "TENSORBOARD_LOGDIR:  ${TENSORBOARD_LOGDIR}"
 echo "LOG_FORMAT:  ${LOG_FORMAT}"
@@ -157,6 +158,7 @@ fairseq-train ../data/final \
   --pt_dec $PT_DEC \
   --freeze_dec $FREEZE_DEC \
   --lr-scheduler $LR_SCHEDULER \
+  --output_dir $OUTPUT_DIR \
   --save-dir $SAVE_DIR \
   --tensorboard-logdir $TENSORBOARD_LOGDIR \
   --no-epoch-checkpoints \

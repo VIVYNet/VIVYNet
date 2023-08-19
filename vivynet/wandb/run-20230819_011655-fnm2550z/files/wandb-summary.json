@@ -1,1 +1,0 @@
-{"loss": 7160.6142578125, "evt_loss": 13782.25390625, "dur_loss": 3073.904052734375, "trk_loss": 4658.88134765625, "ins_loss": 7127.41650390625, "ntokens": 3060, "nsentences": 1, "sample_size": 3060, "on_sample_size": 3060, "_timestamp": 1692433116.051712, "_runtime": 100.51536703109741, "_step": 171, "_wandb": {"runtime": 100}}

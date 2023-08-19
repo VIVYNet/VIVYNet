@@ -47,6 +47,7 @@ LR=0.00001
 LR_SCHEDULER=polynomial_decay
 
 # Logging and checkpoing saving
+OUTPUT_DIR=./results/$VARIANT
 SAVE_DIR=./results/$VARIANT/ckpt
 TENSORBOARD_LOGDIR=./results/$VARIANT/logs
 LOG_FORMAT=simple

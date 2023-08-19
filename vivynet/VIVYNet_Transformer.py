@@ -157,6 +157,15 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
         VIVYNet.debug.ldf("freeze_dec")
 
+        # Output directory
+        parser.add_argument(
+            "--output_dir",
+            type=str,
+            metavar="N",
+            help="Directory to output information",
+        )
+        VIVYNet.debug.ldf("output_dir")
+
         VIVYNet.debug.ldf("<< END >>")
 
     @classmethod
@@ -166,7 +175,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("<< START >>")
 
         # WandB Integration
-        VIVYNet.WANDB = wandb.init(project="VIVYNet", config=vars(args))
+        VIVYNet.WANDB = wandb.init(
+            project="VIVYNet", config=vars(args), dir=args.output_dir
+        )
         VIVYNet.debug.ldf("WANDB Initialization")
 
         #
