@@ -1,7 +1,18 @@
-decoder/checkpoints
-testing/fsq/*
-data/*
-*.pyc
+# VSCode folder
 .vscode/
+
+# Data folder
+data/*
+
+# Pycaches
+__pycache__/
+*.pyc
+*.pyo
+
+# VIVYNet folders
 vivynet/results/
 vivynet/checkpoints/
+vivynet/inference_ckpt
+
+# API keys
+vivynet/personal.sh

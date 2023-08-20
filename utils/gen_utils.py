@@ -12,8 +12,8 @@ from miditoolkit.midi.parser import MidiFile
 from miditoolkit.midi.containers import Instrument
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from encoding import ison, char2int, str2pit, ispitch
-from preprocess_midi import midi_to_event_seq_str
+from .encoding import ison, char2int, str2pit, ispitch
+from .preprocess_midi import midi_to_event_seq_str
 from utils.get_bpe_data import apply_bpe_for_sentence, load_before_apply_bpe
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from make_data import process_single_piece
@@ -219,10 +219,10 @@ def gen_one(model, src_input, prime_nums, MAX_LEN = 4090, MIN_LEN = 0):
     prime_mea_idx = 0
     prime = copy.deepcopy(prime_nums)
     ins_list = [-1] 
-    print(prime)
-    print(prime[:-1])
-    print(prime[1:])
-    input()
+    # print(prime)
+    # print(prime[:-1])
+    # print(prime[1:])
+    # input()
 
     with torch.no_grad():
         memo = None
@@ -276,9 +276,11 @@ def get_note_seq(prime, trk_ins_map):
     measure_time = 0
     last_bom = 0
     error_note = 0
+    #last_pos = 0
     for (e,d,t,_, _, _) in prime[1:]:
 
         ee = music_dict.index2word(0, e)
+        print(ee)
         if ee[0].lower() == 'm':
 
             measure_time += last_bom

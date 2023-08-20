@@ -409,9 +409,21 @@ def event_seq_to_str(new_event_seq):
 # abs_pos type pitch program is_drum track_id duration/rela_pos
 def midi_to_event_seq_str(midi_file_path, readonly=False):
     p_midi = MidiFile(midi_file_path)
+    ## p_midi structure:
+    """
+            self.ticks_per_beat = ticks_per_beat 
+            self.max_tick = 0
+            self.tempo_changes = []
+            self.time_signature_changes = []
+            self.key_signature_changes = []
+            self.lyrics = []
+            self.markers = []
+            self.instruments = []
+    """
     for ins in p_midi.instruments:
         ins.remove_invalid_notes(verbose=False)
 
+    ## merge all of drum instruments into one
     merge_drums(p_midi)
 
     if not readonly:
@@ -504,7 +516,7 @@ def mp_handler(file_paths):
 if __name__ == '__main__':
 
     warnings.filterwarnings('ignore')
-
+    """Compile all the midi files"""
     folder_path = "/home/blherre4/VIVY/VIVYNet/decoder/symphony_net/data/midis"
     file_paths = []
     for path, directories, files in os.walk(folder_path):
@@ -512,6 +524,6 @@ if __name__ == '__main__':
             if file.endswith(".mid") or file.endswith(".MID"):
                 file_path = path + "/" + file
                 file_paths.append(file_path)
-
+    
     # run multi-processing midi extractor
     mp_handler(file_paths)
