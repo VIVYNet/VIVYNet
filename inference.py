@@ -48,7 +48,7 @@ def main():
     """
     Model Initialization
     """
-    CKPT_DIR = "vivynet/inference_ckpt/checkpoint_best_4.pt"
+    CKPT_DIR = "vivynet/inference_ckpt/checkpoint_best_5.pt"
     INFERENCE_DIR = "vivynet/inference"
     vivynet = FairseqLanguageModel.from_pretrained(
         ".",

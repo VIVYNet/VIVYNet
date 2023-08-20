@@ -276,6 +276,7 @@ def get_note_seq(prime, trk_ins_map):
     measure_time = 0
     last_bom = 0
     error_note = 0
+    #last_pos = 0
     for (e,d,t,_, _, _) in prime[1:]:
 
         ee = music_dict.index2word(0, e)

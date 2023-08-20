@@ -30,6 +30,7 @@ from vivynet.utils.debug import Debug
 # Miscellaneous Import
 from typing import Dict, List, Optional, Tuple
 
+# Note: a flag that checks if its inference or not inside the bert
 
 class BERTBaseMulti(FairseqEncoder):
     """BERTBaseMulti Model Declaration"""
@@ -110,6 +111,52 @@ class BERTBaseEN(FairseqEncoder):
 
         # Send data to device
         src_token = src_token.to(src_token.device).long()
+        BERTBaseEN.debug.ldf("src_token")
+
+        # Return logits from BERTBaseEN << BROKEN >>
+        output = self.model(src_token)
+        BERTBaseEN.debug.ldf("output")
+
+        # Return result
+        BERTBaseEN.debug.ldf("<< END >>")
+        return output
+
+
+
+class BERTInference(FairseqEncoder):
+    """BERTBaseEN Model Declaration"""
+
+    debug = Debug("BERTBaseEN", 6)
+
+    def __init__(self, args, dictionary):
+        """Constructor for BERTBaseEN specifications"""
+
+        BERTBaseEN.debug.ldf("<< START >>")
+
+        # Super module call
+        super().__init__(dictionary)
+        BERTBaseEN.debug.ldf("super()")
+
+        # Instance variables
+        self.args = args
+        BERTBaseEN.debug.ldf("var dev")
+
+        # Initialize model
+        self.model = BertModel.from_pretrained("bert-base-cased")
+        BERTBaseEN.debug.ldf("pretrained model")
+
+        # Run model of CUDA
+        self.model.cuda()
+        BERTBaseEN.debug.ldf("model CUDA")
+        BERTBaseEN.debug.ldf("<< END >>")
+
+    def forward(self, src_token):
+        """Forward function to specify forward propogation"""
+
+        BERTBaseEN.debug.ldf("<< START >>")
+
+        # Send data to device
+        src_token = src_token.to(src_token.device).long().unsqueeze(0)
         BERTBaseEN.debug.ldf("src_token")
 
         # Return logits from BERTBaseEN << BROKEN >>
