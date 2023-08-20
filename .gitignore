@@ -13,3 +13,6 @@ __pycache__/
 vivynet/results/
 vivynet/checkpoints/
 vivynet/inference_ckpt
+
+# API keys
+vivynet/personal.sh

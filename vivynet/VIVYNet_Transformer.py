@@ -7,7 +7,6 @@ from fairseq.models import (
 
 # Submodule imports
 from vivynet.utils.VIVYNetSubModels import (
-    BERTBaseMulti,
     BERTBaseEN,
     SymphonyNetVanilla,
     IntermediarySection,
@@ -118,14 +117,32 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
         VIVYNet.debug.ldf("dec-dropout")
 
+        # Load pretrained weights encoder
+        parser.add_argument(
+            "--pt_enc",
+            type=int,
+            metavar="N",
+            help="Load pretrained encoder layers",
+        )
+        VIVYNet.debug.ldf("pt_enc")
+
         # Freeze encoder
         parser.add_argument(
             "--freeze_enc",
             type=int,
             metavar="N",
-            help="Freeze pretrained Encoder layers",
+            help="Freeze Encoder layers",
         )
         VIVYNet.debug.ldf("freeze_enc")
+
+        # Load pretrained weights decoder
+        parser.add_argument(
+            "--pt_dec",
+            type=int,
+            metavar="N",
+            help="Load pretrained decoder layers",
+        )
+        VIVYNet.debug.ldf("pt_dec")
 
         # Freeze decoder
         parser.add_argument(
@@ -135,6 +152,15 @@ class VIVYNet(FairseqEncoderDecoderModel):
             help="Freeze pretrained Decoder layers",
         )
         VIVYNet.debug.ldf("freeze_dec")
+
+        # Output directory
+        parser.add_argument(
+            "--output_dir",
+            type=str,
+            metavar="N",
+            help="Directory to output information",
+        )
+        VIVYNet.debug.ldf("output_dir")
 
         VIVYNet.debug.ldf("<< END >>")
 
@@ -148,17 +174,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #   BERT BUILDING
         #   region
         #
-
-        # # Create BERTBaseMulti model
-        # bert = BERTBaseMulti(args=args, dictionary=task.source_dictionary)
-        # VIVYNet.debug.ldf("Model Creation: BERTBaseMulti")
-
-        # # Freezing the Encoder layers and load pretrained weights
-        # if args.freeze_enc == 1:
-        #     # Freezing BERTBaseMulti
-        #     VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
-        #     for name, param in bert.named_parameters():
-        #         param.requires_grad = False
 
         # Create BERTBaseEN model
         bert = BERTBaseEN(args=args, dictionary=task.source_dictionary)
@@ -182,14 +197,34 @@ class VIVYNet(FairseqEncoderDecoderModel):
         symphony_net = SymphonyNetVanilla(args=args, task=task)
         VIVYNet.debug.ldf("Model Creation: SymphonyNet")
 
-        # Get the checkpoint
-        checkpoint = torch.load(
-            "../symphonynet/ckpt/"
-            + "checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
-        )
-        VIVYNet.debug.ldf("Checkpoint loading")
+        # Load pretrained weights for decoder
+        if args.pt_dec:
+            # Get the checkpoint
+            checkpoint = torch.load(
+                "../symphonynet/ckpt/"
+                + "checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
+            )
+            VIVYNet.debug.ldf("Checkpoint loading")
 
-        # Freezing the Decoder layers and load pretrained weights
+            # Zipping two models param dicts
+            pretrained_params = []
+            for param in symphony_net.state_dict():
+                if not ("cross_attention" in param or "norm3" in param):
+                    pretrained_params.append(param)
+            VIVYNet.debug.ldf("Weight Targeting Copy")
+
+            # Weight copying
+            VIVYNet.debug.ldf("Proceed Loading Decoder Pretrained Weights")
+            with torch.no_grad():
+                for param1, param2 in zip(
+                    pretrained_params, checkpoint["model"]
+                ):
+                    symphony_net.state_dict()[param1].copy_(
+                        checkpoint["model"][param2]
+                    )
+                    VIVYNet.debug.ldf(f"Loading {param1}")
+
+        # Freezing the Decoder layers
         if args.freeze_dec == 1:
             # Freezing self-attentions
             VIVYNet.debug.ldf("Freezing pretrained Decoder layers")
@@ -203,26 +238,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
                     or "wMpe.weight" in name
                 ):
                     param.requires_grad = False
-
-            # Zipping two models param dicts
-            pretrained_params = []
-            for param in symphony_net.state_dict():
-                if not ("cross_attention" in param or "norm3" in param):
-                    pretrained_params.append(param)
-            VIVYNet.debug.ldf("Weight targeting copy")
-
-            # Weight copying
-            VIVYNet.debug.ldf("Proceed loading Decoder pretrained weights")
-            with torch.no_grad():
-                for param1, param2 in zip(
-                    pretrained_params, checkpoint["model"]
-                ):
-                    # print(param1 + " " + param2)
-                    symphony_net.state_dict()[param1].copy_(
-                        checkpoint["model"][param2]
-                    )
-                    VIVYNet.debug.ldf(f"Loading {param1}")
-            VIVYNet.debug.ldf("Loading Finished!")
+            VIVYNet.debug.ldf("Froze Decoder")
 
         #   endregion
 
@@ -309,12 +325,4 @@ class VIVYNet(FairseqEncoderDecoderModel):
 @register_model_architecture("vivy", "vivy_transformer")
 def train_transformer(args):
     """Train function"""
-
-    # DEBUG
-    debug = Debug("train", 4)
-    debug.ldf("<< train >>")
-
-    args.dec_embed_dim = getattr(args, "dec_embed_dim", 512)
-    args.dec_num_attention_heads = getattr(args, "dec_num_attention_heads", 32)
-    args.dec_num_layers = getattr(args, "dec_num_layers", 12)
-    args.dec_dropout = getattr(args, "dec_dropout", 0.1)
+    pass

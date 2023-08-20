@@ -25,9 +25,6 @@ class ModelCriterion(CrossEntropyCriterion):
 
         ModelCriterion.debug.ldf("<< START >>")
 
-        # print(sample)
-        # input()
-
         # Get output of the model
         net_output = model(
             sample["net_input"]["enc_input"],
@@ -96,6 +93,8 @@ class ModelCriterion(CrossEntropyCriterion):
     @staticmethod
     def reduce_metrics(logging_outputs) -> None:
         """Aggregate logging outputs from data parallel training."""
+
+        # Preprocess logged metrics
         loss_sum = sum(log.get("loss", 0) for log in logging_outputs)
         loss_evt = sum(log.get("evt_loss", 0) for log in logging_outputs)
         loss_dur = sum(log.get("dur_loss", 0) for log in logging_outputs)
@@ -103,48 +102,70 @@ class ModelCriterion(CrossEntropyCriterion):
         loss_ins = sum(log.get("ins_loss", 0) for log in logging_outputs)
         ntokens = sum(log.get("ntokens", 0) for log in logging_outputs)
         sample_size = sum(log.get("sample_size", 0) for log in logging_outputs)
-        on_sample_size = sum(log.get("on_sample_size", 0) for log in logging_outputs)
+        on_sample_size = sum(
+            log.get("on_sample_size", 0) for log in logging_outputs
+        )
+
         # we divide by log(2) to convert the loss from base e to base 2
         # total_losses = 4
-        # weighted_size = (sample_size + on_sample_size*(total_losses-1)) / total_losses
+        # weighted_size =
+        #   (sample_size + on_sample_size*(total_losses-1)) / total_losses
+
+        # Track metrics
         metrics.log_scalar(
             "loss", loss_sum / sample_size / math.log(2), sample_size, round=3
         )
         metrics.log_scalar(
-            "evt_loss", loss_evt / sample_size / math.log(2), sample_size, round=3
+            "evt_loss",
+            loss_evt / sample_size / math.log(2),
+            sample_size,
+            round=3,
         )
         metrics.log_scalar(
-            "dur_loss", loss_dur / on_sample_size / math.log(2), on_sample_size, round=3
+            "dur_loss",
+            loss_dur / on_sample_size / math.log(2),
+            on_sample_size,
+            round=3,
         )
         metrics.log_scalar(
-            "trk_loss", loss_trk / on_sample_size / math.log(2), on_sample_size, round=3
+            "trk_loss",
+            loss_trk / on_sample_size / math.log(2),
+            on_sample_size,
+            round=3,
         )
         metrics.log_scalar(
-            "ins_loss", loss_ins / on_sample_size / math.log(2), on_sample_size, round=3
+            "ins_loss",
+            loss_ins / on_sample_size / math.log(2),
+            on_sample_size,
+            round=3,
         )
-
         if sample_size != ntokens:
             metrics.log_scalar(
                 "nll_loss", loss_sum / ntokens / math.log(2), ntokens, round=3
             )
             metrics.log_derived(
-                "ppl", lambda meters: utils.get_perplexity(meters["nll_loss"].avg)
+                "ppl",
+                lambda meters: utils.get_perplexity(meters["nll_loss"].avg),
             )
         else:
             metrics.log_derived(
                 "ppl", lambda meters: utils.get_perplexity(meters["loss"].avg)
             )
             metrics.log_derived(
-                "evt_ppl", lambda meters: utils.get_perplexity(meters["evt_loss"].avg)
+                "evt_ppl",
+                lambda meters: utils.get_perplexity(meters["evt_loss"].avg),
             )
             metrics.log_derived(
-                "dur_ppl", lambda meters: utils.get_perplexity(meters["dur_loss"].avg)
+                "dur_ppl",
+                lambda meters: utils.get_perplexity(meters["dur_loss"].avg),
             )
             metrics.log_derived(
-                "trk_ppl", lambda meters: utils.get_perplexity(meters["trk_loss"].avg)
+                "trk_ppl",
+                lambda meters: utils.get_perplexity(meters["trk_loss"].avg),
             )
             metrics.log_derived(
-                "ins_ppl", lambda meters: utils.get_perplexity(meters["ins_loss"].avg)
+                "ins_ppl",
+                lambda meters: utils.get_perplexity(meters["ins_loss"].avg),
             )
 
     @staticmethod
