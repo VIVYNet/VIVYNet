@@ -162,6 +162,42 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
         VIVYNet.debug.ldf("output_dir")
 
+        # Decoder embedding dimension
+        parser.add_argument(
+            "--dec_embed_dim",
+            type=int,
+            metavar="N",
+            help="Decoder embedding dimension",
+        )
+        VIVYNet.debug.ldf("dec_embed_dim")
+
+        # Decoder number of attention heads
+        parser.add_argument(
+            "--dec_num_attention_heads",
+            type=int,
+            metavar="N",
+            help="Decoder number of attention heads",
+        )
+        VIVYNet.debug.ldf("dec_num_attention_heads")
+
+        # Decoder number of transformer layers
+        parser.add_argument(
+            "--dec_num_layers",
+            type=int,
+            metavar="N",
+            help="Decoder number of transformer layers",
+        )
+        VIVYNet.debug.ldf("dec_num_layers")
+
+        # Decoder dropout
+        parser.add_argument(
+            "--dec_dropout",
+            type=float,
+            metavar="N",
+            help="Decoder dropout",
+        )
+        VIVYNet.debug.ldf("dec_dropout")
+
         VIVYNet.debug.ldf("<< END >>")
 
     @classmethod
