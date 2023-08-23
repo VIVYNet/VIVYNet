@@ -294,21 +294,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         totpieces = len(piece_sep_ids)
         slice_indices = np.zeros((totpieces, 2), dtype=int)
         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
-
-        # print("Piece sep ids: ", piece_sep_ids[:10])
-        # print("Cumsum sizes: ", sizes_cs[:10])
-        # print("Totpieces: ", totpieces)
-        # print("sizes: ", sizes[:10])
-        # print(len(sizes))
-        # print(totpieces)
-        # print(sizes[48])
-        # input()
-
-        # print("slice indices: ", slice_indices)
-        # print("block to dataset idx: ", block_to_dataset_index)
-        # input()
-
-
+        
         # Process sliced_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
             s = piece_sep_ids[i - 1] if i > 0 else -1
@@ -318,32 +304,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                 sizes_cs[e - 1],
             )
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
-            # print(s)
-            # print(e)
-            # print("Slice Indices: ", slice_indices[i, :])
-            # print("Block to dataset index: ", block_to_dataset_index[i, :])
-            # print(sizes_cs[i:i+10])
-            # input()
-        print("b1: ", block_to_dataset_index)
-
-        # Apply data augmentation by creating multiple samples for each data block
-        sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
-        new_slice_indices = []
-        new_block_to_dataset_index = []
-        for line, line_piece in zip(slice_indices, block_to_dataset_index):
-            l_piece_tot = line[1] - line[0]
-            assert l_piece_tot % self.ratio == 0, (line[0], line[1])
-            l_toks = l_piece_tot // self.ratio
-            chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
-            #chosen_cnt = sum(1 for _ in range(0 - np.random.randint(sample_step), l_toks, sample_step))
-            new_slice_indices.append(np.stack([line]*chosen_cnt))
-            new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
-
-        slice_indices = np.concatenate(new_slice_indices)
-        block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
-        
-        print("b2: ", block_to_dataset_index[:10])
-        input()
 
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
@@ -368,14 +328,10 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         cur_len = 0
 
         st = start_ds_idx
-        # print(st)
-        # print(end_ds_idx)
-        # print(self.ratio)
+
         # Process information
         for idx in range(st, end_ds_idx + 1):
             tmp = self.dataset[idx].view(-1, self.ratio)
-            # print("cc_idx: ", self.cc_idx)
-            # print("tmp: ", tmp)
             if self.perm_inv % 2 == 1:
                 all_cc_pos = (
                     torch.nonzero(tmp[..., 0] == self.cc_idx).view(-1).tolist()
@@ -394,13 +350,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             mea_num[2:, 0] = mea
             mea_num[1][0] = mea - 1
             mea_num[0][0] = mea - 2
-            # print(idx)
-            # print(st)
-            # print("mea: ", mea)
-            # print("mea_num: ", mea_num)
             buffer.append(torch.cat((tmp, mea_num), dim=1))
-            # print("buffer: ", buffer)
-            # input()
             cur_len += tmp.size(0)
             if cur_len >= self.sample_len_max:
                 break
@@ -414,7 +364,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
 
         # Get item
         item = buffer[: self.sample_len_max, ...]
-        # print("item: ", item)
         if self.perm_inv > 0:
             perm = torch.cat(
                 [
@@ -423,10 +372,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                 ]
             )
             item[..., self.trk_idx].apply_(lambda x: perm[x])
-        # print("perm: ", perm)
-        # print("item after inv: ", item)
-        # input()
-
 
         assert self.include_targets
 
@@ -566,6 +511,26 @@ class VIVYData(LanguageModelingTask):
         # Get the data
         parser.add_argument("data", metavar="FILE", help="data")
         VIVYData.debug.ldf("data")
+
+        # Shorten Method
+        parser.add_argument("--shorten_method", type=str, metavar="N")
+        VIVYData.debug.ldf("shorten_method")
+
+        # Shorten Data Split List
+        parser.add_argument("--shorten_data_split_list", type=str, metavar="N")
+        VIVYData.debug.ldf("shorten_data_split_list")
+
+        # Sample Break Mode
+        parser.add_argument("--sample_break_mode", type=str, metavar="N")
+        VIVYData.debug.ldf("sample_break_mode")
+
+        # Ratio
+        parser.add_argument("--ratio", type=int, metavar="N")
+        VIVYData.debug.ldf("ratio")
+
+        # Sample Overlap Rate
+        parser.add_argument("--sample_overlap_rate", type=int, metavar="N")
+        VIVYData.debug.ldf("sample_overlap_rate")
         VIVYData.debug.ldf("<< END >>")
 
     @classmethod
@@ -644,16 +609,6 @@ class VIVYData(LanguageModelingTask):
             self.args.seed,
         )
         VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
-        
-        print("LOG DATASET: ")
-        print("1: ", tgt_datasets.__getitem__(0))
-        print("2: ", tgt_datasets.__getitem__(1))
-        print("3: ", tgt_datasets.__getitem__(2))
-        print("4: ", tgt_datasets.__getitem__(3))
-
-
-        # print(tgt_datasets.sizes)
-        input()
 
         tgt_datasets = TupleMultiHeadDataset(
             tgt_datasets,
@@ -670,12 +625,6 @@ class VIVYData(LanguageModelingTask):
             trk_vocab_size=self.args.trk_voc_size,
         )
         VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
-
-        print("1: ", tgt_datasets.__getitem__(0))
-        print("2: ", tgt_datasets.__getitem__(1))
-        print("3: ", tgt_datasets.__getitem__(2))
-        print("4: ", tgt_datasets.__getitem__(3))
-        input()
 
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
