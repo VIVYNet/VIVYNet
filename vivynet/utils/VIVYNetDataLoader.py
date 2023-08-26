@@ -14,6 +14,7 @@ from fairseq import utils
 
 # Torch Imports
 import torch
+from torch.utils.data import Dataset
 
 # Debug imports
 from vivynet.utils.debug import Debug
@@ -227,6 +228,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
     def __init__(
         self,
         dataset,
+        rand_chosen_cnt_l,
         sizes,
         block_size,
         pad,
@@ -241,6 +243,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         spec_tok_cnt=4,
         evt_vocab_size=425,
         trk_vocab_size=44,
+        
     ):
         """Constructor for class"""
 
@@ -295,20 +298,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         slice_indices = np.zeros((totpieces, 2), dtype=int)
         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
 
-        # print("Piece sep ids: ", piece_sep_ids[:10])
-        # print("Cumsum sizes: ", sizes_cs[:10])
-        # print("Totpieces: ", totpieces)
-        # print("sizes: ", sizes[:10])
-        # print(len(sizes))
-        # print(totpieces)
-        # print(sizes[48])
-        # input()
-
-        # print("slice indices: ", slice_indices)
-        # print("block to dataset idx: ", block_to_dataset_index)
-        # input()
-
-
         # Process sliced_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
             s = piece_sep_ids[i - 1] if i > 0 else -1
@@ -318,16 +307,9 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                 sizes_cs[e - 1],
             )
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
-            # print(s)
-            # print(e)
-            # print("Slice Indices: ", slice_indices[i, :])
-            # print("Block to dataset index: ", block_to_dataset_index[i, :])
-            # print(sizes_cs[i:i+10])
-            # input()
-        print("b1: ", block_to_dataset_index)
-
-        # Apply data augmentation by creating multiple samples for each data block
-        sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1) 
+        
+        #Apply data augmentation by creating multiple samples for each data block
+        sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)  
         new_slice_indices = []
         new_block_to_dataset_index = []
         for line, line_piece in zip(slice_indices, block_to_dataset_index):
@@ -335,15 +317,23 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             assert l_piece_tot % self.ratio == 0, (line[0], line[1])
             l_toks = l_piece_tot // self.ratio
             chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
+            rand_chosen_cnt_l.append(chosen_cnt)
             #chosen_cnt = sum(1 for _ in range(0 - np.random.randint(sample_step), l_toks, sample_step))
             new_slice_indices.append(np.stack([line]*chosen_cnt))
             new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
 
+            # print("CONFIGURATION: ")
+            # print("SAMPLE_LEN_MAX: ", self.sample_len_max)
+            # print("SAMPLE_OVERLAP_RATE: ", sample_overlap_rate)
+            # print("L_PIECE_TOT: ", l_piece_tot)
+            # print("L_TOKS: ", l_toks)
+            # print("CHOSEN_CNT: ", chosen_cnt)
+            # input()
+
+            #TODO: maybe create a list to track chosen_cnt/ pass it to the text for text dup
+
         slice_indices = np.concatenate(new_slice_indices)
         block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
-        
-        print("b2: ", block_to_dataset_index[:10])
-        input()
 
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
@@ -522,6 +512,8 @@ class PairDataset(LanguagePairDataset):
 
         # Variable definitions and initialization
         self.src = src
+        print(self.src)
+        input()
         self.src_dict = src_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
@@ -550,6 +542,28 @@ class PairDataset(LanguagePairDataset):
         # Return the collated information of the given sample
         return t2m_collate(samples, self.src_dict, self.tgt_dict)
 
+
+class TextDataset(Dataset):
+    def __init__(self, source, l_chosen_cnt):
+        super(TextDataset).__init__()
+        
+        # Initializing constructor
+        self.source = source
+        self.aug_src = []
+        self.l_chosen_cnt = l_chosen_cnt
+        # Apply data augmentation for text dataset
+        for seq, mul in zip(self.source, self.l_chosen_cnt):
+            self.aug_src.extend([seq] * mul)
+
+        # # Convert final list to tensor
+        # self.aug_src = torch.stack(self.aug_src)
+
+    def __getitem__(self, index):
+        return self.aug_src[index]
+
+
+    def __len__(self):
+        return len(self.aug_src)
 
 @register_task("text2music")
 class VIVYData(LanguageModelingTask):
@@ -645,18 +659,10 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
         
-        print("LOG DATASET: ")
-        print("1: ", tgt_datasets.__getitem__(0))
-        print("2: ", tgt_datasets.__getitem__(1))
-        print("3: ", tgt_datasets.__getitem__(2))
-        print("4: ", tgt_datasets.__getitem__(3))
-
-
-        # print(tgt_datasets.sizes)
-        input()
-
+        rand_chosen_cnt_l = []
         tgt_datasets = TupleMultiHeadDataset(
             tgt_datasets,
+            rand_chosen_cnt_l,
             tgt_datasets.sizes,
             self.args.tokens_per_sample,
             pad=self.tgt_vocab.pad(),
@@ -671,11 +677,6 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
 
-        print("1: ", tgt_datasets.__getitem__(0))
-        print("2: ", tgt_datasets.__getitem__(1))
-        print("3: ", tgt_datasets.__getitem__(2))
-        print("4: ", tgt_datasets.__getitem__(3))
-        input()
 
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
@@ -717,7 +718,13 @@ class VIVYData(LanguageModelingTask):
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
         VIVYData.debug.ldf(
-            f"SRC - *FINALIZED* (size: {len(src_dataset.sizes)})"
+            f"SRC - *LOADED* (size: {len(src_dataset.sizes)})"
+        )
+
+        src_dataset = TextDataset(src_dataset, rand_chosen_cnt_l)
+
+        VIVYData.debug.ldf(
+            f"SRC - *TEXT AUGMENTED* (size: {len(src_dataset)})"
         )
 
         """
