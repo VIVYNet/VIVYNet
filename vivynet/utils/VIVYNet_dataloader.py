@@ -627,7 +627,8 @@ class VIVYData(LanguageModelingTask):
         """
         TARGET DATA HANDLING
         """
-        augmented_midi = False
+        augmented_midi = True
+
         VIVYData.debug.ldf(f"<< START (split: {split}) >>")
 
         # Split the paths to the data
