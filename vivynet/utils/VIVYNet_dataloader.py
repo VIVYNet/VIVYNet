@@ -330,8 +330,8 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                 # print("CHOSEN_CNT: ", chosen_cnt)
                 # input()
 
-                slice_indices = np.concatenate(new_slice_indices)
-                block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
+            slice_indices = np.concatenate(new_slice_indices)
+            block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
 
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
