@@ -243,7 +243,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         spec_tok_cnt=4,
         evt_vocab_size=425,
         trk_vocab_size=44,
-        
+        augmented=False
     ):
         """Constructor for class"""
 
@@ -308,32 +308,31 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             )
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
         
-        #Apply data augmentation by creating multiple samples for each data block
-        sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)  
-        new_slice_indices = []
-        new_block_to_dataset_index = []
-        for line, line_piece in zip(slice_indices, block_to_dataset_index):
-            l_piece_tot = line[1] - line[0]
-            assert l_piece_tot % self.ratio == 0, (line[0], line[1])
-            l_toks = l_piece_tot // self.ratio
-            chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
-            rand_chosen_cnt_l.append(chosen_cnt)
-            #chosen_cnt = sum(1 for _ in range(0 - np.random.randint(sample_step), l_toks, sample_step))
-            new_slice_indices.append(np.stack([line]*chosen_cnt))
-            new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
+        if (augmented):
+            #Apply data augmentation by creating multiple samples for each data block
+            sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)  
+            new_slice_indices = []
+            new_block_to_dataset_index = []
+            for line, line_piece in zip(slice_indices, block_to_dataset_index):
+                l_piece_tot = line[1] - line[0]
+                assert l_piece_tot % self.ratio == 0, (line[0], line[1])
+                l_toks = l_piece_tot // self.ratio
+                chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
+                rand_chosen_cnt_l.append(chosen_cnt)
+                #chosen_cnt = sum(1 for _ in range(0 - np.random.randint(sample_step), l_toks, sample_step))
+                new_slice_indices.append(np.stack([line]*chosen_cnt))
+                new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
 
-            # print("CONFIGURATION: ")
-            # print("SAMPLE_LEN_MAX: ", self.sample_len_max)
-            # print("SAMPLE_OVERLAP_RATE: ", sample_overlap_rate)
-            # print("L_PIECE_TOT: ", l_piece_tot)
-            # print("L_TOKS: ", l_toks)
-            # print("CHOSEN_CNT: ", chosen_cnt)
-            # input()
+                # print("CONFIGURATION: ")
+                # print("SAMPLE_LEN_MAX: ", self.sample_len_max)
+                # print("SAMPLE_OVERLAP_RATE: ", sample_overlap_rate)
+                # print("L_PIECE_TOT: ", l_piece_tot)
+                # print("L_TOKS: ", l_toks)
+                # print("CHOSEN_CNT: ", chosen_cnt)
+                # input()
 
-            #TODO: maybe create a list to track chosen_cnt/ pass it to the text for text dup
-
-        slice_indices = np.concatenate(new_slice_indices)
-        block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
+                slice_indices = np.concatenate(new_slice_indices)
+                block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
 
         # # Transform the slices, sizes, and block information
         self._sizes = slice_indices[:, 1] - slice_indices[:, 0]
@@ -512,8 +511,6 @@ class PairDataset(LanguagePairDataset):
 
         # Variable definitions and initialization
         self.src = src
-        print(self.src)
-        input()
         self.src_dict = src_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
@@ -551,19 +548,22 @@ class TextDataset(Dataset):
         self.source = source
         self.aug_src = []
         self.l_chosen_cnt = l_chosen_cnt
+        self.sizes = []
         # Apply data augmentation for text dataset
         for seq, mul in zip(self.source, self.l_chosen_cnt):
             self.aug_src.extend([seq] * mul)
-
+            self.sizes.extend([len(seq)] * mul)
         # # Convert final list to tensor
         # self.aug_src = torch.stack(self.aug_src)
 
     def __getitem__(self, index):
         return self.aug_src[index]
 
-
     def __len__(self):
         return len(self.aug_src)
+
+    def sizes(self):
+        return self.sizes
 
 @register_task("text2music")
 class VIVYData(LanguageModelingTask):
@@ -623,7 +623,7 @@ class VIVYData(LanguageModelingTask):
         """
         TARGET DATA HANDLING
         """
-
+        augmented_midi = False
         VIVYData.debug.ldf(f"<< START (split: {split}) >>")
 
         # Split the paths to the data
@@ -674,6 +674,7 @@ class VIVYData(LanguageModelingTask):
             permutation_invariant=self.args.perm_inv,
             evt_vocab_size=self.args.evt_voc_size,
             trk_vocab_size=self.args.trk_voc_size,
+            augmented=augmented_midi
         )
         VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
 
@@ -721,12 +722,15 @@ class VIVYData(LanguageModelingTask):
             f"SRC - *LOADED* (size: {len(src_dataset.sizes)})"
         )
 
-        src_dataset = TextDataset(src_dataset, rand_chosen_cnt_l)
+        src_dataset = TextDataset(src_dataset, rand_chosen_cnt_l) if augmented_midi else src_dataset
+        
+        # print(src_dataset.sizes)
+        # print(final_target.sizes)
+        # input()
 
         VIVYData.debug.ldf(
             f"SRC - *TEXT AUGMENTED* (size: {len(src_dataset)})"
         )
-
         """
         DATASET COMPILATION
         """
