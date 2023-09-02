@@ -22,15 +22,14 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-
 # Debug Imports
 from vivynet.utils.debug import Debug
-
 
 # Miscellaneous Import
 from typing import Dict, List, Optional, Tuple
 
 # Note: a flag that checks if its inference or not inside the bert
+
 
 class BERTBaseMulti(FairseqEncoder):
     """BERTBaseMulti Model Declaration"""
@@ -124,7 +123,6 @@ class BERTBaseEN(FairseqEncoder):
         # Return result
         BERTBaseEN.debug.ldf("<< END >>")
         return output
-
 
 
 class BERTInference(FairseqEncoder):

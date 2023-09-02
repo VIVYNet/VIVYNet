@@ -31,29 +31,9 @@ class VIVYNet(FairseqEncoderDecoderModel):
         """Argument Definition class"""
         VIVYNet.debug.ldf("<< START >>")
 
-        # Shorten Method
-        parser.add_argument("--shorten_method", type=str, metavar="N")
-        VIVYNet.debug.ldf("shorten_method")
-
-        # Shorten Data Split List
-        parser.add_argument("--shorten_data_split_list", type=str, metavar="N")
-        VIVYNet.debug.ldf("shorten_data_split_list")
-
         # Token Per Sample
         parser.add_argument("--tokens_per_sample", type=int, metavar="N")
         VIVYNet.debug.ldf("tokens_per_sample")
-
-        # Sample Break Mode
-        parser.add_argument("--sample_break_mode", type=str, metavar="N")
-        VIVYNet.debug.ldf("sample_break_mode")
-
-        # Ratio
-        parser.add_argument("--ratio", type=int, metavar="N")
-        VIVYNet.debug.ldf("ratio")
-
-        # Sample Overlap Rate
-        parser.add_argument("--sample_overlap_rate", type=int, metavar="N")
-        VIVYNet.debug.ldf("sample_overlap_rate")
 
         # Permutation invariance
         parser.add_argument("--perm_inv", type=int, metavar="N")
@@ -82,40 +62,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Maximum Measure Count within a Sample
         parser.add_argument("--max_mea_pos", type=int, metavar="N")
         VIVYNet.debug.ldf("max_mea_pos")
-
-        # Decoder Embedding Dimension
-        parser.add_argument(
-            "--dec-embed-dim",
-            type=int,
-            metavar="N",
-            help="embedding dimension",
-        )
-        VIVYNet.debug.ldf("dec-embed-dim")
-
-        # Decoder Attention Head Numbers
-        parser.add_argument(
-            "--dec-num-attention-heads",
-            type=int,
-            metavar="N",
-            help="num attention heads",
-        )
-        VIVYNet.debug.ldf("dec-num-attention-heads")
-
-        # Number Decoder Layers
-        parser.add_argument(
-            "--dec-num-layers", type=int, metavar="N", help="num layers"
-        )
-        VIVYNet.debug.ldf("dec-num-layers")
-
-        # Decoder Dropout
-        parser.add_argument(
-            "--dec-dropout",
-            type=float,
-            metavar="D",
-            help="dropout probability for all fully connected layers "
-            "in the embeddings, encoder, and pooler",
-        )
-        VIVYNet.debug.ldf("dec-dropout")
 
         # Load pretrained weights encoder
         parser.add_argument(
@@ -152,15 +98,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
             help="Freeze pretrained Decoder layers",
         )
         VIVYNet.debug.ldf("freeze_dec")
-
-        # Output directory
-        parser.add_argument(
-            "--output_dir",
-            type=str,
-            metavar="N",
-            help="Directory to output information",
-        )
-        VIVYNet.debug.ldf("output_dir")
 
         # Decoder embedding dimension
         parser.add_argument(

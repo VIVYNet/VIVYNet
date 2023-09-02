@@ -44,12 +44,12 @@ MIDI_FILE_TO_TOKEN_MAP = {}
 
 TOKENIZER = AutoTokenizer.from_pretrained("bert-base-cased")  # Tokenizer
 
-TRAIN_SPLIT = 0.6
+TRAIN_SPLIT = 0.6 
 
 
 def build_map() -> None:
     """MIDI Token Map Builder Function
-
+    
     Description:
         Because the MIDI tokenizer will not output the tokens in a desired
         order, we must read the corresponding map that comes along the token
@@ -59,7 +59,7 @@ def build_map() -> None:
         :return: None
         :rtype: None
     """
-
+    
     # Open the file and build a mapping from it
     with open(MIDI_TOKEN_MAP) as f:
         for line_num, line in enumerate(f):
@@ -69,17 +69,17 @@ def build_map() -> None:
 
 def transfer(item: str) -> None:
     """File Transfer Function
-
+    
     Description:
         Transfer files from the dataset to a midis folder
-
+    
     Information:
         :param item: Path to process for tokenizing
         :type item: str
         :return: None
         :rtype: None
     """
-
+    
     # Get the absolute path of the midi file
     path = DATASET_LOC + "/" + item["directory"].split("./")[-1]
     if not os.path.isdir(path):
@@ -95,7 +95,7 @@ def transfer(item: str) -> None:
 
 def tokenize(item: dict) -> None:
     """Tokenizer Function
-
+    
     Description:
         Tokenizes the features and labels of the give datapoint. Places them
         into a .text and .music file for text and MIDI tokens, respectively.
@@ -106,7 +106,7 @@ def tokenize(item: dict) -> None:
         :return: None
         :rtype: None
     """
-
+    
     #
     #   TEXT ENCODING
     #
@@ -114,7 +114,7 @@ def tokenize(item: dict) -> None:
     # Extract text and path to the data
     text = item["text"]
     path = DATASET_LOC + item["directory"].split(".")[-1]
-
+    
     # Clean text
     text = text.strip()  # Strip text
     text = re.sub("'{3}[0-9]{0,3}'{3}", "", text)  # Remove all {'''#'''}
@@ -151,7 +151,7 @@ def tokenize(item: dict) -> None:
     #
     #   MUSIC ENCODING
     #
-
+    
     # Get the absolute path of the item's respective midi file
     path = DATASET_LOC + "/" + item["directory"].split("./")[-1]
     if not os.path.isdir(path):
@@ -176,9 +176,9 @@ def tokenize(item: dict) -> None:
     # Append tokenized text into a line in the targeted data directory
     with open(f"{TEXT_TOKEN_FILE}", "a+") as f:
         for i in encoded:
-            f.write(str(i) + " ")
+            f.write(str(i) + " ")        
         f.write("\n")
-
+        
     # Append content to the finalized MIDI token file
     with open(f"{MIDI_TOKEN_FILE}", "a+") as f:
         f.write(f"{content}")
@@ -189,26 +189,26 @@ def text_binarize(train_ratio: float) -> None:
 
     Description:
         Binarizes the text tokens into .idx and .bin files
-
+        
     Information:
         :param train_ratio: the ratio between training and validation data
         :type train_ratio: float
         :return: None
         :rtype: None
-
+    
     """
-
+    
     # Variable declaration
     totalpiece = 0
     word_count = Counter()
     data = []
-
+    
     # Send each line into the raw_data list
     with open(TEXT_TOKEN_FILE, "r") as f:
         for line in tqdm(f, desc="reading..."):
             totalpiece += 1
             data.append(line.strip())
-
+        
     # count the words in each sentence and update the word_counts Counter
     for sentence in data:
         word_count.update(sentence.split())
@@ -234,7 +234,7 @@ def text_binarize(train_ratio: float) -> None:
         insert = [int(i) for i in item.split()]
         train_ds.add_item(torch.IntTensor(insert))
     train_ds.finalize(f"{FINAL_LOC}/train.idx")
-
+    
     # Binarize for validation data
     valid_ds = MMapIndexedDatasetBuilder(
         f"{FINAL_LOC}/valid.bin", dtype=np.uint16
@@ -259,14 +259,14 @@ if __name__ == "__main__":
     # Run the MIDI preprocess script
     print("Preprocessing MIDIs...")
     preprocess_midi_run()
-
+    
     # Build map
     print("Building Map...")
     build_map()
-
+    
     # Read the files' lines
     print("Reading Token Temp File Content...")
-    file = open(MIDI_TOKEN_TEMP_FILE)
+    file = open(MIDI_TOKEN_TEMP_FILE) 
     MIDI_TOKEN_FILE_DATA = file.readlines()
 
     # print(list(MIDI_FILE_TO_TOKEN_MAP.keys())[:100])

@@ -146,7 +146,6 @@ fairseq-train ../data/final \
   --dec_num_layers $DEC_NUM_LAYERS \
   --dec_dropout $DEC_DROPOUT \
   --lr-scheduler $LR_SCHEDULER \
-  --output_dir $OUTPUT_DIR \
   --save-dir $SAVE_DIR \
   --tensorboard-logdir $TENSORBOARD_LOGDIR \
   --no-epoch-checkpoints \

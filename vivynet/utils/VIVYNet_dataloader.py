@@ -297,7 +297,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         totpieces = len(piece_sep_ids)
         slice_indices = np.zeros((totpieces, 2), dtype=int)
         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
-
         # Process sliced_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
             s = piece_sep_ids[i - 1] if i > 0 else -1
@@ -357,14 +356,10 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         cur_len = 0
 
         st = start_ds_idx
-        # print(st)
-        # print(end_ds_idx)
-        # print(self.ratio)
+
         # Process information
         for idx in range(st, end_ds_idx + 1):
             tmp = self.dataset[idx].view(-1, self.ratio)
-            # print("cc_idx: ", self.cc_idx)
-            # print("tmp: ", tmp)
             if self.perm_inv % 2 == 1:
                 all_cc_pos = (
                     torch.nonzero(tmp[..., 0] == self.cc_idx).view(-1).tolist()
@@ -383,13 +378,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
             mea_num[2:, 0] = mea
             mea_num[1][0] = mea - 1
             mea_num[0][0] = mea - 2
-            # print(idx)
-            # print(st)
-            # print("mea: ", mea)
-            # print("mea_num: ", mea_num)
             buffer.append(torch.cat((tmp, mea_num), dim=1))
-            # print("buffer: ", buffer)
-            # input()
             cur_len += tmp.size(0)
             if cur_len >= self.sample_len_max:
                 break
@@ -403,7 +392,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
 
         # Get item
         item = buffer[: self.sample_len_max, ...]
-        # print("item: ", item)
         if self.perm_inv > 0:
             perm = torch.cat(
                 [
@@ -412,10 +400,6 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                 ]
             )
             item[..., self.trk_idx].apply_(lambda x: perm[x])
-        # print("perm: ", perm)
-        # print("item after inv: ", item)
-        # input()
-
 
         assert self.include_targets
 
@@ -580,6 +564,26 @@ class VIVYData(LanguageModelingTask):
         # Get the data
         parser.add_argument("data", metavar="FILE", help="data")
         VIVYData.debug.ldf("data")
+
+        # Shorten Method
+        parser.add_argument("--shorten_method", type=str, metavar="N")
+        VIVYData.debug.ldf("shorten_method")
+
+        # Shorten Data Split List
+        parser.add_argument("--shorten_data_split_list", type=str, metavar="N")
+        VIVYData.debug.ldf("shorten_data_split_list")
+
+        # Sample Break Mode
+        parser.add_argument("--sample_break_mode", type=str, metavar="N")
+        VIVYData.debug.ldf("sample_break_mode")
+
+        # Ratio
+        parser.add_argument("--ratio", type=int, metavar="N")
+        VIVYData.debug.ldf("ratio")
+
+        # Sample Overlap Rate
+        parser.add_argument("--sample_overlap_rate", type=int, metavar="N")
+        VIVYData.debug.ldf("sample_overlap_rate")
         VIVYData.debug.ldf("<< END >>")
 
     @classmethod
@@ -677,7 +681,6 @@ class VIVYData(LanguageModelingTask):
             augmented=augmented_midi
         )
         VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
-
 
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
