@@ -50,6 +50,11 @@ if [[ $0 == *"slurm"* ]]; then
   echo "Showing GPU Details"
   nvidia-smi -L
   nvidia-smi
+else
+  echo "Making directories..."
+  mkdir $VIVY_OUTPUT_DIR
+  echo "Directories made"
+  echo
 fi
 
 #   endregion
@@ -62,95 +67,68 @@ fi
 #
 
 # Print config settings
-echo -e "\n\n\nVARIANT:  ${VARIANT}"
+echo -e "\n\n\nVARIANT:  ${VIVY_VARIANT}"
 echo "============================================"
-echo "USER_DIR:  ${USER_DIR}"
-echo "TASK:  ${TASK}"
-echo "CRITERION:  ${CRITERION}"
-echo "ARCH:  ${ARCH}"
-echo "SEED:  ${SEED}"
-echo "PT_ENC:  ${PT_ENC}"
-echo "FREEZE_ENC:  ${FREEZE_ENC}"
-echo "PT_DEC:  ${PT_DEC}"
-echo "FREEZE_DEC:  ${FREEZE_DEC}"
-echo "DEC_EMBED_DIM:  ${DEC_EMBED_DIM}"
-echo "DEC_NUM_ATTN_HEADS:  ${DEC_NUM_ATTN_HEADS}"
-echo "DEC_NUM_LAYERS:  ${DEC_NUM_LAYERS}"
-echo "DEC_DROPOUT:  ${DEC_DROPOUT}"
-echo "EVT_VOC_SIZE:  ${EVT_VOC_SIZE}"
-echo "TRK_VOC_SIZE:  ${TRK_VOC_SIZE}"
-echo "DUR_VOC_SIZE:  ${DUR_VOC_SIZE}"
-echo "INS_VOC_SIZE:  ${INS_VOC_SIZE}"
-echo "MAX_REL_POS:  ${MAX_REL_POS}"
-echo "MAX_MEA_POS:  ${MAX_MEA_POS}"
-echo "TOKENS_PER_SAMPLE:  ${TOKENS_PER_SAMPLE}"
-echo "SHORTEN:  ${SHORTEN}"
-echo "SHORTEN_DATA_SPLIT_LIST:  ${SHORTEN_DATA_SPLIT_LIST}"
-echo "SAMPLE_BREAK_MODE:  ${SAMPLE_BREAK_MODE}"
-echo "RATIO:  ${RATIO}"
-echo "SAMPLE_OVERLAP_RATE:  ${SAMPLE_OVERLAP_RATE}"
-echo "PERM_INV:  ${PERM_INV}"
-echo "OPTIMIZER:  ${OPTIMIZER}"
-echo "ADAM_BETAS:  ${ADAM_BETAS}"
-echo "ADAM_EPS:  ${ADAM_EPS}"
-echo "CLIP_NORM:  ${CLIP_NORM}"
-echo "WEIGHT_DECAY:  ${WEIGHT_DECAY}"
-echo "BATCH_SIZE:  ${BATCH_SIZE}"
-echo "LR:  ${LR}"
-echo "LR_SCHEDULER:  ${LR_SCHEDULER}"
-echo "OUTPUT_DIR:  ${OUTPUT_DIR}"
-echo "SAVE_DIR:  ${SAVE_DIR}"
-echo "TENSORBOARD_LOGDIR:  ${TENSORBOARD_LOGDIR}"
-echo "LOG_FORMAT:  ${LOG_FORMAT}"
-echo "LOG_INTERVAL:  ${LOG_INTERVAL}"
+for var in $(compgen -v VIVY_); do
+    stripped_var=${var#VIVY_}
+    echo "$stripped_var: ${!var}"
+done
 echo
 
 # Setup wandb
 wandb login $WANDB_API_KEY
 export WANDB_NAME="$RUN_NAME - $VARIANT"
-export WANDB_DIR=$OUTPUT_DIR
+export WANDB_DIR=$VIVY_OUTPUT_DIR
 
 # Run model train
 fairseq-train ../data/final \
-  --user-dir $USER_DIR \
-  --task $TASK \
-  --criterion $CRITERION \
-  --arch $ARCH \
-  --optimizer $OPTIMIZER \
-  --adam-betas "$ADAM_BETAS" \
-  --adam-eps $ADAM_EPS \
-  --clip-norm $CLIP_NORM \
-  --weight-decay $WEIGHT_DECAY \
-  --batch-size $BATCH_SIZE \
-  --lr $LR \
-  --shorten_method $SHORTEN \
-  --shorten_data_split_list "$SHORTEN_DATA_SPLIT_LIST" \
-  --tokens_per_sample $TOKENS_PER_SAMPLE \
-  --seed $SEED \
-  --sample_break_mode $SAMPLE_BREAK_MODE \
-  --ratio $RATIO \
-  --sample_overlap_rate $SAMPLE_OVERLAP_RATE \
-  --perm_inv $PERM_INV \
-  --evt_voc_size $EVT_VOC_SIZE \
-  --trk_voc_size $TRK_VOC_SIZE \
-  --dur_voc_size $DUR_VOC_SIZE \
-  --ins_voc_size $INS_VOC_SIZE \
-  --max_rel_pos $MAX_REL_POS \
-  --max_mea_pos $MAX_MEA_POS \
-  --pt_enc $PT_ENC \
-  --freeze_enc $FREEZE_ENC \
-  --pt_dec $PT_DEC \
-  --freeze_dec $FREEZE_DEC \
-  --dec_embed_dim $DEC_EMBED_DIM \
-  --dec_num_attention_heads $DEC_NUM_ATTN_HEADS \
-  --dec_num_layers $DEC_NUM_LAYERS \
-  --dec_dropout $DEC_DROPOUT \
-  --lr-scheduler $LR_SCHEDULER \
-  --save-dir $SAVE_DIR \
-  --tensorboard-logdir $TENSORBOARD_LOGDIR \
+  --user-dir $VIVY_USER_DIR \
+  --task $VIVY_TASK \
+  --criterion $VIVY_CRITERION \
+  --arch $VIVY_ARCH \
+  --seed $VIVY_SEED \
+  --enc $VIVY_ENC \
+  --freeze_enc $VIVY_FREEZE_ENC \
+  --pt_enc $VIVY_PT_ENC \
+  --dec $VIVY_DEC \
+  --freeze_dec $VIVY_FREEZE_DEC \
+  --pt_dec $VIVY_PT_DEC \
+  --evt_voc_size $VIVY_EVT_VOC_SIZE \
+  --trk_voc_size $VIVY_TRK_VOC_SIZE \
+  --dur_voc_size $VIVY_DUR_VOC_SIZE \
+  --ins_voc_size $VIVY_INS_VOC_SIZE \
+  --max_rel_pos $VIVY_MAX_REL_POS \
+  --max_mea_pos $VIVY_MAX_MEA_POS \
+  --dec_embed_dim $VIVY_DEC_EMBED_DIM \
+  --dec_num_attention_heads $VIVY_DEC_NUM_ATTN_HEADS \
+  --dec_num_layers $VIVY_DEC_NUM_LAYERS \
+  --dec_dropout $VIVY_DEC_DROPOUT \
+  --latent $VIVY_LATENT \
+  --latent_input_dim $VIVY_LATENT_INPUT_DIM \
+  --latent_hidden_dim $VIVY_LATENT_HIDDEN_DIM \
+  --latent_output_dim $VIVY_LATENT_OUTPUT_DIM \
+  --latent_hidden_layers $VIVY_LATENT_HIDDEN_LAYERS \
+  --latent_dropout_rate $VIVY_LATENT_DROPOUT_RATE \
+  --tokens_per_sample $VIVY_TOKENS_PER_SAMPLE \
+  --shorten_method $VIVY_SHORTEN \
+  --shorten_data_split_list "$VIVY_SHORTEN_DATA_SPLIT_LIST" \
+  --sample_break_mode $VIVY_SAMPLE_BREAK_MODE \
+  --ratio $VIVY_RATIO \
+  --sample_overlap_rate $VIVY_SAMPLE_OVERLAP_RATE \
+  --perm_inv $VIVY_PERM_INV \
+  --optimizer $VIVY_OPTIMIZER \
+  --adam-betas "$VIVY_ADAM_BETAS" \
+  --adam-eps $VIVY_ADAM_EPS \
+  --clip-norm $VIVY_CLIP_NORM \
+  --weight-decay $VIVY_WEIGHT_DECAY \
+  --batch-size $VIVY_BATCH_SIZE \
+  --lr $VIVY_LR \
+  --lr-scheduler $VIVY_LR_SCHEDULER \
+  --save-dir $VIVY_SAVE_DIR \
+  --tensorboard-logdir $VIVY_TENSORBOARD_LOGDIR \
   --no-epoch-checkpoints \
-  --log-format $LOG_FORMAT \
-  --log-interval $LOG_INTERVAL \
+  --log-format $VIVY_LOG_FORMAT \
+  --log-interval $VIVY_LOG_INTERVAL \
   --wandb-project $WANDB_PROJECT
 
 # endregion

@@ -1,6 +1,3 @@
-# Fairseq Imports
-from fairseq.models import FairseqEncoder
-
 # Torch Imports
 import torch.nn as nn
 
@@ -11,23 +8,26 @@ from vivynet.utils.debug import Debug
 from collections import OrderedDict
 
 
-class IntermediarySection(FairseqEncoder):
+class LatentLinear(nn.Module):
     """Intermediary section to help translate the two modalities"""
 
-    debug = Debug("IntermediarySection", 7)
+    debug = Debug("LatentLinear", 7)
 
     def __init__(
         self,
-        args,
         input_dim,
         hidden_dim,
         output_dim,
         hidden_layers,
-        dropout_rate=0.25,
+        dropout_rate,
     ):
         """Constructor for intermediary section"""
 
-        IntermediarySection.debug.ldf("<< START >>")
+        LatentLinear.debug.ldf("<< START >>")
+
+        # Super call
+        super(LatentLinear, self).__init__()
+        LatentLinear.debug.ldf("super()")
 
         # Cast the parameters
         input_dim = int(input_dim)
@@ -108,7 +108,61 @@ class IntermediarySection(FairseqEncoder):
         )
         self.model = nn.Sequential(OrderedDict(self.final_specifications))
 
+    @staticmethod
+    def add_args(parser, check):
+        """Method to add arguments for this specific model"""
+
+        # Latent input dimension
+        if not check(parser, "latent_input_dim"):
+            parser.add_argument(
+                "--latent_input_dim",
+                type=int,
+                metavar="N",
+                help="Specify the latent model's input dimensions",
+            )
+            LatentLinear.debug.ldf("latent_input_dim")
+
+        # Latent hidden dimension
+        if not check(parser, "latent_hidden_dim"):
+            parser.add_argument(
+                "--latent_hidden_dim",
+                type=int,
+                metavar="N",
+                help="Specify the latent model's hidden dimensions",
+            )
+            LatentLinear.debug.ldf("latent_hidden_dim")
+
+        # Latent output dimension
+        if not check(parser, "latent_output_dim"):
+            parser.add_argument(
+                "--latent_output_dim",
+                type=int,
+                metavar="N",
+                help="Specify the latent model's output dimensions",
+            )
+            LatentLinear.debug.ldf("latent_output_dim")
+
+        # Latent hidden layers
+        if not check(parser, "latent_hidden_layers"):
+            parser.add_argument(
+                "--latent_hidden_layers",
+                type=int,
+                metavar="N",
+                help="Specify the latent model's hidden layers",
+            )
+            LatentLinear.debug.ldf("latent_hidden_layers")
+
+        # Latent hidden layers
+        if not check(parser, "latent_dropout_rate"):
+            parser.add_argument(
+                "--latent_dropout_rate",
+                type=float,
+                metavar="N",
+                help="Specify the latent model's dropout rate",
+            )
+            LatentLinear.debug.ldf("latent_dropout_rate")
+
     def forward(self, x):
         """Forward function to process input"""
-        IntermediarySection.debug.ldf("<< forward >>")
+        LatentLinear.debug.ldf("<< forward >>")
         return self.model(x)

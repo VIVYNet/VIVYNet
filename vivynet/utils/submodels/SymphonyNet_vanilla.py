@@ -148,6 +148,52 @@ class SymphonyNetVanilla(FairseqDecoder):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
 
+    @staticmethod
+    def add_args(parser, check):
+        """Method to add arguments for this specific model"""
+
+        # Decoder embedding dimension
+        # Latent input dimension
+        if not check(parser, "dec_embed_dim"):
+            parser.add_argument(
+                "--dec_embed_dim",
+                type=int,
+                metavar="N",
+                help="Decoder embedding dimension",
+            )
+            SymphonyNetVanilla.debug.ldf("dec_embed_dim")
+
+        # Decoder number of attention heads
+        if not check(parser, "dec_num_attention_heads"):
+            parser.add_argument(
+                "--dec_num_attention_heads",
+                type=int,
+                metavar="N",
+                help="Decoder number of attention heads",
+            )
+            SymphonyNetVanilla.debug.ldf("dec_num_attention_heads")
+
+        # Decoder number of transformer layers
+        if not check(parser, "dec_num_layers"):
+            parser.add_argument(
+                "--dec_num_layers",
+                type=int,
+                metavar="N",
+                help="Decoder number of transformer layers",
+            )
+            SymphonyNetVanilla.debug.ldf("dec_num_layers")
+
+        # Decoder dropout
+        if not check(parser, "dec_dropout"):
+            parser.add_argument(
+                "--dec_dropout",
+                type=float,
+                metavar="N",
+                help="Decoder dropout",
+            )
+            SymphonyNetVanilla.debug.ldf("dec_dropout")
+
+
     def forward(
         self,
         encoder_out,
@@ -166,7 +212,7 @@ class SymphonyNetVanilla(FairseqDecoder):
             encoder_out=encoder_out,
             src_lengths=src_lengths,
             encoder_out_lengths=encoder_out_lengths,
-            state=state
+            state=state,
         )
         SymphonyNetVanilla.debug.ldf("Feature Extract")
 
@@ -302,11 +348,11 @@ class SymphonyNetVanilla(FairseqDecoder):
 
         # Calculate information from the data into the model
         if self.inference:
-            outputs, state = self.decoder_model(	
-                x=x.squeeze(0),	
-                memory=encoder_out,	
-                memory_length_mask=None,	
-                state=state,	
+            outputs, state = self.decoder_model(
+                x=x.squeeze(0),
+                memory=encoder_out,
+                memory_length_mask=None,
+                state=state,
             )
         else:
             outputs = self.decoder_model(

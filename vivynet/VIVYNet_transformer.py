@@ -6,11 +6,7 @@ from fairseq.models import (
 )
 
 # Submodule imports
-from vivynet.utils.VIVYNetSubModels import (
-    BERTBaseEN,
-    SymphonyNetVanilla,
-    IntermediarySection,
-)
+from vivynet.utils.submodels import *
 
 # Torch Imports
 import torch
@@ -26,10 +22,26 @@ class VIVYNet(FairseqEncoderDecoderModel):
     # DEBUG
     debug = Debug("VIVYNet", 3)
 
+    # Mappings
+    ENCODER_MAPS = {
+        "BERT_multilingual": BERT,
+        "BERT_english": BERT,
+    }
+    DECODER_MAPS = {
+        "SymphonyNet_Encoder": SymphonyNetEncoder,
+        "SymphonyNet_Vanilla": SymphonyNetVanilla,
+    }
+    LATENT_MAPS = {"linear": LatentLinear}
+
     @staticmethod
     def add_args(parser):
         """Argument Definition class"""
         VIVYNet.debug.ldf("<< START >>")
+
+        #
+        #   *** Data Specification ***
+        #   region
+        #
 
         # Token Per Sample
         parser.add_argument("--tokens_per_sample", type=int, metavar="N")
@@ -38,6 +50,13 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Permutation invariance
         parser.add_argument("--perm_inv", type=int, metavar="N")
         VIVYNet.debug.ldf("perm_inv")
+
+        #   endregion
+
+        #
+        #   *** VIVYNet Specifications ***
+        #   region
+        #
 
         # Event Token Size
         parser.add_argument("--evt_voc_size", type=int, metavar="N")
@@ -62,6 +81,46 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Maximum Measure Count within a Sample
         parser.add_argument("--max_mea_pos", type=int, metavar="N")
         VIVYNet.debug.ldf("max_mea_pos")
+
+        # endregion
+
+        #
+        #   *** Encoder, Decoder, and Latent Specifications ***
+        #   region
+        #
+
+        # Specify which encoder to load
+        parser.add_argument(
+            "--enc",
+            type=str,
+            metavar="N",
+            required=True,
+            choices=list(VIVYNet.ENCODER_MAPS.keys()),
+            help="Specify which latent encoder model to load",
+        )
+        VIVYNet.debug.ldf("enc")
+
+        # Specify which decoder to load
+        parser.add_argument(
+            "--dec",
+            type=str,
+            metavar="N",
+            required=True,
+            choices=list(VIVYNet.DECODER_MAPS.keys()),
+            help="Specify which latent decoder model to load",
+        )
+        VIVYNet.debug.ldf("dec")
+
+        # Specify which latent model to load
+        parser.add_argument(
+            "--latent",
+            type=str,
+            metavar="N",
+            required=True,
+            choices=list(VIVYNet.LATENT_MAPS.keys()),
+            help="Specify which latent space model to load",
+        )
+        VIVYNet.debug.ldf("latent")
 
         # Load pretrained weights encoder
         parser.add_argument(
@@ -99,42 +158,25 @@ class VIVYNet(FairseqEncoderDecoderModel):
         )
         VIVYNet.debug.ldf("freeze_dec")
 
-        # Decoder embedding dimension
-        parser.add_argument(
-            "--dec_embed_dim",
-            type=int,
-            metavar="N",
-            help="Decoder embedding dimension",
-        )
-        VIVYNet.debug.ldf("dec_embed_dim")
+        #   endregion
 
-        # Decoder number of attention heads
-        parser.add_argument(
-            "--dec_num_attention_heads",
-            type=int,
-            metavar="N",
-            help="Decoder number of attention heads",
-        )
-        VIVYNet.debug.ldf("dec_num_attention_heads")
+        # Define a helper function for checking if the argument is already
+        # in place
+        check = lambda parser, name: name in (a.dest for a in parser._actions)
 
-        # Decoder number of transformer layers
-        parser.add_argument(
-            "--dec_num_layers",
-            type=int,
-            metavar="N",
-            help="Decoder number of transformer layers",
-        )
-        VIVYNet.debug.ldf("dec_num_layers")
+        #   *** Encoder Specific Specifications ***
+        for i in VIVYNet.ENCODER_MAPS:
+            VIVYNet.ENCODER_MAPS[i].add_args(parser, check)
 
-        # Decoder dropout
-        parser.add_argument(
-            "--dec_dropout",
-            type=float,
-            metavar="N",
-            help="Decoder dropout",
-        )
-        VIVYNet.debug.ldf("dec_dropout")
+        #   *** Decoder Specific Specifications ***
+        for i in VIVYNet.DECODER_MAPS:
+            VIVYNet.DECODER_MAPS[i].add_args(parser, check)
 
+        #   *** Latent Specific Specifications ***
+        for i in VIVYNet.LATENT_MAPS:
+            VIVYNet.LATENT_MAPS[i].add_args(parser, check)
+
+        # End argument parsing
         VIVYNet.debug.ldf("<< END >>")
 
     @classmethod
@@ -144,20 +186,20 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("<< START >>")
 
         #
-        #   BERT BUILDING
+        #   ENCODER BUILDING
         #   region
         #
 
         # Create BERTBaseEN model
-        bert = BERTBaseEN(args=args, dictionary=task.source_dictionary)
+        encoder_model = VIVYNet.ENCODER_MAPS[args.enc](args=args, task=task)
         VIVYNet.debug.ldf("Model Creation: BERTBaseEN")
 
         # Freezing the Encoder layers and load pretrained weights
         if args.freeze_enc == 1:
             # Freezing BERTBaseEN
-            VIVYNet.debug.ldf("Freezing pretrained Encoder layers")
-            for name, param in bert.named_parameters():
+            for name, param in encoder_model.named_parameters():
                 param.requires_grad = False
+            VIVYNet.debug.ldf("Froze pretrained Encoder layers")
 
         #   endregion
 
@@ -167,51 +209,53 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #
 
         # Create SymphonyNet model
-        symphony_net = SymphonyNetVanilla(args=args, task=task)
+        decoder_model = VIVYNet.DECODER_MAPS[args.dec](args=args, task=task)
         VIVYNet.debug.ldf("Model Creation: SymphonyNet")
 
-        # Load pretrained weights for decoder
-        if args.pt_dec:
-            # Get the checkpoint
-            checkpoint = torch.load(
-                "../symphonynet/ckpt/"
-                + "checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
-            )
-            VIVYNet.debug.ldf("Checkpoint loading")
+        # Conduct these actions based on certain decoder types
+        if "SymphonyNet" in args.dec:
+            # Load pretrained weights for decoder
+            if args.pt_dec:
+                # Get the checkpoint
+                checkpoint = torch.load(
+                    "../symphonynet/ckpt/"
+                    + "checkpoint_last_linear_4096_chord_bpe_hardloss1_PI2.pt"
+                )
+                VIVYNet.debug.ldf("Checkpoint loading")
 
-            # Zipping two models param dicts
-            pretrained_params = []
-            for param in symphony_net.state_dict():
-                if not ("cross_attention" in param or "norm3" in param):
-                    pretrained_params.append(param)
-            VIVYNet.debug.ldf("Weight Targeting Copy")
+                # Zipping two models param dicts
+                pretrained_params = []
+                for param in decoder_model.state_dict():
+                    if not ("cross_attention" in param or "norm3" in param):
+                        pretrained_params.append(param)
+                VIVYNet.debug.ldf("Weight Targeting Copy")
 
-            # Weight copying
-            VIVYNet.debug.ldf("Proceed Loading Decoder Pretrained Weights")
-            with torch.no_grad():
-                for param1, param2 in zip(
-                    pretrained_params, checkpoint["model"]
-                ):
-                    symphony_net.state_dict()[param1].copy_(
-                        checkpoint["model"][param2]
-                    )
-                    VIVYNet.debug.ldf(f"Loading {param1}")
+                # Weight copying
+                VIVYNet.debug.ldf("Proceed Loading Decoder Pretrained Weights")
+                with torch.no_grad():
+                    for param1, param2 in zip(
+                        pretrained_params, checkpoint["model"]
+                    ):
+                        decoder_model.state_dict()[param1].copy_(
+                            checkpoint["model"][param2]
+                        )
+                        VIVYNet.debug.ldf(f"Loading {param1}")
 
-        # Freezing the Decoder layers
-        if args.freeze_dec == 1:
-            # Freezing self-attentions
-            VIVYNet.debug.ldf("Freezing pretrained Decoder layers")
-            for name, param in symphony_net.named_parameters():
-                if (
-                    "self_attention"
-                    or "wEvte.weight"
-                    or "wTrke.weight"
-                    or "wDure.weight"
-                    or "wRpe.weight"
-                    or "wMpe.weight" in name
-                ):
-                    param.requires_grad = False
-            VIVYNet.debug.ldf("Froze Decoder")
+            # Freezing the Decoder layers
+            if args.freeze_dec == 1:
+                # Freezing self-attentions
+                VIVYNet.debug.ldf("Freezing pretrained Decoder layers")
+                for name, param in decoder_model.named_parameters():
+                    if (
+                        "self_attention"
+                        or "wEvte.weight"
+                        or "wTrke.weight"
+                        or "wDure.weight"
+                        or "wRpe.weight"
+                        or "wMpe.weight" in name
+                    ):
+                        param.requires_grad = False
+                VIVYNet.debug.ldf("Froze Decoder")
 
         #   endregion
 
@@ -221,16 +265,23 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #
 
         # Create intermediary layer
-        intermediary = IntermediarySection(args)
-        VIVYNet.debug.ldf("Model Creation: Intermediary Layer")
+        if VIVYNet.LATENT_MAPS[args.latent] == LatentLinear:
+            latent = LatentLinear(
+                input_dim=args.latent_input_dim,
+                hidden_dim=args.latent_hidden_dim,
+                output_dim=args.latent_output_dim,
+                hidden_layers=args.latent_hidden_layers,
+                dropout_rate=args.latent_dropout_rate,
+            )
+        VIVYNet.debug.ldf("Model Creation: Latent Layer")
 
         #   endregion
 
         # Return
         VIVYNet.debug.ldf("<< END >>")
-        return VIVYNet(bert, symphony_net, intermediary)
+        return VIVYNet(encoder_model, decoder_model, latent)
 
-    def __init__(self, encoder, decoder, intermediary):
+    def __init__(self, encoder, decoder, latent):
         """Constructor for the VIVYNet model"""
 
         VIVYNet.debug.ldf("<< START >>")
@@ -242,7 +293,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Create instance variables based on parameters given
         self.encoder = encoder
         self.decoder = decoder
-        self.intermediary = intermediary
+        self.latent = latent
         VIVYNet.debug.ldf("models")
 
         # Put models into train mode
@@ -263,7 +314,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Clear previously calculated gradients
         self.encoder.zero_grad()
         self.decoder.zero_grad()
-        self.intermediary.zero_grad()
+        self.latent.zero_grad()
         VIVYNet.debug.ldf("encoder.zero_grad()")
 
         # Get loss and the logits from the model
@@ -271,13 +322,13 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("res 1")
 
         # Intermediary layer pass
-        intermediate = self.intermediary(enc_output[0])
+        latent_output = self.latent(enc_output[0])
         src_lengths = len(src_tokens)
-        VIVYNet.debug.ldf(f"res 2 : {intermediate.shape} : {src_lengths}")
+        VIVYNet.debug.ldf(f"res 2 : {latent_output.shape} : {src_lengths}")
 
         # Get overall features from decoder
-        features = self.decoder(
-            encoder_out=intermediate,
+        decoder_output = self.decoder(
+            encoder_out=latent_output,
             decoder_in=prev_output_tokens,
             src_lengths=prev_output_tokens_lengths,
             encoder_out_lengths=src_lengths,
@@ -286,7 +337,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Return the logits
         VIVYNet.debug.ldf("<< END >>")
-        return features
+        return decoder_output
 
     @property
     def supported_targets(self):

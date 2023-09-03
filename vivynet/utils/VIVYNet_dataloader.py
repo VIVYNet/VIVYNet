@@ -243,23 +243,9 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         spec_tok_cnt=4,
         evt_vocab_size=425,
         trk_vocab_size=44,
-        augmented=False
+        augmented=False,
     ):
         """Constructor for class"""
-
-        # Try to import modules from fairseq
-        try:
-            from fairseq.data.token_block_utils_fast import (
-                _get_slice_indices_fast,
-                _get_block_to_dataset_index_fast,
-            )
-
-        # Raise errors if importingn fails
-        except ImportError:
-            raise ImportError(
-                "Please build Cython components with: `pip install --editable .` "
-                "or `python setup.py build_ext --inplace`"
-            )
 
         # Super call attributes and operations from parent class
         super(TokenBlockDataset, self).__init__()
@@ -297,6 +283,7 @@ class TupleMultiHeadDataset(TokenBlockDataset):
         totpieces = len(piece_sep_ids)
         slice_indices = np.zeros((totpieces, 2), dtype=int)
         block_to_dataset_index = np.zeros((totpieces, 3), dtype=int)
+
         # Process sliced_indices and block_to_dataset_index arrays
         for i in range(len(piece_sep_ids)):
             s = piece_sep_ids[i - 1] if i > 0 else -1
@@ -306,29 +293,36 @@ class TupleMultiHeadDataset(TokenBlockDataset):
                 sizes_cs[e - 1],
             )
             block_to_dataset_index[i, :] = (s + 1, 0, e - 1)
-        
-        if (augmented):
-            #Apply data augmentation by creating multiple samples for each data block
-            sample_step = max(round(self.sample_len_max / sample_overlap_rate), 1)  
+
+        # Apply data augmentation
+        if augmented:
+            # Apply data augmentation by creating multiple samples for each data
+            # block
+            sample_step = max(
+                round(self.sample_len_max / sample_overlap_rate), 1
+            )
             new_slice_indices = []
             new_block_to_dataset_index = []
             for line, line_piece in zip(slice_indices, block_to_dataset_index):
                 l_piece_tot = line[1] - line[0]
                 assert l_piece_tot % self.ratio == 0, (line[0], line[1])
                 l_toks = l_piece_tot // self.ratio
-                chosen_cnt = math.ceil((l_toks + np.random.randint(sample_step)) / sample_step)
+                chosen_cnt = math.ceil(
+                    (l_toks + np.random.randint(sample_step)) / sample_step
+                )
                 rand_chosen_cnt_l.append(chosen_cnt)
-                #chosen_cnt = sum(1 for _ in range(0 - np.random.randint(sample_step), l_toks, sample_step))
-                new_slice_indices.append(np.stack([line]*chosen_cnt))
-                new_block_to_dataset_index.append(np.stack([line_piece]*chosen_cnt))
-
-                # print("CONFIGURATION: ")
-                # print("SAMPLE_LEN_MAX: ", self.sample_len_max)
-                # print("SAMPLE_OVERLAP_RATE: ", sample_overlap_rate)
-                # print("L_PIECE_TOT: ", l_piece_tot)
-                # print("L_TOKS: ", l_toks)
-                # print("CHOSEN_CNT: ", chosen_cnt)
-                # input()
+                # chosen_cnt = sum(
+                #     1
+                #     for _ in range(
+                #         0 - np.random.randint(sample_step),
+                #         l_toks,
+                #         sample_step
+                #     )
+                # )
+                new_slice_indices.append(np.stack([line] * chosen_cnt))
+                new_block_to_dataset_index.append(
+                    np.stack([line_piece] * chosen_cnt)
+                )
 
             slice_indices = np.concatenate(new_slice_indices)
             block_to_dataset_index = np.concatenate(new_block_to_dataset_index)
@@ -527,7 +521,7 @@ class PairDataset(LanguagePairDataset):
 class TextDataset(Dataset):
     def __init__(self, source, l_chosen_cnt):
         super(TextDataset).__init__()
-        
+
         # Initializing constructor
         self.source = source
         self.aug_src = []
@@ -548,6 +542,7 @@ class TextDataset(Dataset):
 
     def sizes(self):
         return self.sizes
+
 
 @register_task("text2music")
 class VIVYData(LanguageModelingTask):
@@ -627,9 +622,11 @@ class VIVYData(LanguageModelingTask):
         """
         TARGET DATA HANDLING
         """
-        augmented_midi = True
 
         VIVYData.debug.ldf(f"<< START (split: {split}) >>")
+
+        # Define variables
+        augmented_midi = True
 
         # Split the paths to the data
         paths = utils.split_paths(self.args.data + "/labels/bin")
@@ -663,7 +660,7 @@ class VIVYData(LanguageModelingTask):
             self.args.seed,
         )
         VIVYData.debug.ldf("TGT - maybe_shorten_dataset")
-        
+
         rand_chosen_cnt_l = []
         tgt_datasets = TupleMultiHeadDataset(
             tgt_datasets,
@@ -679,7 +676,7 @@ class VIVYData(LanguageModelingTask):
             permutation_invariant=self.args.perm_inv,
             evt_vocab_size=self.args.evt_voc_size,
             trk_vocab_size=self.args.trk_voc_size,
-            augmented=augmented_midi
+            augmented=augmented_midi,
         )
         VIVYData.debug.ldf("TGT - TupleMultiHeadDataset Init")
 
@@ -722,19 +719,19 @@ class VIVYData(LanguageModelingTask):
         src_dataset = data_utils.load_indexed_dataset(
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
-        VIVYData.debug.ldf(
-            f"SRC - *LOADED* (size: {len(src_dataset.sizes)})"
+        VIVYData.debug.ldf(f"SRC - *LOADED* (size: {len(src_dataset.sizes)})")
+
+        src_dataset = (
+            TextDataset(src_dataset, rand_chosen_cnt_l)
+            if augmented_midi
+            else src_dataset
         )
 
-        src_dataset = TextDataset(src_dataset, rand_chosen_cnt_l) if augmented_midi else src_dataset
-        
         # print(src_dataset.sizes)
         # print(final_target.sizes)
         # input()
 
-        VIVYData.debug.ldf(
-            f"SRC - *TEXT AUGMENTED* (size: {len(src_dataset)})"
-        )
+        VIVYData.debug.ldf(f"SRC - *TEXT AUGMENTED* (size: {len(src_dataset)})")
         """
         DATASET COMPILATION
         """

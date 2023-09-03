@@ -148,6 +148,51 @@ class SymphonyNetEncoder(FairseqDecoder):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
 
+    @staticmethod
+    def add_args(parser, check):
+        """Method to add arguments for this specific model"""
+
+        # Decoder embedding dimension
+        # Latent input dimension
+        if not check(parser, "dec_embed_dim"):
+            parser.add_argument(
+                "--dec_embed_dim",
+                type=int,
+                metavar="N",
+                help="Decoder embedding dimension",
+            )
+            SymphonyNetEncoder.debug.ldf("dec_embed_dim")
+
+        # Decoder number of attention heads
+        if not check(parser, "dec_num_attention_heads"):
+            parser.add_argument(
+                "--dec_num_attention_heads",
+                type=int,
+                metavar="N",
+                help="Decoder number of attention heads",
+            )
+            SymphonyNetEncoder.debug.ldf("dec_num_attention_heads")
+
+        # Decoder number of transformer layers
+        if not check(parser, "dec_num_layers"):
+            parser.add_argument(
+                "--dec_num_layers",
+                type=int,
+                metavar="N",
+                help="Decoder number of transformer layers",
+            )
+            SymphonyNetEncoder.debug.ldf("dec_num_layers")
+
+        # Decoder dropout
+        if not check(parser, "dec_dropout"):
+            parser.add_argument(
+                "--dec_dropout",
+                type=float,
+                metavar="N",
+                help="Decoder dropout",
+            )
+            SymphonyNetEncoder.debug.ldf("dec_dropout")
+
     def forward(
         self,
         decoder_in,

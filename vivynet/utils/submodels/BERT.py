@@ -13,13 +13,13 @@ class BERT(FairseqEncoder):
 
     debug = Debug("BERTBaseEN", 6)
 
-    def __init__(self, args, dictionary, multilingual=False, inference=False):
+    def __init__(self, args, task, multilingual=False, inference=False):
         """Constructor for BERTBaseEN specifications"""
 
         BERT.debug.ldf("<< START >>")
 
         # Super module call
-        super().__init__(dictionary)
+        super().__init__(task.source_dictionary)
         BERT.debug.ldf("super()")
 
         # Instance variables
@@ -45,6 +45,11 @@ class BERT(FairseqEncoder):
         self.model.cuda()
         BERT.debug.ldf("model CUDA")
         BERT.debug.ldf("<< END >>")
+
+    @staticmethod
+    def add_args(parser, check):
+        """Method to add arguments for this specific model"""
+        return
 
     def forward(self, src_token):
         """Forward function to specify forward propogation"""
