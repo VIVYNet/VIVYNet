@@ -58,8 +58,8 @@ VIVY_LR=0.00001
 VIVY_LR_SCHEDULER=reduce_lr_on_plateau
 
 # Logging and checkpoing saving
-VIVY_OUTPUT_DIR=./results/$VARIANT
-VIVY_SAVE_DIR=./results/$VARIANT/ckpt
-VIVY_TENSORBOARD_LOGDIR=./results/$VARIANT/logs
+VIVY_OUTPUT_DIR=./results/$VIVY_VARIANT
+VIVY_SAVE_DIR=./results/$VIVY_VARIANT/ckpt
+VIVY_TENSORBOARD_LOGDIR=./results/$VIVY_VARIANT/logs
 VIVY_LOG_FORMAT=simple
 VIVY_LOG_INTERVAL=10
