@@ -193,7 +193,6 @@ class SymphonyNetVanilla(FairseqDecoder):
             )
             SymphonyNetVanilla.debug.ldf("dec_dropout")
 
-
     def forward(
         self,
         encoder_out,

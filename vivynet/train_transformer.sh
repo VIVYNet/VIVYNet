@@ -20,7 +20,7 @@ if [[ $0 == *"slurm"* ]]; then
 else
   echo "Not using Slurm..."
   echo
-  source ./configs/test.sh       # <<< CHANGE CONFIG NAME IF NOT USING SLURM
+  source ./configs/test3.sh       # <<< CHANGE CONFIG NAME IF NOT USING SLURM
 fi
 source ./personal.sh
 
@@ -77,7 +77,7 @@ echo
 
 # Setup wandb
 wandb login $WANDB_API_KEY
-export WANDB_NAME="$RUN_NAME - $VARIANT"
+export WANDB_NAME="$RUN_NAME - $VIVY_VARIANT"
 export WANDB_DIR=$VIVY_OUTPUT_DIR
 
 # Run model train
@@ -104,11 +104,15 @@ fairseq-train ../data/final \
   --dec_num_layers $VIVY_DEC_NUM_LAYERS \
   --dec_dropout $VIVY_DEC_DROPOUT \
   --latent $VIVY_LATENT \
-  --latent_input_dim $VIVY_LATENT_INPUT_DIM \
-  --latent_hidden_dim $VIVY_LATENT_HIDDEN_DIM \
-  --latent_output_dim $VIVY_LATENT_OUTPUT_DIM \
-  --latent_hidden_layers $VIVY_LATENT_HIDDEN_LAYERS \
-  --latent_dropout_rate $VIVY_LATENT_DROPOUT_RATE \
+  --latent_num_layers ${VIVY_LATENT_NUM_LAYERS:=0} \
+  --latent_num_attention_heads ${VIVY_LATENT_NUM_ATTN_HEADS:=0} \
+  --latent_embed_dim ${VIVY_LATENT_EMBED_DIM:=0} \
+  --latent_dropout ${VIVY_LATENT_DROPOUT:=0} \
+  --latent_input_dim ${VIVY_LATENT_INPUT_DIM:=0} \
+  --latent_hidden_dim ${VIVY_LATENT_HIDDEN_DIM:=0} \
+  --latent_output_dim ${VIVY_LATENT_OUTPUT_DIM:=0} \
+  --latent_hidden_layers ${VIVY_LATENT_HIDDEN_LAYERS:=0} \
+  --latent_dropout_rate ${VIVY_LATENT_DROPOUT_RATE:=0} \
   --tokens_per_sample $VIVY_TOKENS_PER_SAMPLE \
   --shorten_method $VIVY_SHORTEN \
   --shorten_data_split_list "$VIVY_SHORTEN_DATA_SPLIT_LIST" \
