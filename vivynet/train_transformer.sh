@@ -3,7 +3,7 @@
 #SBATCH -p gpu                              ## Partition
 #SBATCH -q wildfire                         ## QOS
 #SBATCH -c 1                                ## Number of Cores
-#SBATCH --time=1440                         ## 1 day of compute
+#SBATCH --time=4320                         ## 3 day of compute
 #SBATCH --mem 48G                           ## 48 GB of RAM
 #SBATCH --mail-type=ALL                     ## notify for any job state change
 
