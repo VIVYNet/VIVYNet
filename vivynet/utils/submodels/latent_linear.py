@@ -4,7 +4,7 @@ import torch.nn as nn
 # Debug Imports
 from vivynet.utils.debug import Debug
 
-# Datastructure import
+# Data structure import
 from collections import OrderedDict
 
 

@@ -31,7 +31,10 @@ class VIVYNet(FairseqEncoderDecoderModel):
         "SymphonyNet_Encoder": SymphonyNetEncoder,
         "SymphonyNet_Vanilla": SymphonyNetVanilla,
     }
-    LATENT_MAPS = {"linear": LatentLinear}
+    LATENT_MAPS = {
+        "linear": LatentLinear,
+        "transformer_encoder": LatentTransformerEncoder,
+    }
 
     @staticmethod
     def add_args(parser):
@@ -264,7 +267,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #   region
         #
 
-        # Create intermediary layer
+        # Create intermediary layer if it is specified to LatentLinear
         if VIVYNet.LATENT_MAPS[args.latent] == LatentLinear:
             latent = LatentLinear(
                 input_dim=args.latent_input_dim,
@@ -273,7 +276,13 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 hidden_layers=args.latent_hidden_layers,
                 dropout_rate=args.latent_dropout_rate,
             )
-        VIVYNet.debug.ldf("Model Creation: Latent Layer")
+            VIVYNet.debug.ldf("Model Creation: Latent Layer")
+
+        # Create intermediary layer if it is specified to
+        # LatentTransformerDecoder
+        if VIVYNet.LATENT_MAPS[args.latent] == LatentTransformerEncoder:
+            latent = LatentTransformerEncoder(args=args, task=task)
+            VIVYNet.debug.ldf("Model Creation: Latent Transformer Decoder")
 
         #   endregion
 
