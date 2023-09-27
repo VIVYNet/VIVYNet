@@ -3,7 +3,7 @@ from colorama import Fore, Style
 import inspect
 
 # Set DEBUG on/off
-DISABLE_DEBUG = False
+DISABLE_DEBUG = True
 
 class Debug:
     """Debug Class"""

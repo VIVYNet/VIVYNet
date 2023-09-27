@@ -15,9 +15,26 @@ from fairseq.models import FairseqLanguageModel
 
 # Miscellaneous Import
 import time
+import os
+
+def input_file():
+    with open("vivynet/input.txt","r") as f:
+        lines = f.readlines()
+
+    str_rs = ""
+    for line in lines:
+        str_rs = str_rs + ( (line.strip() + " ") if line[0] == '\n' else line )
+
+    return str_rs
 
 def main():
-    src_input = input("Enter Text: ")
+    src_input = ""
+
+    if os.path.isfile("vivynet/input.txt"):
+        src_input = input_file()
+        print("FILE INPUT: \n", src_input)
+    else:
+        src_input = input("Enter Text: ")
     tgt_input = [[2, 2, 2, 1, 0, 0]]  # Target input should always start at BOS
 
     """
@@ -48,7 +65,7 @@ def main():
     """
     Model Initialization
     """
-    CKPT_DIR = "vivynet/inference_ckpt/checkpoint_best_5.pt"
+    CKPT_DIR = "vivynet/inference_ckpt/checkpoint_best_1-524.pt"
     INFERENCE_DIR = "vivynet/inference"
     vivynet = FairseqLanguageModel.from_pretrained(
         ".",
@@ -61,13 +78,14 @@ def main():
     vivynet.cuda()
     vivynet.eval()
 
+
     """
     Generation
     """
     while True:
         try:
             generated, ins_logits = gen_one(
-                vivynet, encoded, tgt_input, MIN_LEN=256, MAX_LEN=600
+                vivynet, encoded, tgt_input, MIN_LEN=32, MAX_LEN=600
             )
             break
         except Exception as e:
