@@ -65,7 +65,7 @@ def main():
     """
     Model Initialization
     """
-    CKPT_DIR = "vivynet/inference_ckpt/checkpoint_best_1-524.pt"
+    CKPT_DIR = "vivynet/results/run5/ckpt/checkpoint_best.pt"
     INFERENCE_DIR = "vivynet/inference"
     vivynet = FairseqLanguageModel.from_pretrained(
         ".",
@@ -82,6 +82,9 @@ def main():
     """
     Generation
     """
+    generated, ins_logits = gen_one(
+            vivynet, encoded, tgt_input, MIN_LEN=32, MAX_LEN=600
+        )
     while True:
         try:
             generated, ins_logits = gen_one(

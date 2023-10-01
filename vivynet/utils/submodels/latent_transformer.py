@@ -52,7 +52,7 @@ class LatentTransformerEncoder(FairseqEncoder):
             feed_forward_dimensions=4 * args.latent_embed_dim,
             activation="gelu",
             dropout=args.latent_dropout,
-            attention_type="causal-linear",
+            attention_type="causal-linear", # https://fast-transformers.github.io/attention/
         ).get()
         LatentTransformerEncoder.debug.ldf("Latent Encoder Model")
 
@@ -171,9 +171,11 @@ class LatentTransformerEncoder(FairseqEncoder):
         # Calculate information from the data into the model
         if self.inference:
             outputs = self.input_section(x.squeeze(0))
-            outputs = self.encoder_model(
+            print(outputs.shape)
+            print(x.shape)
+            input()
+            outputs, state = self.encoder_model(
                 x=outputs,
-                memory_length_mask=None,
                 state=state,
             )
             outputs = outputs.permute(1, 0, 2)
