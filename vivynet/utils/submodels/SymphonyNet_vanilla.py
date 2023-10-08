@@ -353,8 +353,8 @@ class SymphonyNetVanilla(FairseqDecoder):
         if self.inference:
             outputs, state = self.decoder_model(
                 x=x.squeeze(0),
-                memory=encoder_out,
-                memory_length_mask=enc_len_mask
+                memory=encoder_out.permute(1, 0, 2),
+                memory_length_mask=src_lengths
             )
         else:
             outputs = self.decoder_model(
@@ -371,7 +371,6 @@ class SymphonyNetVanilla(FairseqDecoder):
         # Return outputs
         SymphonyNetVanilla.debug.ldf("<< END >>")
         if self.inference:
-            print('>>>>>>>>>>>>>>>>>>>> INFERENCE')
             return outputs, state
         else:
             return outputs

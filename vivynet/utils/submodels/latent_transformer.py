@@ -170,22 +170,10 @@ class LatentTransformerEncoder(FairseqEncoder):
 
         # Calculate information from the data into the model
         if self.inference:
-            # print(x.shape)
-            # print(" into ")
-            # print(x.squeeze(0).shape)
-            # print(" into ")
             outputs = self.input_section(x.squeeze(0))
-            # print(outputs.shape)
             outputs = outputs.permute(1, 0, 2)
-            # print(" into ")
-            # print(outputs.shape)
             outputs = outputs.squeeze(0)
-            # print(" into ")
-            # print(outputs.shape)
-            # print(" into ")
             outputs, state = self.encoder_model(x=outputs)
-            # print(outputs.shape)
-            # print(" into ")
         else:
             outputs = self.input_section(x)
             outputs = self.encoder_model(outputs, self.attn_mask, len_mask)
