@@ -17,15 +17,17 @@ from fairseq.models import FairseqLanguageModel
 import time
 import os
 
+
 def input_file():
-    with open("vivynet/input.txt","r") as f:
+    with open("vivynet/input.txt", "r") as f:
         lines = f.readlines()
 
     str_rs = ""
     for line in lines:
-        str_rs = str_rs + ( (line.strip() + " ") if line[0] == '\n' else line )
+        str_rs = str_rs + ((line.strip() + " ") if line[0] == "\n" else line)
 
     return str_rs
+
 
 def main():
     src_input = ""
@@ -78,13 +80,9 @@ def main():
     vivynet.cuda()
     vivynet.eval()
 
-
     """
     Generation
     """
-    generated, ins_logits = gen_one(
-            vivynet, encoded, tgt_input, MIN_LEN=32, MAX_LEN=600
-        )
     while True:
         try:
             generated, ins_logits = gen_one(
