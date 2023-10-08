@@ -191,7 +191,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
 
         # Get overall features from decoder
         features, state = self.decoder(
-            encoder_out=intermediate.unsqueeze(1),
+            encoder_out=intermediate.unsqueeze(1), # [512, 1, 512]
             decoder_in=prev_output_tokens,
             src_lengths=prev_output_tokens_lengths,
             encoder_out_lengths=src_lengths,
