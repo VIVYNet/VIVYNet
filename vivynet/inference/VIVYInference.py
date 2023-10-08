@@ -188,10 +188,16 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Intermediary layer pass
         intermediate = self.latent(enc_output[0])
         src_lengths = len(src_tokens)
-        VIVYNet.debug.ldf(f"res 2 : {intermediate.shape} : {src_lengths}")
+        VIVYNet.debug.ldf(f"res 2 : {intermediate[0].shape} : {src_lengths}")
         print(">>>>> LATENT")
 
         # Get overall features from decoder
+        intermediate = intermediate[0]
+        print(intermediate.shape)
+        print(" into ")
+        intermediate = intermediate.unsqueeze(1)
+        print(intermediate.shape)
+        input()
         features, state = self.decoder(
             encoder_out=intermediate,
             decoder_in=prev_output_tokens,
