@@ -213,6 +213,8 @@ class SymphonyNetVanilla(FairseqDecoder):
             encoder_out_lengths=encoder_out_lengths,
             state=state,
         )
+        if self.inference:
+            features, state = features
         SymphonyNetVanilla.debug.ldf("Feature Extract")
 
         # Project the given features into the output layers
@@ -226,6 +228,8 @@ class SymphonyNetVanilla(FairseqDecoder):
         SymphonyNetVanilla.debug.ldf("<< END >>")
 
         # Return the logits for the EVENT, DURATION, TRACK, and INSTRUMENT
+        if self.inference:
+            return (evt_logits, dur_logits, trk_logits, ins_logits), state
         return (evt_logits, dur_logits, trk_logits, ins_logits)
 
     def extract_features(
@@ -350,8 +354,7 @@ class SymphonyNetVanilla(FairseqDecoder):
             outputs, state = self.decoder_model(
                 x=x.squeeze(0),
                 memory=encoder_out,
-                memory_length_mask=None,
-                state=state,
+                memory_length_mask=enc_len_mask
             )
         else:
             outputs = self.decoder_model(
@@ -368,6 +371,7 @@ class SymphonyNetVanilla(FairseqDecoder):
         # Return outputs
         SymphonyNetVanilla.debug.ldf("<< END >>")
         if self.inference:
+            print('>>>>>>>>>>>>>>>>>>>> INFERENCE')
             return outputs, state
         else:
             return outputs

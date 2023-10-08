@@ -52,7 +52,7 @@ class LatentTransformerEncoder(FairseqEncoder):
             feed_forward_dimensions=4 * args.latent_embed_dim,
             activation="gelu",
             dropout=args.latent_dropout,
-            attention_type="causal-linear", # https://fast-transformers.github.io/attention/
+            attention_type="causal-linear",  # https://fast-transformers.github.io/attention/
         ).get()
         LatentTransformerEncoder.debug.ldf("Latent Encoder Model")
 
@@ -170,32 +170,29 @@ class LatentTransformerEncoder(FairseqEncoder):
 
         # Calculate information from the data into the model
         if self.inference:
-            print(x.shape)
-            print(" into ")
-            print(x.squeeze(0).shape)
-            print(" into ")
+            # print(x.shape)
+            # print(" into ")
+            # print(x.squeeze(0).shape)
+            # print(" into ")
             outputs = self.input_section(x.squeeze(0))
-            print(outputs.shape)
+            # print(outputs.shape)
             outputs = outputs.permute(1, 0, 2)
-            print(" into ")
-            print(outputs.shape)
+            # print(" into ")
+            # print(outputs.shape)
             outputs = outputs.squeeze(0)
-            print(" into ")
-            print(outputs.shape)
-            print(" into ")
-            outputs, state = self.encoder_model(
-                x=outputs,
-                state=state,
-            )
-            print(outputs.shape)
-            print(" into ")
+            # print(" into ")
+            # print(outputs.shape)
+            # print(" into ")
+            outputs, state = self.encoder_model(x=outputs)
+            # print(outputs.shape)
+            # print(" into ")
         else:
             outputs = self.input_section(x)
             outputs = self.encoder_model(outputs, self.attn_mask, len_mask)
             outputs = outputs.permute(1, 0, 2)
         outputs = self.output_section(outputs)
-        print(outputs.shape)
-        input()
+        # print(outputs.shape)
+        # input()
         LatentTransformerEncoder.debug.ldf("Model Computation")
 
         # Return output
