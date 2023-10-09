@@ -48,8 +48,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #
 
         # Create BERTBaseEN model
-        print(args)
-        input()
         encoder_model = VIVYNet.ENCODER_MAPS[args.enc](args=args, task=task, inference=True)
         VIVYNet.debug.ldf("Model Creation: BERTBaseEN")
 
