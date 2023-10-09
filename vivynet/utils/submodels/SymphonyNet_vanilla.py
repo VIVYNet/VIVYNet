@@ -199,7 +199,6 @@ class SymphonyNetVanilla(FairseqDecoder):
         decoder_in,
         src_lengths=None,
         encoder_out_lengths=None,
-        state=None,
     ):
         """SymphonyNet's Forward Function"""
 
@@ -211,10 +210,10 @@ class SymphonyNetVanilla(FairseqDecoder):
             encoder_out=encoder_out,
             src_lengths=src_lengths,
             encoder_out_lengths=encoder_out_lengths,
-            state=state,
         )
         if self.inference:
             features, state = features
+
         SymphonyNetVanilla.debug.ldf("Feature Extract")
 
         # Project the given features into the output layers
@@ -238,7 +237,6 @@ class SymphonyNetVanilla(FairseqDecoder):
         encoder_out=None,
         src_lengths=None,
         encoder_out_lengths=None,
-        state=None,
     ):
         """Extract feature method"""
         # TODO: Understand how SymphonyNet masks work, including LengthMask and
@@ -260,7 +258,6 @@ class SymphonyNetVanilla(FairseqDecoder):
         SymphonyNetVanilla.debug.ldf("event embedding")
 
         # Get the event mask
-        SymphonyNetVanilla.debug.ldf("event mask")
         evton_mask = (
             decoder_in[..., 1]
             .ne(self.pad_idx)
@@ -278,68 +275,88 @@ class SymphonyNetVanilla(FairseqDecoder):
         tmp = self.wTrke(decoder_in[..., 2])
         trk_emb = tmp * evton_mask
         SymphonyNetVanilla.debug.ldf("track embedding")
-
+        
         # Calculate length mask for the decoder input information
-        pad_mask = (
-            decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
-        )
-        if src_lengths is not None:
-            len_mask = LengthMask(
-                src_lengths, max_len=seq_len, device=decoder_in.device
+        if not self.inference:
+            pad_mask = (
+                decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
             )
-        else:
-            len_mask = LengthMask(
-                torch.sum(pad_mask, axis=1),
-                max_len=seq_len,
-                device=decoder_in.device,
-            )
-        SymphonyNetVanilla.debug.ldf("Calculating LengthMask for tgt")
-
+            if src_lengths is not None:
+                len_mask = LengthMask(
+                    src_lengths, max_len=seq_len, device=decoder_in.device
+                )
+            else:
+                len_mask = LengthMask(
+                    torch.sum(pad_mask, axis=1),
+                    max_len=seq_len,
+                    device=decoder_in.device,
+                )
+        # if src_lengths is None:
+        #     assert("LengthMask for tgt is missing!")
+        SymphonyNetVanilla.debug.ldf("Calculating LengthMask for tgt for training")
+        
         # Calculate length mask for the encoder output information
-        if encoder_out_lengths is not None:
-            enc_len_mask = LengthMask(
-                torch.tensor(encoder_out_lengths, dtype=torch.int),
-                max_len=enc_len,
-                device=encoder_out.device,
-            )
-        else:
-            # WIP: Calc LengthMask when enc_out_len is none
-            # enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
-            enc_len_mask = LengthMask(
-                torch.tensor(enc_len, dtype=torch.int),
-                max_len=enc_len,
-                device=encoder_out.device,
-            )
+        if not self.inference:
+            if encoder_out_lengths is not None:
+                enc_len_mask = LengthMask(
+                    torch.tensor(encoder_out_lengths, dtype=torch.int),
+                    max_len=enc_len,
+                    device=encoder_out.device,
+                )
+            else:
+                # WIP: Calc LengthMask when enc_out_len is none
+                # enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
+                enc_len_mask = LengthMask(
+                    torch.tensor(enc_len, dtype=torch.int),
+                    max_len=enc_len,
+                    device=encoder_out.device,
+                )
+        # if encoder_out_lengths is None:
+        #     assert("LengthMask for src is missing!")
         SymphonyNetVanilla.debug.ldf("Calculating LengthMask for src")
 
+
         # Apply the full mask to the cross attention layers
-        full_mask = FullMask(N=seq_len, M=enc_len, device=decoder_in.device)
+        if not self.inference:
+            full_mask = FullMask(N=seq_len, M=enc_len, device=decoder_in.device)
         SymphonyNetVanilla.debug.ldf("Full mask for cross attention layer")
 
         # Apply permutation variance techniques
-        if self.perm_inv > 1:
-            rel_pos = pad_mask * decoder_in[..., 4]
-            rel_pos_mask = (
-                rel_pos.ne(0).float()[..., None].to(decoder_in.device)
-            )  # ignore bom, chord, eos
-
-            measure_ids = pad_mask * decoder_in[..., 5]
-            mea_mask = (
-                measure_ids.ne(0).float()[..., None].to(decoder_in.device)
-            )  # ignore eos
-
-            pos_emb = rel_pos_mask * self.wRpe(rel_pos) + mea_mask * self.wMpe(
-                measure_ids
-            )
-
+        if self.inference: # Does not ignore bom, chord, eos 
+            if self.perm_inv > 1:
+                SymphonyNetVanilla.debug.ldf("permutation invariant > 1")
+                rel_pos = decoder_in[..., 4]
+                measure_ids = decoder_in[..., 5]
+                pos_emb = self.wMpe(measure_ids) + self.wRpe(rel_pos)
+            else:
+                # set instrument id as position id
+                position_ids = x[..., 3]
+                pos_emb = self.wpe(position_ids)
         else:
-            # set position ids to exclude padding symbols
-            position_ids = pad_mask * (
-                torch.arange(1, 1 + seq_len)
-                .to(decoder_in.device)
-                .repeat(bsz, 1)
-            )
-            pos_emb = self.wpe(position_ids)
+            if self.perm_inv > 1:
+                SymphonyNetVanilla.debug.ldf("permutation invariant > 1")
+                rel_pos = pad_mask * decoder_in[..., 4]
+                rel_pos_mask = (
+                    rel_pos.ne(0).float()[..., None].to(decoder_in.device) # ignore bom, chord, eos
+                )  
+
+                measure_ids = pad_mask * decoder_in[..., 5]
+                mea_mask = (
+                    measure_ids.ne(0).float()[..., None].to(decoder_in.device) # ignore eos
+                )  
+
+                pos_emb = rel_pos_mask * self.wRpe(rel_pos) + mea_mask * self.wMpe(
+                    measure_ids
+                )
+
+            else:
+                # set position ids to exclude padding symbols
+                position_ids = pad_mask * (
+                    torch.arange(1, 1 + seq_len)
+                    .to(decoder_in.device)
+                    .repeat(bsz, 1)
+                )
+                pos_emb = self.wpe(position_ids)
         SymphonyNetVanilla.debug.ldf("permutation invariant")
 
         # Combine the embeddings together

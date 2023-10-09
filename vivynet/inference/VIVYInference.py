@@ -48,6 +48,8 @@ class VIVYNet(FairseqEncoderDecoderModel):
         #
 
         # Create BERTBaseEN model
+        print(args)
+        input()
         encoder_model = VIVYNet.ENCODER_MAPS[args.enc](args=args, task=task, inference=True)
         VIVYNet.debug.ldf("Model Creation: BERTBaseEN")
 
@@ -185,7 +187,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
         VIVYNet.debug.ldf("res 1")
 
         # Intermediary layer pass
-        intermediate, _ = self.latent(enc_output[0])
+        intermediate, _ = self.latent(enc_output[0]) # [512, 512]
         src_lengths = len(src_tokens)
         VIVYNet.debug.ldf(f"res 2 : {intermediate.shape} : {src_lengths}")
 

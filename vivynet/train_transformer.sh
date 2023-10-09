@@ -20,7 +20,7 @@ if [[ $0 == *"slurm"* ]]; then
 else
   echo "Not using Slurm..."
   echo
-  source ./configs/test3.sh       # <<< CHANGE CONFIG NAME IF NOT USING SLURM
+  source ./configs/test1.sh       # <<< CHANGE CONFIG NAME IF NOT USING SLURM
 fi
 source ./personal.sh
 
