@@ -168,7 +168,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         src_tokens,
         prev_output_tokens,
         prev_output_tokens_lengths=None,
-        state=None,
     ):
         """Forward propagation method"""
 

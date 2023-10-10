@@ -371,7 +371,7 @@ class SymphonyNetVanilla(FairseqDecoder):
             outputs, state = self.decoder_model(
                 x=x.squeeze(0),
                 memory=encoder_out.permute(1, 0, 2),
-                memory_length_mask=None
+                memory_length_mask=src_lengths, 
             )
         else:
             outputs = self.decoder_model(

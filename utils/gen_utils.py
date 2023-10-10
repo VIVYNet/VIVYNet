@@ -159,7 +159,7 @@ def get_next_chord(ori):
 def get_next(model, text, prime, memory, has_prime = False):
     pr = torch.from_numpy(np.array(prime))[None, None, :].cuda()
     text = torch.Tensor(text).cuda()
-    (e,d,t,ins), memory = model(src_tokens=text, prev_output_tokens=pr, state=memory)
+    (e,d,t,ins), memory = model(src_tokens=text, prev_output_tokens=pr, prev_output_tokens_lengths=memory)
 
     e, d, t, ins = e[0,:], d[0,:], t[0,:], ins[0,:]
     if has_prime:

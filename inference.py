@@ -83,10 +83,13 @@ def main():
     """
     Generation
     """
+    generated, ins_logits = gen_one(
+                vivynet, encoded, tgt_input, MIN_LEN=32, MAX_LEN=128
+            )
     while True:
         try:
             generated, ins_logits = gen_one(
-                vivynet, encoded, tgt_input, MIN_LEN=1024
+                vivynet, encoded, tgt_input, MIN_LEN=32, MAX_LEN=128
             )
             break
         except Exception as e:
