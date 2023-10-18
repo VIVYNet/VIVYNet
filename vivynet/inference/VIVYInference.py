@@ -188,11 +188,15 @@ class VIVYNet(FairseqEncoderDecoderModel):
         src_lengths = len(src_tokens) # [25, 325, 25 ,12 ,32 ,52]
         VIVYNet.debug.ldf(f"res 2 : {intermediate.shape} : {src_lengths}")
 
+        # print(src_tokens)
+        # print(src_tokens.size())
+        # input()
+
         # Get overall features from decoder
         features, state = self.decoder(
             encoder_out=intermediate.unsqueeze(1), # [512, 1, 512]
             decoder_in=prev_output_tokens,
-            src_lengths=prev_output_tokens_lengths, #512
+            src_lengths=prev_output_tokens_lengths, # 512
             encoder_out_lengths=src_lengths,
         )
         VIVYNet.debug.ldf("res 3")
