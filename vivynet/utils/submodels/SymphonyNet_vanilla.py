@@ -250,7 +250,7 @@ class SymphonyNetVanilla(FairseqDecoder):
         SymphonyNetVanilla.debug.ldf("process decoder_in")
 
         # Process the output of the decoder
-        enc_len, enc_bsz, embed_dim = encoder_out.size()
+        enc_bsz, enc_len, embed_dim = encoder_out.size()
         SymphonyNetVanilla.debug.ldf("process encoder_out")
 
         # Get the event embedding
@@ -281,6 +281,7 @@ class SymphonyNetVanilla(FairseqDecoder):
             pad_mask = (
                 decoder_in[..., 0].ne(self.pad_idx).long().to(decoder_in.device)
             )
+
             if src_lengths is not None:
                 len_mask = LengthMask(
                     src_lengths, max_len=seq_len, device=decoder_in.device
@@ -305,9 +306,10 @@ class SymphonyNetVanilla(FairseqDecoder):
             )
         else:
             # WIP: Calc LengthMask when enc_out_len is none
-            enc_pad_mask = encoder_out[1].ne(self.enc_pad_idx).long().to(x.device)
+            # enc_pad_mask = encoder_out[..., 0].ne(0).long().to(encoder_out.device)
+
             enc_len_mask = LengthMask(
-                torch.sum(enc_pad_mask, axis=1),
+                torch.sum(pad_mask, axis=1),
                 max_len=enc_len,
                 device=encoder_out.device,
                 )
