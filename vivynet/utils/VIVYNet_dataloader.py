@@ -692,7 +692,7 @@ class VIVYData(LanguageModelingTask):
             src_vocab=self.tgt_vocab,
             tgt_vocab=self.tgt_vocab,
             add_eos_for_other_targets=add_eos_for_other_targets,
-            shuffle=True,
+            shuffle=False,
             targets=self.targets,
             add_bos_token=False,  # Note: it should be from args,
         )

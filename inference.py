@@ -45,9 +45,7 @@ def main():
     bert_tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
     encoded = bert_tokenizer(
         src_input, truncation=True, padding="max_length", max_length=512
-    )[
-        "input_ids"
-    ]  # We are using only input_ids for now
+    )["input_ids"]  # We are using only input_ids for now
 
     """
     Process Midi
@@ -67,7 +65,7 @@ def main():
     """
     Model Initialization
     """
-    CKPT_DIR = "vivynet/inference_ckpt/checkpoint_best_0-955.pt"
+    CKPT_DIR = "vivynet/results/run5/ckpt/checkpoint_best.pt"
     INFERENCE_DIR = "vivynet/inference"
     vivynet = FairseqLanguageModel.from_pretrained(
         ".",
@@ -83,9 +81,9 @@ def main():
     """
     Generation
     """
-    generated, ins_logits = gen_one(
-                vivynet, encoded, tgt_input, MIN_LEN=32, MAX_LEN=128
-            )
+    # generated, ins_logits = gen_one(
+    #     vivynet, encoded, tgt_input, MIN_LEN=32, MAX_LEN=128
+    # )
     while True:
         try:
             generated, ins_logits = gen_one(
@@ -97,8 +95,6 @@ def main():
             continue
 
     print("Generated: ", generated)
-    # print("Logits: ", ins_logits)
-    # input()
 
     trk_ins_map = get_trk_ins_map(generated, ins_logits)
     note_seq = get_note_seq(generated, trk_ins_map)

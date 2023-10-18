@@ -275,7 +275,7 @@ class SymphonyNetVanilla(FairseqDecoder):
         tmp = self.wTrke(decoder_in[..., 2])
         trk_emb = tmp * evton_mask
         SymphonyNetVanilla.debug.ldf("track embedding")
-        
+
         # Calculate length mask for the decoder input information
         if not self.inference:
             pad_mask = (
@@ -295,7 +295,7 @@ class SymphonyNetVanilla(FairseqDecoder):
         # if src_lengths is None:
         #     assert("LengthMask for tgt is missing!")
         SymphonyNetVanilla.debug.ldf("Calculating LengthMask for tgt for training")
-        
+
         # Calculate length mask for the encoder output information
         # if not self.inference:
         if encoder_out_lengths is not None:
@@ -324,7 +324,7 @@ class SymphonyNetVanilla(FairseqDecoder):
         SymphonyNetVanilla.debug.ldf("Full mask for cross attention layer")
 
         # Apply permutation variance techniques
-        if self.inference: # Does not ignore bom, chord, eos 
+        if self.inference: # Does not ignore bom, chord, eos
             if self.perm_inv > 1:
                 SymphonyNetVanilla.debug.ldf("permutation invariant > 1")
                 rel_pos = decoder_in[..., 4]
@@ -340,12 +340,12 @@ class SymphonyNetVanilla(FairseqDecoder):
                 rel_pos = pad_mask * decoder_in[..., 4]
                 rel_pos_mask = (
                     rel_pos.ne(0).float()[..., None].to(decoder_in.device) # ignore bom, chord, eos
-                )  
+                )
 
                 measure_ids = pad_mask * decoder_in[..., 5]
                 mea_mask = (
                     measure_ids.ne(0).float()[..., None].to(decoder_in.device) # ignore eos
-                )  
+                )
 
                 pos_emb = rel_pos_mask * self.wRpe(rel_pos) + mea_mask * self.wMpe(
                     measure_ids
@@ -373,7 +373,7 @@ class SymphonyNetVanilla(FairseqDecoder):
             outputs, state = self.decoder_model(
                 x=x.squeeze(0),
                 memory=encoder_out.permute(1, 0, 2),
-                memory_length_mask=enc_len_mask, 
+                memory_length_mask=enc_len_mask,
                 state = src_lengths
             )
         else:
