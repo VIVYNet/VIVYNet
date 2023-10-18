@@ -296,20 +296,20 @@ class SymphonyNetVanilla(FairseqDecoder):
         SymphonyNetVanilla.debug.ldf("Calculating LengthMask for tgt for training")
         
         # Calculate length mask for the encoder output information
-        if not self.inference:
-            if encoder_out_lengths is not None:
-                enc_len_mask = LengthMask(
-                    torch.tensor(encoder_out_lengths, dtype=torch.int),
-                    max_len=enc_len,
-                    device=encoder_out.device,
-                )
-            else:
-                # WIP: Calc LengthMask when enc_out_len is none
-                # enc_pad_mask = x[1].ne(self.enc_pad_idx).long().to(x.device)
-                enc_len_mask = LengthMask(
-                    torch.tensor(enc_len, dtype=torch.int),
-                    max_len=enc_len,
-                    device=encoder_out.device,
+        # if not self.inference:
+        if encoder_out_lengths is not None:
+            enc_len_mask = LengthMask(
+                torch.tensor(encoder_out_lengths, dtype=torch.int),
+                max_len=enc_len,
+                device=encoder_out.device,
+            )
+        else:
+            # WIP: Calc LengthMask when enc_out_len is none
+            enc_pad_mask = encoder_out[1].ne(self.enc_pad_idx).long().to(x.device)
+            enc_len_mask = LengthMask(
+                torch.sum(enc_pad_mask, axis=1),
+                max_len=enc_len,
+                device=encoder_out.device,
                 )
         # if encoder_out_lengths is None:
         #     assert("LengthMask for src is missing!")
@@ -371,7 +371,8 @@ class SymphonyNetVanilla(FairseqDecoder):
             outputs, state = self.decoder_model(
                 x=x.squeeze(0),
                 memory=encoder_out.permute(1, 0, 2),
-                memory_length_mask=src_lengths, 
+                memory_length_mask=enc_len_mask, 
+                state = src_lengths
             )
         else:
             outputs = self.decoder_model(

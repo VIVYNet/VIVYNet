@@ -330,6 +330,12 @@ class VIVYNet(FairseqEncoderDecoderModel):
         enc_output = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
 
+        print(enc_output)
+        print(enc_output.size())
+        input()
+        print(prev_output_tokens)
+        print(prev_output_tokens.size())
+        input()
         # Intermediary layer pass
         latent_output = self.latent(enc_output[0])
         src_lengths = len(src_tokens)
