@@ -480,7 +480,7 @@ class PairDataset(LanguagePairDataset):
     """Main dataset structure"""
 
     def __init__(
-        self, src, src_sizes, src_dict, tgt=None, tgt_sizes=None, tgt_dict=None
+        self, src, src_sizes, src_dict, shuffle, tgt=None, tgt_sizes=None, tgt_dict=None
     ):
         """Text2Music Dataset classification"""
 
@@ -492,6 +492,7 @@ class PairDataset(LanguagePairDataset):
         self.src_dict = src_dict
         self.tgt = tgt
         self.tgt_dict = tgt_dict
+        self.shuffle = shuffle
 
     def __getitem__(self, index):
         """Get item method"""
@@ -686,6 +687,8 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - Add EOS for other targets")
 
+        
+
         final_target = MultiheadDataset(
             dataset=tgt_datasets,
             sizes=tgt_datasets.sizes,
@@ -696,6 +699,9 @@ class VIVYData(LanguageModelingTask):
             targets=self.targets,
             add_bos_token=False,  # Note: it should be from args,
         )
+
+        print(final_target.__getitem__(0))
+
         VIVYData.debug.ldf("TGT - MultiheadDataset Init")
         VIVYData.debug.ldf(
             f"TGT - *FINALIZED* (size: {len(final_target.sizes)}) - {split}"
@@ -720,7 +726,7 @@ class VIVYData(LanguageModelingTask):
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
         VIVYData.debug.ldf(f"SRC - *LOADED* (size: {len(src_dataset.sizes)})")
-
+        
         src_dataset = (
             TextDataset(src_dataset, rand_chosen_cnt_l)
             if augmented_midi
@@ -756,7 +762,12 @@ class VIVYData(LanguageModelingTask):
             tgt=short_tgt or final_target,
             tgt_sizes=short_tgt_vocab or final_target.sizes,
             tgt_dict=self.tgt_vocab,
+            shuffle= True,
         )
+
+        print(self.datasets[split].__getitem__(0))
+        input()
+
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
 
