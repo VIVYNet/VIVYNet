@@ -687,7 +687,7 @@ class VIVYData(LanguageModelingTask):
         )
         VIVYData.debug.ldf("TGT - Add EOS for other targets")
 
-        
+
 
         final_target = MultiheadDataset(
             dataset=tgt_datasets,
@@ -699,8 +699,6 @@ class VIVYData(LanguageModelingTask):
             targets=self.targets,
             add_bos_token=False,  # Note: it should be from args,
         )
-
-        print(final_target.__getitem__(0))
 
         VIVYData.debug.ldf("TGT - MultiheadDataset Init")
         VIVYData.debug.ldf(
@@ -726,7 +724,7 @@ class VIVYData(LanguageModelingTask):
             split_path, self.src_vocab, self.args.dataset_impl, combine=combine
         )
         VIVYData.debug.ldf(f"SRC - *LOADED* (size: {len(src_dataset.sizes)})")
-        
+
         src_dataset = (
             TextDataset(src_dataset, rand_chosen_cnt_l)
             if augmented_midi
@@ -747,12 +745,12 @@ class VIVYData(LanguageModelingTask):
         short_src_vocab = []
         short_tgt = []
         short_tgt_vocab = []
-        for i in range(10):
-            short_src.append(src_dataset[i])
-            short_src_vocab.append(src_dataset.sizes[i])
-            short_tgt.append(final_target[i])
-            short_tgt_vocab.append(final_target.sizes[i])
-        VIVYData.debug.ldf("DEBUG - SHORTENING")
+        # for i in range(10):
+        #     short_src.append(src_dataset[i])
+        #     short_src_vocab.append(src_dataset.sizes[i])
+        #     short_tgt.append(final_target[i])
+        #     short_tgt_vocab.append(final_target.sizes[i])
+        # VIVYData.debug.ldf("DEBUG - SHORTENING")
 
         # Data compilation
         self.datasets[split] = PairDataset(
@@ -764,10 +762,6 @@ class VIVYData(LanguageModelingTask):
             tgt_dict=self.tgt_vocab,
             shuffle= True,
         )
-
-        print(self.datasets[split].__getitem__(0))
-        input()
-
         VIVYData.debug.ldf("COMPILATION")
         VIVYData.debug.ldf(f"<< END (split: {split}) >>")
 
