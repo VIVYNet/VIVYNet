@@ -329,7 +329,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
         # Get loss and the logits from the model
         enc_output = self.encoder(src_tokens)
         VIVYNet.debug.ldf("res 1")
-
         # Intermediary layer pass
         latent_output = self.latent(enc_output[0])
         src_lengths = len(src_tokens)
@@ -340,7 +339,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
             encoder_out=latent_output,
             decoder_in=prev_output_tokens,
             src_lengths=prev_output_tokens_lengths,
-            encoder_out_lengths=src_lengths,
+            encoder_out_lengths=None,
         )
         VIVYNet.debug.ldf("res 3")
 
