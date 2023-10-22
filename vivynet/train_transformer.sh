@@ -133,7 +133,7 @@ fairseq-train ../data/final \
   --no-epoch-checkpoints \
   --log-format $VIVY_LOG_FORMAT \
   --log-interval $VIVY_LOG_INTERVAL \
-  # --wandb-project $WANDB_PROJECT
+  --wandb-project $WANDB_PROJECT
 
 # endregion
 
