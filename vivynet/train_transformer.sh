@@ -82,6 +82,7 @@ export WANDB_DIR=$VIVY_OUTPUT_DIR
 
 # Run model train
 fairseq-train ../data/final \
+  --cpu \
   --user-dir $VIVY_USER_DIR \
   --task $VIVY_TASK \
   --criterion $VIVY_CRITERION \
@@ -133,7 +134,7 @@ fairseq-train ../data/final \
   --no-epoch-checkpoints \
   --log-format $VIVY_LOG_FORMAT \
   --log-interval $VIVY_LOG_INTERVAL \
-  --wandb-project $WANDB_PROJECT
+  # --wandb-project $WANDB_PROJECT
 
 # endregion
 

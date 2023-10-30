@@ -52,12 +52,12 @@ class LatentTransformerEncoder(FairseqEncoder):
             feed_forward_dimensions=4 * args.latent_embed_dim,
             activation="gelu",
             dropout=args.latent_dropout,
-            attention_type="causal-linear",  # https://fast-transformers.github.io/attention/
+            attention_type="linear",  # https://fast-transformers.github.io/attention/
         ).get()
         LatentTransformerEncoder.debug.ldf("Latent Encoder Model")
 
         # Generate attention mask
-        self.attn_mask = TriangularCausalMask(self.max_pos)
+        # self.attn_mask = TriangularCausalMask(self.max_pos)
         LatentTransformerEncoder.debug.ldf("Attention Mask")
 
         # Define translation layers
@@ -138,7 +138,7 @@ class LatentTransformerEncoder(FairseqEncoder):
 
     def forward(
         self,
-        x,
+        x,          # [N, L, E] <=> [1, 54, 768]
         src_lengths=None,
         state=None,
     ):
@@ -147,7 +147,7 @@ class LatentTransformerEncoder(FairseqEncoder):
         LatentTransformerEncoder.debug.ldf("<< START >>")
 
         # Permutate the tensor
-        x = x.permute(1, 0, 2)
+        # x = x.permute(1, 0, 2)
         LatentTransformerEncoder.debug.ldf("Input Permute")
 
         # Breaking down the dimensions of the input seq
@@ -176,8 +176,10 @@ class LatentTransformerEncoder(FairseqEncoder):
             outputs, state = self.encoder_model(x=outputs)
         else:
             outputs = self.input_section(x)
-            outputs = self.encoder_model(outputs, self.attn_mask, len_mask)
-            outputs = outputs.permute(1, 0, 2)
+            # print("latent size: ", outputs.size())
+            # input()
+            outputs = self.encoder_model(x = outputs, attn_mask = None, length_mask = len_mask)
+            # outputs = outputs.permute(1, 0, 2)
         outputs = self.output_section(outputs)
         # print(outputs.shape)
         # input()
