@@ -52,7 +52,7 @@ class LatentTransformerEncoder(FairseqEncoder):
             feed_forward_dimensions=4 * args.latent_embed_dim,
             activation="gelu",
             dropout=args.latent_dropout,
-            attention_type="linear",  # https://fast-transformers.github.io/attention/
+            attention_type="full",  # https://fast-transformers.github.io/attention/
         ).get()
         LatentTransformerEncoder.debug.ldf("Latent Encoder Model")
 

@@ -15,8 +15,8 @@ VIVY_PT_ENC=0
 
 # Decoder model specifications
 VIVY_DEC=SymphonyNet_Vanilla
-VIVY_FREEZE_DEC=0
-VIVY_PT_DEC=0
+VIVY_FREEZE_DEC=1
+VIVY_PT_DEC=1
 VIVY_EVT_VOC_SIZE=1125
 VIVY_TRK_VOC_SIZE=44
 VIVY_DUR_VOC_SIZE=36
@@ -63,7 +63,7 @@ VIVY_WEIGHT_DECAY=0.01
 # Training options
 VIVY_BATCH_SIZE=1
 VIVY_LR=0.0001
-VIVY_LR_SCHEDULER=reduce_lr_on_plateau
+VIVY_LR_SCHEDULER=polynomial_decay
 
 # Logging and checkpoing saving
 VIVY_OUTPUT_DIR=./results/$VIVY_VARIANT
