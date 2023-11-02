@@ -227,8 +227,7 @@ class VIVYNet(FairseqEncoderDecoderModel):
                 VIVYNet.debug.ldf("Checkpoint loading")
 
                 # Zipping two models param dicts
-                pretrained_params = []
-                
+                pretrained_params = []                
                 
                 for param in decoder_model.state_dict():
                     if not ("cross_attention" in param or "norm3" in param):
@@ -241,7 +240,6 @@ class VIVYNet(FairseqEncoderDecoderModel):
                     for param1, param2 in zip(
                         pretrained_params, checkpoint["model"]
                     ):
-                        # print(param1 + "\t" + param2)
                         decoder_model.state_dict()[param1].copy_(
                             checkpoint["model"][param2]
                         )
