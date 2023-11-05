@@ -52,7 +52,7 @@ class LatentTransformerEncoder(FairseqEncoder):
             feed_forward_dimensions=4 * args.latent_embed_dim,
             activation="gelu",
             dropout=args.latent_dropout,
-            attention_type="full",  # https://fast-transformers.github.io/attention/
+            attention_type=args.latent_self_attention_type,  # https://fast-transformers.github.io/attention/ FULL | LINEAR
         ).get()
         LatentTransformerEncoder.debug.ldf("Latent Encoder Model")
 
@@ -136,6 +136,16 @@ class LatentTransformerEncoder(FairseqEncoder):
             )
             LatentTransformerEncoder.debug.ldf("latent_output_dim")
 
+        # Latent self attention type
+        if not check(parser, "latent_self_attention_type"):
+            parser.add_argument(
+                "--latent_self_attention_type",
+                type=str,
+                metavar="N",
+                help="Latent encoder self attention type",
+            )
+            LatentTransformerEncoder.debug.ldf("latent_self_attention_type")
+
     def forward(
         self,
         x,  # [N, L, E] <=> [1, 54, 768]
@@ -180,8 +190,6 @@ class LatentTransformerEncoder(FairseqEncoder):
                 x=outputs, attn_mask=None, length_mask=len_mask
             )
         outputs = self.output_section(outputs)
-        # print(outputs.shape)
-        # input()
         LatentTransformerEncoder.debug.ldf("Model Computation")
 
         # Return output

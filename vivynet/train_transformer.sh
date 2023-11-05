@@ -113,6 +113,7 @@ fairseq-train ../data/final \
   --latent_output_dim ${VIVY_LATENT_OUTPUT_DIM:=0} \
   --latent_hidden_layers ${VIVY_LATENT_HIDDEN_LAYERS:=0} \
   --latent_dropout_rate ${VIVY_LATENT_DROPOUT_RATE:=0} \
+  --latent_self_attention_type ${VIVY_LATENT_SELF_ATTENTION_TYPE:=0} \
   --tokens_per_sample $VIVY_TOKENS_PER_SAMPLE \
   --shorten_method $VIVY_SHORTEN \
   --shorten_data_split_list "$VIVY_SHORTEN_DATA_SPLIT_LIST" \
