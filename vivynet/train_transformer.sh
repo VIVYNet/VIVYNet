@@ -134,7 +134,6 @@ fairseq-train ../data/final \
   --no-epoch-checkpoints \
   --log-format $VIVY_LOG_FORMAT \
   --log-interval $VIVY_LOG_INTERVAL \
-  --total-num-update 210000 \
   --wandb-project $WANDB_PROJECT
 
 # endregion
